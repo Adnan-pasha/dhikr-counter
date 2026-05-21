@@ -36,6 +36,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
   const [locationName, setLocationName] = useState<string>('London, UK (Default)');
   const [gpsLoading, setGpsLoading] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [isUnsecureContext, setIsUnsecureContext] = useState<boolean>(false);
   
   // Simulated compass alignment rotation (for testing and manual alignment)
   // Users can drag or use sliders to rotate their direction to orient towards Mecca
@@ -99,6 +100,9 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
 
   // Auto trigger GPS on load
   useEffect(() => {
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      setIsUnsecureContext(true);
+    }
     requestGPSLocation();
   }, []);
 
@@ -141,13 +145,25 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
 
   // Connect Device Orientation Compass Sensors (Android & general fallback)
   useEffect(() => {
-    const handleOrientation = (e: DeviceOrientationEvent) => {
+    let absoluteActive = false;
+
+    const handleAbsoluteOrientation = (e: Event) => {
+      const de = e as DeviceOrientationEvent;
+      if (de.alpha !== null) {
+        // Alignment relative to absolute Magnetic North on Android/Chrome
+        setHeading(360 - de.alpha);
+        setIsLiveSensors(true);
+        absoluteActive = true;
+      }
+    };
+
+    const handleStandardOrientation = (e: DeviceOrientationEvent) => {
       // iOS specific webkitCompassHeading
       if ('webkitCompassHeading' in e) {
         setHeading(e.webkitCompassHeading as number);
         setIsLiveSensors(true);
-      } else if (e.alpha !== null) {
-        // Android alpha sensor orientation
+      } else if (!absoluteActive && e.alpha !== null && (e as any).absolute) {
+        // Fallback for Android if we got an absolute flag in standard event
         setHeading(360 - e.alpha);
         setIsLiveSensors(true);
       }
@@ -155,13 +171,13 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
 
     // Listen only on mounting if interactive request isn't active
     if (window.DeviceOrientationEvent && typeof (window.DeviceOrientationEvent as any).requestPermission !== 'function') {
-      window.addEventListener('deviceorientation', handleOrientation);
-      window.addEventListener('deviceorientationabsolute', handleOrientation);
+      window.addEventListener('deviceorientationabsolute', handleAbsoluteOrientation);
+      window.addEventListener('deviceorientation', handleStandardOrientation);
     }
 
     return () => {
-      window.removeEventListener('deviceorientation', handleOrientation);
-      window.removeEventListener('deviceorientationabsolute', handleOrientation);
+      window.removeEventListener('deviceorientationabsolute', handleAbsoluteOrientation);
+      window.removeEventListener('deviceorientation', handleStandardOrientation);
     };
   }, []);
 
@@ -399,6 +415,20 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
               className="text-[10px] font-semibold text-amber-400 bg-amber-500/5 border border-amber-500/10 p-2 rounded-xl mt-2 select-none"
             >
               {gpsError}
+            </motion.div>
+          )}
+
+          {isUnsecureContext && (
+            <motion.div 
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-[11px] leading-relaxed text-amber-300 bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl mt-3 text-center"
+            >
+              <HelpCircle className="w-4 h-4 text-amber-400 mx-auto mb-1 animate-pulse" />
+              <b className="font-bold">Insecure Connection (HTTP) Detected</b>
+              <p className="mt-1 text-slate-300 text-[10px] font-medium leading-normal select-text">
+                Modern mobile browsers block GPS & compass sensors over standard HTTP. Access via <b>HTTPS://</b> (e.g., using GitHub Pages secure URL <code>https://adnan-pasha.github.io/dhikr-counter</code>) to activate precision bearings.
+              </p>
             </motion.div>
           )}
 
