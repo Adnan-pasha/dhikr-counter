@@ -104,20 +104,23 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Azan Alarm & Audio system state with reliable fallback CDN mirrors
-  // Move fast Raw GitHub mirrors first to avoid initial 10-second delays on archive.org
+  // Use globally accelerated, CORS & Range-header compatible jsDelivr CDN mirrors first
+  // to guarantee instant mobile and desktop playback with no browser security errors.
   const MECCA_AZAN_URLS = [
+    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan2.mp3',
+    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan5.mp3',
+    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan4.mp3',
     'https://raw.githubusercontent.com/farafarizul/myazan/master/assets/audio/azan2.mp3',
-    'https://raw.githubusercontent.com/farafarizul/myazan/main/assets/audio/azan2.mp3',
-    'https://archive.org/download/AdhanMakkah/Adhan-Makkah.mp3',
     'https://www.islamcan.com/audio/adhan/mecca.mp3',
-    'https://upload.wikimedia.org/wikipedia/commons/c/c2/Adhan_by_Abdul_Basit_Abd_us-Samad.ogg'
+    'https://archive.org/download/AdhanMakkah/Adhan-Makkah.mp3'
   ];
   const MEDINA_AZAN_URLS = [
+    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan3.mp3',
+    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/subuh.mp3',
+    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan1.mp3',
     'https://raw.githubusercontent.com/farafarizul/myazan/master/assets/audio/azan3.mp3',
-    'https://raw.githubusercontent.com/farafarizul/myazan/main/assets/audio/azan3.mp3',
-    'https://archive.org/download/AdhanMedina/Adhan-Medina.mp3',
     'https://www.islamcan.com/audio/adhan/azan1.mp3',
-    'https://upload.wikimedia.org/wikipedia/commons/8/82/Adhan_Athan_Azan_Istanbul_Turkey.ogg'
+    'https://archive.org/download/AdhanMedina/Adhan-Medina.mp3'
   ];
   
   const [selectedAzanSound, setSelectedAzanSound] = useState<'mecca' | 'medina'>('mecca');
