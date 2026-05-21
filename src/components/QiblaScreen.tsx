@@ -383,6 +383,38 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
   const [isLiveSensors, setIsLiveSensors] = useState<boolean>(false);
   const [iosNeedsPermission, setIosNeedsPermission] = useState<boolean>(false);
   
+  const targetHeading = useRef<number>(0);
+  const currentHeading = useRef<number>(0);
+
+  // Smooth lerp updating loop using requestAnimationFrame (Shortest angular path interpolation)
+  useEffect(() => {
+    let animId: number;
+    const update = () => {
+      const target = targetHeading.current;
+      const current = currentHeading.current;
+      
+      let diff = target - current;
+      while (diff < -180) diff += 360;
+      while (diff > 180) diff -= 360;
+      
+      if (Math.abs(diff) < 0.05) {
+        if (current !== target) {
+          currentHeading.current = target;
+          setHeading(target);
+        }
+      } else {
+        // Highly reactive but buttery-smooth physics damping (0.12 coefficient is ideal)
+        const next = (current + diff * 0.12 + 360) % 360;
+        currentHeading.current = next;
+        setHeading(next);
+      }
+      animId = requestAnimationFrame(update);
+    };
+    
+    animId = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
   const dialRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartAngle = useRef<number>(0);
@@ -501,7 +533,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
       const de = e as DeviceOrientationEvent;
       if (de.alpha !== null) {
         // Alignment relative to absolute Magnetic North on Android/Chrome
-        setHeading(360 - de.alpha);
+        targetHeading.current = 360 - de.alpha;
         setIsLiveSensors(true);
         absoluteActive = true;
       }
@@ -510,11 +542,11 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
     const handleStandardOrientation = (e: DeviceOrientationEvent) => {
       // iOS specific webkitCompassHeading
       if ('webkitCompassHeading' in e) {
-        setHeading(e.webkitCompassHeading as number);
+        targetHeading.current = e.webkitCompassHeading as number;
         setIsLiveSensors(true);
       } else if (!absoluteActive && e.alpha !== null) {
         // Fallback for Android/General if the absolute event didn't trigger
-        setHeading(360 - e.alpha);
+        targetHeading.current = 360 - e.alpha;
         setIsLiveSensors(true);
       }
     };
@@ -556,6 +588,8 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
     const startAngle = Math.atan2(clientY - centerY, clientX - centerX) * 180 / Math.PI;
     dragStartAngle.current = startAngle;
     startHeading.current = heading;
+    targetHeading.current = heading;
+    currentHeading.current = heading;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -570,7 +604,14 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
     const diff = currentAngle - dragStartAngle.current;
     
     // adjust heading by difference
-    setHeading((startHeading.current - diff + 360) % 360);
+    const val = (startHeading.current - diff + 360) % 360;
+    targetHeading.current = val;
+    currentHeading.current = val;
+    setHeading(val);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -585,11 +626,16 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
     const startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180 / Math.PI;
     dragStartAngle.current = startAngle;
     startHeading.current = heading;
+    targetHeading.current = heading;
+    currentHeading.current = heading;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const currentAngle = Math.atan2(moveEvent.clientY - centerY, moveEvent.clientX - centerX) * 180 / Math.PI;
       const diffAngle = currentAngle - dragStartAngle.current;
-      setHeading((startHeading.current - diffAngle + 360) % 360);
+      const val = (startHeading.current - diffAngle + 360) % 360;
+      targetHeading.current = val;
+      currentHeading.current = val;
+      setHeading(val);
     };
 
     const handleMouseUp = () => {
@@ -1102,6 +1148,8 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
               ref={dialRef}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
               onMouseDown={handleMouseDown}
               className={`relative w-64 h-64 md:w-72 md:h-72 rounded-full border border-slate-850 bg-slate-950/80 flex items-center justify-center cursor-grab active:cursor-grabbing shadow-[inset_0_4px_30px_rgba(0,0,0,0.8),0_15px_35px_rgba(0,0,0,0.4)] transition-shadow duration-300 z-10 ${isAligned ? 'border-emerald-500/25 ring-8 ring-emerald-500/5 shadow-[0_0_40px_rgba(16,185,129,0.1),inset_0_4px_30px_rgba(0,0,0,0.8)]' : ''}`}
               style={{ 
@@ -1211,6 +1259,96 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
               </div>
             )}
           </div>
+
+          {/* Desktop Preview / Simulator precision calibration dashboard */}
+          {!isLiveSensors && (
+            <div className="w-full max-w-xs bg-slate-900/30 border border-slate-850/70 rounded-2xl p-3 flex flex-col gap-2.5 shrink-0 select-none">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
+                  <Sliders className="w-3.5 h-3.5 text-amber-500" /> Align Simulator
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Smoothly auto-spin compass dial to align perfectly to the Kaaba direction
+                    targetHeading.current = qiblaAngle;
+                  }}
+                  className="px-2.5 py-1 rounded bg-gradient-to-tr from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 transition-all text-slate-950 text-4xs font-black uppercase tracking-wider flex items-center gap-1 shadow-sm shadow-amber-950/20 cursor-pointer"
+                >
+                  <Sparkles className="w-2.5 h-2.5" /> Auto-Align
+                </button>
+              </div>
+
+              {/* Slider Controller */}
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between text-4xs font-bold text-slate-400">
+                  <span>Rotate Dial</span>
+                  <span className="font-mono text-slate-200 font-extrabold">{Math.round(heading)}°</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="359"
+                  value={Math.round(heading)}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    targetHeading.current = val;
+                    currentHeading.current = val;
+                    setHeading(val);
+                  }}
+                  className="w-full accent-amber-500 h-1 bg-slate-950 rounded-lg cursor-pointer"
+                />
+              </div>
+
+              {/* Stepper click precision adjusting */}
+              <div className="grid grid-cols-4 gap-1.5 mt-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = (targetHeading.current - 5 + 360) % 360;
+                    targetHeading.current = next;
+                  }}
+                  className="py-1 rounded bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 transition-colors text-slate-300 font-mono text-[10px] font-extrabold cursor-pointer"
+                  title="Rotate Left 5 Degrees"
+                >
+                  -5°
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = (targetHeading.current - 1 + 360) % 360;
+                    targetHeading.current = next;
+                  }}
+                  className="py-1 rounded bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 transition-colors text-slate-300 font-mono text-[10px] font-extrabold cursor-pointer"
+                  title="Rotate Left 1 Degree"
+                >
+                  -1°
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = (targetHeading.current + 1) % 360;
+                    targetHeading.current = next;
+                  }}
+                  className="py-1 rounded bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 transition-colors text-slate-300 font-mono text-[10px] font-extrabold cursor-pointer"
+                  title="Rotate Right 1 Degree"
+                >
+                  +1°
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = (targetHeading.current + 5) % 360;
+                    targetHeading.current = next;
+                  }}
+                  className="py-1 rounded bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 transition-colors text-slate-300 font-mono text-[10px] font-extrabold cursor-pointer"
+                  title="Rotate Right 5 Degrees"
+                >
+                  +5°
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Informative description tip overlay bottom */}
           <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-850/60 text-[10px] leading-relaxed text-slate-400 max-w-xs flex items-start gap-1.5 select-none shrink-0">
