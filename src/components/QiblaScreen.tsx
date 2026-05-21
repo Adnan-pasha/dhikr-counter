@@ -106,6 +106,8 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
     requestGPSLocation();
   }, []);
 
+  const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
+
   // Check if iOS permissions are required for compass
   useEffect(() => {
     if (
@@ -114,6 +116,10 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
       typeof (window.DeviceOrientationEvent as any).requestPermission === 'function'
     ) {
       setIosNeedsPermission(true);
+      setPermissionGranted(false);
+    } else {
+      setIosNeedsPermission(false);
+      setPermissionGranted(true);
     }
   }, []);
 
@@ -125,13 +131,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
         const response = await DeviceOrientationEventAny.requestPermission();
         if (response === 'granted') {
           setIosNeedsPermission(false);
-          const handleOrientation = (e: DeviceOrientationEvent) => {
-            if ('webkitCompassHeading' in e) {
-              setHeading(e.webkitCompassHeading as number);
-              setIsLiveSensors(true);
-            }
-          };
-          window.addEventListener('deviceorientation', handleOrientation);
+          setPermissionGranted(true);
           setIsLiveSensors(true);
         } else {
           setGpsError('Compass orientation permission was denied.');
@@ -139,12 +139,14 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
       }
     } catch (e) {
       console.error('Compass activation failed:', e);
-      setGpsError('Compass sensor calibration requires a secure secure context or user permission.');
+      setGpsError('Compass sensor calibration requires a secure context or user permission.');
     }
   };
 
-  // Connect Device Orientation Compass Sensors (Android & general fallback)
+  // Connect Device Orientation Compass Sensors (iOS, Android, & browser fallbacks)
   useEffect(() => {
+    if (!permissionGranted) return;
+
     let absoluteActive = false;
 
     const handleAbsoluteOrientation = (e: Event) => {
@@ -162,24 +164,21 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
       if ('webkitCompassHeading' in e) {
         setHeading(e.webkitCompassHeading as number);
         setIsLiveSensors(true);
-      } else if (!absoluteActive && e.alpha !== null && (e as any).absolute) {
-        // Fallback for Android if we got an absolute flag in standard event
+      } else if (!absoluteActive && e.alpha !== null) {
+        // Fallback for Android/General if the absolute event didn't trigger
         setHeading(360 - e.alpha);
         setIsLiveSensors(true);
       }
     };
 
-    // Listen only on mounting if interactive request isn't active
-    if (window.DeviceOrientationEvent && typeof (window.DeviceOrientationEvent as any).requestPermission !== 'function') {
-      window.addEventListener('deviceorientationabsolute', handleAbsoluteOrientation);
-      window.addEventListener('deviceorientation', handleStandardOrientation);
-    }
+    window.addEventListener('deviceorientationabsolute', handleAbsoluteOrientation);
+    window.addEventListener('deviceorientation', handleStandardOrientation);
 
     return () => {
       window.removeEventListener('deviceorientationabsolute', handleAbsoluteOrientation);
       window.removeEventListener('deviceorientation', handleStandardOrientation);
     };
-  }, []);
+  }, [permissionGranted]);
 
   // When city preset selected
   const handleSelectCity = (city: CityPreset) => {
@@ -380,11 +379,29 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
               </div>
             </div>
 
-            {/* Golden Core Dial Center */}
+            {/* Minimalist Central Pivot Pin */}
             <div className={`w-12 h-12 rounded-full bg-slate-900 border border-slate-800 shadow-md flex items-center justify-center z-10 transition-colors ${isAligned ? 'border-emerald-500' : ''}`}>
-              <Navigation className={`w-5 h-5 text-slate-400 shrink-0 select-none ${isAligned ? 'text-emerald-400 fill-emerald-500/20' : ''}`} style={{ transform: `rotate(${relativeQiblaAngle}deg)` }} />
+              <div className={`w-2.5 h-2.5 rounded-full ${isAligned ? 'bg-emerald-400' : 'bg-slate-700'}`} />
             </div>
 
+          </div>
+
+          {/* INDEPENDENT CENTRAL GILDED QIBLA NEEDLE (Positioned outside dial so it is unaffected by dial's -heading rotation) */}
+          <div 
+            id="center_qibla_compass_needle"
+            className={`absolute w-12 h-12 rounded-full bg-slate-900/95 border shadow-lg flex items-center justify-center z-20 pointer-events-none transition-all duration-300 ${isAligned ? 'border-emerald-500 ring-4 ring-emerald-500/10' : 'border-slate-800 ring-4 ring-slate-800/10'}`}
+            style={{ 
+              transform: `rotate(${relativeQiblaAngle}deg)`, 
+              transition: isDragging ? 'none' : 'transform 0.25s ease-out'
+            }}
+          >
+            {/* Elegant Custom 3D Symmetric Needle */}
+            <div className="relative w-1.5 h-10 flex flex-col items-center justify-center">
+              {/* North Tip (pointing straight up) */}
+              <div className={`w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[18px] transition-colors duration-300 ${isAligned ? 'border-b-emerald-400' : 'border-b-amber-500'}`} />
+              {/* South Tip (pointing straight down) */}
+              <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[18px] border-t-slate-600" />
+            </div>
           </div>
 
           {/* FIXED VERTICAL TARGETING POINTER (Stays vertical on screen to show phone orientation alignment) */}

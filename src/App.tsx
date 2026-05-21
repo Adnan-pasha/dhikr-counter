@@ -280,6 +280,50 @@ export default function App() {
     setDhikrs((prev) => prev.filter((d) => d.id !== id));
   };
 
+  const handleToggleCompleteToday = (dhikrId: string) => {
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const todayEnd = todayStart + 24 * 60 * 60 * 1000;
+
+    // Is there a log for this dhikr today?
+    const todayLogIndex = history.findIndex((log) => {
+      if (log.dhikrId !== dhikrId) return false;
+      const logTime = new Date(log.timestamp).getTime();
+      return logTime >= todayStart && logTime < todayEnd;
+    });
+
+    if (todayLogIndex !== -1) {
+      // Completed, Toggle to PENDING by removing!
+      setConfirmModal({
+        title: 'Mark as Pending?',
+        message: 'This prayer was previously marked as completed today. Do you wish to change its status back to pending?',
+        onConfirm: () => {
+          setHistory((prev) => prev.filter((_, idx) => idx !== todayLogIndex));
+          setConfirmModal(null);
+        }
+      });
+    } else {
+      // Pending, Toggle to COMPLETED by adding history!
+      const dhikrObj = dhikrs.find((d) => d.id === dhikrId) || SYSTEM_DHIKRS.find((d) => d.id === dhikrId);
+      if (!dhikrObj) return;
+
+      const targetOfDhikr = dhikrObj.targetCount > 0 ? dhikrObj.targetCount : 100;
+      const newLog: DhikrHistory = {
+        id: 'toggle_' + Math.random().toString(36).substring(2, 9),
+        dhikrId: dhikrId,
+        dhikrName: dhikrObj.nameEn,
+        count: targetOfDhikr,
+        timestamp: new Date().toISOString(),
+      };
+
+      setHistory((prev) => [...prev, newLog]);
+
+      if (preferences.soundOn) {
+        playCompletionSound(preferences.volume);
+      }
+    }
+  };
+
   const handleClearHistory = () => {
     setConfirmModal({
       title: 'Erase Completion Logs',
@@ -376,6 +420,7 @@ export default function App() {
               <CounterScreen
                 currentDhikr={activeDhikr}
                 currentCount={currentCount}
+                history={history}
                 preferences={preferences}
                 onIncrement={handleIncrement}
                 onReset={handleReset}
@@ -388,6 +433,7 @@ export default function App() {
               <DhikrLibrary
                 dhikrs={dhikrs}
                 currentDhikrId={currentDhikrId}
+                history={history}
                 onSelectDhikr={(id) => {
                   setCurrentDhikrId(id);
                   setCurrentCount(0);
@@ -395,6 +441,7 @@ export default function App() {
                 }}
                 onAddDhikr={handleAddDhikr}
                 onDeleteDhikr={handleDeleteDhikr}
+                onToggleCompleteToday={handleToggleCompleteToday}
               />
             )}
 

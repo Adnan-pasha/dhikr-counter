@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Play, RotateCcw, Volume2, VolumeX, Eye, EyeOff, Sparkles, ChevronRight, Check } from 'lucide-react';
-import { Dhikr, UserPreferences } from '../types';
+import { Dhikr, DhikrHistory, UserPreferences } from '../types';
 import { playBeadSound, playCompletionSound } from '../audio';
 
 interface CounterScreenProps {
   currentDhikr: Dhikr;
   currentCount: number;
+  history: DhikrHistory[];
   preferences: UserPreferences;
   onIncrement: () => void;
   onReset: () => void;
@@ -17,6 +18,7 @@ interface CounterScreenProps {
 export default function CounterScreen({
   currentDhikr,
   currentCount,
+  history,
   preferences,
   onIncrement,
   onReset,
@@ -27,6 +29,17 @@ export default function CounterScreen({
   const [beadOffset, setBeadOffset] = useState(0);
   const [showFlash, setShowFlash] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const isCompletedToday = history.some((log) => {
+    if (log.dhikrId !== currentDhikr.id) return false;
+    const logDate = new Date(log.timestamp);
+    const today = new Date();
+    return (
+      logDate.getFullYear() === today.getFullYear() &&
+      logDate.getMonth() === today.getMonth() &&
+      logDate.getDate() === today.getDate()
+    );
+  });
 
   // Trigger brief visual flash on target complete
   useEffect(() => {
@@ -173,10 +186,19 @@ export default function CounterScreen({
           className="flex flex-col items-start focus:outline-none text-left group max-w-[70%]"
         >
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Active Chant</span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-bold text-lg text-slate-100 truncate group-hover:text-amber-400 transition-colors">
               {currentDhikr.nameEn}
             </span>
+            {isCompletedToday ? (
+              <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-0.5">
+                <Check className="w-2.5 h-2.5 stroke-[2.5]" /> Done
+              </span>
+            ) : (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/50">
+                Pending
+              </span>
+            )}
             <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
           </div>
         </button>
@@ -385,6 +407,15 @@ export default function CounterScreen({
             <div className="text-center pt-8">
               <p className="text-2xl font-arabic text-emerald-400">{currentDhikr.nameAr}</p>
               <p className="text-xs text-neutral-500 uppercase tracking-widest mt-1">{currentDhikr.nameEn}</p>
+              {isCompletedToday ? (
+                <span className="text-[10px] uppercase tracking-widest text-emerald-400 font-extrabold flex items-center justify-center gap-1 mt-1.5 leading-none">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" /> Completed Today
+                </span>
+              ) : (
+                <span className="text-[10px] uppercase tracking-widest text-neutral-550 font-semibold block mt-1.5 leading-none">
+                  Pending Today
+                </span>
+              )}
             </div>
 
             {/* Giant Fullscreen Interactive Tap Target */}
