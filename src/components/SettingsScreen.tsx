@@ -25,16 +25,49 @@ export default function SettingsScreen({
   // Scheduler Editor Form States
   const [isAddingReminder, setIsAddingReminder] = useState(false);
   const [newReminderDhikrId, setNewReminderDhikrId] = useState(dhikrs[0]?.id || 'subhanallah');
-  const [newReminderTime, setNewReminderTime] = useState('08:00');
+  
+  // Custom interactive 12-hour AM/PM clock states
+  const [timeHour, setTimeHour] = useState('08');
+  const [timeMinute, setTimeMinute] = useState('00');
+  const [timePeriod, setTimePeriod] = useState<'AM' | 'PM'>('AM');
   const [newReminderDays, setNewReminderDays] = useState<string[]>(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
   const [newReminderLabel, setNewReminderLabel] = useState('Daily Tasbih Duty');
 
+  // Success Feedbacks and Notifications inside card
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+
+  const triggerFeedback = (message: string) => {
+    setFeedbackMessage(message);
+    setTimeout(() => {
+      setFeedbackMessage(prev => prev === message ? null : prev);
+    }, 4500);
+  };
+
+  const get24HourString = (h: string, m: string, period: 'AM' | 'PM') => {
+    let hr = parseInt(h, 10);
+    if (period === 'PM' && hr < 12) hr += 12;
+    if (period === 'AM' && hr === 12) hr = 0;
+    return `${String(hr).padStart(2, '0')}:${m}`;
+  };
+
   const handleToggleReminder = (id: string, isEnabled: boolean) => {
-    onUpdateReminders(prev => prev.map(rem => rem.id === id ? { ...rem, isEnabled } : rem));
+    onUpdateReminders(prev => prev.map(rem => {
+      if (rem.id === id) {
+        triggerFeedback(`Saved: "${rem.label}" is now ${isEnabled ? 'Active 🔔' : 'Muted 🔕'}`);
+        return { ...rem, isEnabled };
+      }
+      return rem;
+    }));
   };
 
   const handleDeleteReminder = (id: string) => {
-    onUpdateReminders(prev => prev.filter(rem => rem.id !== id));
+    onUpdateReminders(prev => {
+      const match = prev.find(rem => rem.id === id);
+      if (match) {
+        triggerFeedback(`Deleted: "${match.label}" has been removed`);
+      }
+      return prev.filter(rem => rem.id !== id);
+    });
   };
 
   const handleToggleDaySelection = (day: string) => {
@@ -53,11 +86,14 @@ export default function SettingsScreen({
     const matchingDhikr = dhikrs.find(d => d.id === newReminderDhikrId) || dhikrs[0];
     const itemEnName = matchingDhikr ? matchingDhikr.nameEn : 'SubhanAllah';
 
+    // Construct real time string in 24-hours format
+    const time24Str = get24HourString(timeHour, timeMinute, timePeriod);
+
     const fresh: DhikrReminder = {
       id: 'rem_' + Math.random().toString(36).substring(2, 9),
       dhikrId: newReminderDhikrId,
       dhikrName: itemEnName,
-      timeString: newReminderTime,
+      timeString: time24Str,
       days: newReminderDays.length > 0 ? newReminderDays : ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
       label: newReminderLabel.trim(),
       isEnabled: true
@@ -65,6 +101,14 @@ export default function SettingsScreen({
 
     onUpdateReminders(prev => [...prev, fresh]);
     setIsAddingReminder(false);
+    triggerFeedback(`Success: Added reminder "${fresh.label}" for ${timeHour}:${timeMinute} ${timePeriod}! 🔔`);
+    
+    // Reset inputs
+    setNewReminderLabel('Daily Tasbih Duty');
+    setTimeHour('08');
+    setTimeMinute('00');
+    setTimePeriod('AM');
+    setNewReminderDays(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
   };
   
   // Custom switch component wrapper
@@ -264,7 +308,7 @@ export default function SettingsScreen({
         {/* Card: Schedules and Gentle Reminders */}
         <div id="reminders_section_card" className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 select-none">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 select-none font-sans">
               <Bell className="w-3.5 h-3.5 text-amber-400" /> Schedules & Reminders
             </h3>
             {!isAddingReminder && (
@@ -278,84 +322,235 @@ export default function SettingsScreen({
             )}
           </div>
 
+          {/* Action Feedback Banner */}
+          <AnimatePresence>
+            {feedbackMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                className="bg-emerald-500/10 border-2 border-emerald-500/30 text-emerald-350 rounded-2xl px-4 py-3 flex items-start gap-3 shadow-lg shadow-emerald-950/20 select-none"
+              >
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/40 text-emerald-400 shrink-0 mt-0.5">
+                  <span className="text-sm">✔</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-2xs font-extrabold text-emerald-400 uppercase tracking-widest leading-none">Settings Notification</p>
+                  <p className="text-xs font-semibold text-slate-200 mt-1 leading-normal">{feedbackMessage}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+ 
           {/* Form Creator Drawer */}
           <AnimatePresence>
             {isAddingReminder && (
               <motion.form
                 id="form_reminder_creator"
                 onSubmit={handleAddReminder}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="p-3.5 rounded-xl bg-slate-950 border border-slate-850 space-y-3.5 overflow-hidden"
+                initial={{ opacity: 0, y: 15, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: 15, height: 0 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="p-4 rounded-2xl bg-slate-950 border border-slate-850 space-y-4 overflow-hidden shadow-2xl"
               >
-                <div className="flex justify-between items-center border-b border-slate-900 pb-2">
-                  <span className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Configure New Auto-Reminder</span>
+                <div className="flex justify-between items-center border-b border-slate-900 pb-2.5">
+                  <div className="flex items-center gap-1.5 bg-transparent">
+                    <span className="text-xs shrink-0">🔔</span>
+                    <span className="text-[10px] font-black uppercase text-amber-500 tracking-wider">New Auto-Tasbih Duty</span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setIsAddingReminder(false)}
-                    className="text-[10px] text-slate-500 hover:text-slate-350 cursor-pointer"
+                    className="text-[10px] text-slate-500 hover:text-red-400 font-bold transition-colors cursor-pointer"
                   >
-                    Cancel
+                    Close Form
                   </button>
                 </div>
-
+ 
                 {/* Input: Label string */}
-                <div className="space-y-1">
-                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Reminder Name</label>
+                <div className="space-y-1 bg-transparent">
+                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Duty Label / Title</label>
                   <input
                     id="input_reminder_label"
                     type="text"
                     required
+                    maxLength={32}
                     value={newReminderLabel}
                     onChange={(e) => setNewReminderLabel(e.target.value)}
-                    placeholder="e.g. Morning Prayer, Bedtime Dhikr"
-                    className="w-full text-xs py-2 px-3 rounded-xl bg-slate-900/50 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 font-medium font-sans"
+                    placeholder="e.g. Astaghfirullah 100x"
+                    className="w-full text-xs py-2 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-150 placeholder-slate-600 focus:outline-none focus:border-amber-500/80 font-bold font-sans transition-all"
                   />
                 </div>
-
-                {/* Dropdown Selection: Dhikr items */}
-                <div className="space-y-1">
-                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Choose Dhikr</label>
+ 
+                {/* Choose Dhikr items */}
+                <div className="space-y-1 bg-transparent">
+                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Preset Target Praise</label>
                   <select
                     id="select_reminder_dhikr"
                     value={newReminderDhikrId}
                     onChange={(e) => setNewReminderDhikrId(e.target.value)}
-                    className="w-full text-xs font-bold py-2 px-3 rounded-xl bg-slate-900/50 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans"
+                    className="w-full text-xs font-bold py-2 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer font-sans"
                   >
                     {dhikrs.map((d) => (
                       <option key={d.id} value={d.id} className="bg-slate-950 text-slate-200">
-                        {d.nameEn} (Ar: {d.nameAr.slice(0, 10)}...)
+                        {d.nameEn} ({d.nameAr.slice(0, 12)}...)
                       </option>
                     ))}
                   </select>
                 </div>
-
-                {/* Time picker */}
-                <div className="space-y-1">
-                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Reminder Time</label>
-                  <input
-                    id="input_reminder_time"
-                    type="time"
-                    required
-                    value={newReminderTime}
-                    onChange={(e) => setNewReminderTime(e.target.value)}
-                    className="w-full text-xs font-mono py-2 px-3 rounded-xl bg-slate-900/50 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500 cursor-pointer"
-                  />
+ 
+                {/* Interactive Time Dial (Chevrons + Spin Select) */}
+                <div className="space-y-1 bg-transparent">
+                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Set Reminder Time</label>
+                  
+                  <div className="flex items-center gap-4 bg-slate-900/60 border border-slate-850 rounded-2xl p-3.5 justify-center relative">
+                    {/* Hour control column */}
+                    <div className="flex flex-col items-center bg-transparent">
+                      {/* Plus button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const list = ['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'];
+                          const currIdx = list.indexOf(timeHour);
+                          const nextIdx = (currIdx + 1) % list.length;
+                          setTimeHour(list[nextIdx]);
+                        }}
+                        className="w-6 h-5 rounded hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors cursor-pointer select-none"
+                      >
+                        ▲
+                      </button>
+                      <select
+                        id="select_time_hour"
+                        value={timeHour}
+                        onChange={(e) => setTimeHour(e.target.value)}
+                        className="bg-slate-950 text-slate-100 font-mono font-black text-sm px-3 py-1.5 rounded-xl border border-slate-850 focus:outline-none focus:border-amber-500 cursor-pointer text-center"
+                      >
+                        {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map(h => (
+                          <option key={h} value={h}>{h}</option>
+                        ))}
+                      </select>
+                      {/* Minus button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const list = ['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'];
+                          const currIdx = list.indexOf(timeHour);
+                          const nextIdx = (currIdx - 1 + list.length) % list.length;
+                          setTimeHour(list[nextIdx]);
+                        }}
+                        className="w-6 h-5 rounded hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors cursor-pointer select-none"
+                      >
+                        ▼
+                      </button>
+                    </div>
+ 
+                    <span className="text-amber-500 font-black text-lg select-none mb-1 animate-pulse">:</span>
+ 
+                    {/* Minute control column */}
+                    <div className="flex flex-col items-center bg-transparent">
+                      {/* Plus button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentM = parseInt(timeMinute, 10);
+                          const nextM = (currentM + 5) % 60; // steps of 5 for convenience!
+                          setTimeMinute(String(nextM).padStart(2, '0'));
+                        }}
+                        className="w-6 h-5 rounded hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors cursor-pointer select-none"
+                      >
+                        ▲
+                      </button>
+                      <select
+                        id="select_time_minute"
+                        value={timeMinute}
+                        onChange={(e) => setTimeMinute(e.target.value)}
+                        className="bg-slate-950 text-slate-100 font-mono font-black text-sm px-3 py-1.5 rounded-xl border border-slate-850 focus:outline-none focus:border-amber-500 cursor-pointer text-center"
+                      >
+                        {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                      {/* Minus button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentM = parseInt(timeMinute, 10);
+                          const nextM = (currentM - 5 + 60) % 60;
+                          setTimeMinute(String(nextM).padStart(2, '0'));
+                        }}
+                        className="w-6 h-5 rounded hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-colors cursor-pointer select-none"
+                      >
+                        ▼
+                      </button>
+                    </div>
+ 
+                    {/* Period selection */}
+                    <div className="flex flex-col items-center bg-transparent ml-2">
+                      <div className="flex bg-slate-950 rounded-xl p-0.5 border border-slate-850">
+                        {(['AM', 'PM'] as const).map(p => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setTimePeriod(p)}
+                            className={`px-3 py-1.5 text-3xs font-black tracking-wider rounded-lg transition-all cursor-pointer ${
+                              timePeriod === p 
+                                ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
+                                : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+ 
+                  <p className="text-[8px] text-slate-500 font-semibold text-center select-none">
+                    * Tap arrows for quick increments or click fields directly to access the standard dial spinner.
+                  </p>
                 </div>
-
-                {/* Weekdays pickers */}
-                <div className="space-y-1.5">
-                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Repeat Days</label>
-                  <div className="flex justify-between">
+ 
+                {/* Weekdays pickers (High art circles!) */}
+                <div className="space-y-2 bg-transparent">
+                  <div className="flex justify-between items-center bg-transparent">
+                    <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Recurrent Intervals</label>
+                    <div className="flex gap-1 bg-transparent">
+                      <button
+                        type="button"
+                        onClick={() => setNewReminderDays(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'])}
+                        className="text-[7.5px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-900 hover:bg-amber-500/10 hover:text-amber-450 border border-slate-800 text-slate-400 cursor-pointer transition-colors"
+                      >
+                        Every day
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewReminderDays(['mon', 'tue', 'wed', 'thu', 'fri'])}
+                        className="text-[7.5px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-900 hover:bg-amber-500/10 hover:text-amber-450 border border-slate-800 text-slate-400 cursor-pointer transition-colors"
+                      >
+                        Weekdays
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewReminderDays(['sat', 'sun'])}
+                        className="text-[7.5px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-900 hover:bg-amber-500/10 hover:text-amber-450 border border-slate-800 text-slate-400 cursor-pointer transition-colors"
+                      >
+                        Weekends
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Days circular buttons wrap */}
+                  <div className="flex justify-between gap-1 mt-1 bg-transparent">
                     {[
-                      { key: 'sun', label: 'S' },
-                      { key: 'mon', label: 'M' },
-                      { key: 'tue', label: 'T' },
-                      { key: 'wed', label: 'W' },
-                      { key: 'thu', label: 'T' },
-                      { key: 'fri', label: 'F' },
-                      { key: 'sat', label: 'S' },
+                      { key: 'sun', label: 'S', day: 'Sun', color: 'bg-amber-500' },
+                      { key: 'mon', label: 'M', day: 'Mon', color: 'bg-orange-400' },
+                      { key: 'tue', label: 'T', day: 'Tue', color: 'bg-yellow-400' },
+                      { key: 'wed', label: 'W', day: 'Wed', color: 'bg-emerald-400' },
+                      { key: 'thu', label: 'T', day: 'Thu', color: 'bg-teal-400' },
+                      { key: 'fri', label: 'F', day: 'Fri', color: 'bg-sky-400' },
+                      { key: 'sat', label: 'S', day: 'Sat', color: 'bg-indigo-400' },
                     ].map((day) => {
                       const active = newReminderDays.includes(day.key);
                       return (
@@ -363,26 +558,31 @@ export default function SettingsScreen({
                           key={day.key}
                           type="button"
                           onClick={() => handleToggleDaySelection(day.key)}
-                          className={`w-7 h-7 rounded-lg text-2xs font-extrabold transition-all cursor-pointer ${
+                          className={`relative w-8.5 h-8.5 rounded-full text-2xs font-bold transition-all flex flex-col items-center justify-center cursor-pointer border ${
                             active
-                              ? 'bg-amber-500 text-slate-950 shadow-sm'
-                              : 'bg-slate-900 text-slate-500 border border-slate-800'
+                              ? 'bg-slate-900 text-amber-400 border-amber-500/50 shadow-md shadow-amber-950/20 font-black scale-105'
+                              : 'bg-slate-950 text-slate-500 border-slate-900 hover:border-slate-800'
                           }`}
+                          title={`Repeat on ${day.day}`}
                         >
-                          {day.label}
+                          <span className="leading-none">{day.label}</span>
+                          {/* Active status indicator dot below letter */}
+                          {active && (
+                            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-amber-400" />
+                          )}
                         </button>
                       );
                     })}
                   </div>
                 </div>
-
+ 
                 {/* CTA Submit */}
                 <button
                   id="btn_submit_reminder_schedule"
                   type="submit"
-                  className="w-full py-2 bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-2xs uppercase tracking-wider rounded-xl hover:opacity-95 transition-all shadow-md shadow-amber-950/20 cursor-pointer font-sans"
+                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-2xs uppercase tracking-wider rounded-xl hover:brightness-110 active:scale-98 transition-all shadow-lg shadow-amber-950/20 cursor-pointer font-sans"
                 >
-                  Create Schedule 🔔
+                  Save Active Dhikr Schedule 🔔
                 </button>
               </motion.form>
             )}
@@ -397,48 +597,64 @@ export default function SettingsScreen({
                 <p className="text-[9px] text-slate-600 mt-0.5 px-6 font-sans">Add specific fajr, asr or bedtime prayer reminders above to chant automatically</p>
               </div>
             ) : (
-              reminders.map((rem) => (
-                <div
-                  id={`reminder_row_${rem.id}`}
-                  key={rem.id}
-                  className={`p-3 rounded-xl border flex justify-between items-center transition-all ${
-                    rem.isEnabled
-                      ? 'bg-slate-900/40 border-slate-800'
-                      : 'bg-slate-900/15 border-slate-900/40 opacity-60'
-                  }`}
-                >
-                  <div className="flex-1 min-w-0 pr-2">
-                    <div className="flex items-center gap-1.5 mb-1 bg-transparent">
-                      <span className="text-xs font-black font-mono text-amber-450">{rem.timeString}</span>
-                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 truncate font-sans">{rem.label}</span>
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <p className="text-[9px] text-slate-400 font-bold truncate font-sans">
-                        Praise: <span className="text-slate-200 font-black">{rem.dhikrName}</span>
-                      </p>
-                      <p className="text-[8px] text-slate-500 lowercase font-medium tracking-tight font-sans">
-                        repeat: {rem.days.length === 7 ? 'Every day' : rem.days.join(', ')}
-                      </p>
-                    </div>
-                  </div>
+              reminders.map((rem) => {
+                // Inline helper to convert 24h to 12h representation for visual alignment
+                const format12Hour = (time24: string) => {
+                  try {
+                    const [hrs, mins] = time24.split(':');
+                    let h = parseInt(hrs, 10);
+                    const period = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12;
+                    if (h === 0) h = 12;
+                    return `${String(h).padStart(2, '0')}:${mins} ${period}`;
+                  } catch {
+                    return time24;
+                  }
+                };
 
-                  {/* Actions (Toggle & Delete) */}
-                  <div className="flex items-center gap-2.5 shrink-0 bg-transparent">
-                    <Switch
-                      id={`switch_rem_${rem.id}`}
-                      checked={rem.isEnabled}
-                      onChange={(checked) => handleToggleReminder(rem.id, checked)}
-                    />
-                    <button
-                      id={`btn_delete_reminder_${rem.id}`}
-                      onClick={() => handleDeleteReminder(rem.id)}
-                      className="p-1 rounded-lg text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                return (
+                  <div
+                    id={`reminder_row_${rem.id}`}
+                    key={rem.id}
+                    className={`p-3 rounded-xl border flex justify-between items-center transition-all ${
+                      rem.isEnabled
+                        ? 'bg-slate-900/40 border-slate-800'
+                        : 'bg-slate-900/15 border-slate-900/40 opacity-60'
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="flex items-center gap-1.5 mb-1 bg-transparent">
+                        <span className="text-xs font-black font-mono text-amber-450">{format12Hour(rem.timeString)}</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 truncate font-sans">{rem.label}</span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-[9px] text-slate-400 font-bold truncate font-sans">
+                          Praise: <span className="text-slate-200 font-black">{rem.dhikrName}</span>
+                        </p>
+                        <p className="text-[8px] text-slate-500 lowercase font-medium tracking-tight font-sans">
+                          repeat: {rem.days.length === 7 ? 'Every day' : rem.days.join(', ')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Actions (Toggle & Delete) */}
+                    <div className="flex items-center gap-2.5 shrink-0 bg-transparent">
+                      <Switch
+                        id={`switch_rem_${rem.id}`}
+                        checked={rem.isEnabled}
+                        onChange={(checked) => handleToggleReminder(rem.id, checked)}
+                      />
+                      <button
+                        id={`btn_delete_reminder_${rem.id}`}
+                        onClick={() => handleDeleteReminder(rem.id)}
+                        className="p-1 rounded-lg text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
