@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: process.env.NODE_ENV === 'production' ? '/tasbih-counter/' : '/',
+    base: process.env.NODE_ENV === 'production' ? '/dhikr-counter/' : '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
