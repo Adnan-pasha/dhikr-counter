@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Circle, Trophy, Settings as SettingsIcon, Heart, Landmark, CircleDot, HelpCircle, Compass, RotateCcw, AlertTriangle, WifiOff, Cloud } from 'lucide-react';
-import { Dhikr, DhikrHistory, UserPreferences, AppTheme } from './types';
+import { BookOpen, Circle, Trophy, Settings as SettingsIcon, Heart, Landmark, CircleDot, HelpCircle, Compass, RotateCcw, AlertTriangle, WifiOff, Cloud, Clock } from 'lucide-react';
+import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder } from './types';
 import { playBeadSound, playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
 import DhikrLibrary from './components/DhikrLibrary';
@@ -63,12 +63,46 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   volume: 0.5,
 };
 
+// Default Dhikr Reminders Preset
+const DEFAULT_REMINDERS: DhikrReminder[] = [
+  {
+    id: 'rem_fajr',
+    dhikrId: 'subhanallah',
+    dhikrName: 'SubhanAllah',
+    timeString: '05:15',
+    days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+    label: 'Fajr Morning Remembrance',
+    isEnabled: true,
+  },
+  {
+    id: 'rem_asr',
+    dhikrId: 'alhamdulillah',
+    dhikrName: 'Alhamdulillah',
+    timeString: '16:30',
+    days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+    label: 'Asr Afternoon Gratitude',
+    isEnabled: true,
+  },
+  {
+    id: 'rem_bedtime',
+    dhikrId: 'astaghfirullah',
+    dhikrName: 'Astaghfirullah',
+    timeString: '22:00',
+    days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+    label: 'Bedtime Forgiveness Ask',
+    isEnabled: true,
+  }
+];
+
 export default function App() {
   const [dhikrs, setDhikrs] = useState<Dhikr[]>([]);
   const [currentDhikrId, setCurrentDhikrId] = useState<string>('subhanallah');
   const [currentCount, setCurrentCount] = useState<number>(0);
   const [history, setHistory] = useState<DhikrHistory[]>([]);
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
+  const [reminders, setReminders] = useState<DhikrReminder[]>([]);
+  const [lastTriggeredTimeKey, setLastTriggeredTimeKey] = useState<string>('');
+  const [activeReminderTriggered, setActiveReminderTriggered] = useState<DhikrReminder | null>(null);
   const [activeTab, setActiveTab] = useState<'counter' | 'library' | 'stats' | 'settings' | 'qibla'>('counter');
   const [streak, setStreak] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
@@ -119,6 +153,14 @@ export default function App() {
       if (storedPrefs) {
         setPreferences(JSON.parse(storedPrefs));
       }
+
+      const storedReminders = localStorage.getItem('tasbih_reminders');
+      if (storedReminders) {
+        setReminders(JSON.parse(storedReminders));
+      } else {
+        setReminders(DEFAULT_REMINDERS);
+        localStorage.setItem('tasbih_reminders', JSON.stringify(DEFAULT_REMINDERS));
+      }
     } catch (e) {
       console.error('Failed to load local storage configurations:', e);
     }
@@ -147,6 +189,54 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('tasbih_preferences', JSON.stringify(preferences));
   }, [preferences]);
+
+  useEffect(() => {
+    localStorage.setItem('tasbih_reminders', JSON.stringify(reminders));
+  }, [reminders]);
+
+  // Gentle reminder automatic polling system (runs every 5 seconds to detect exactly when a minute matches)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      
+      const currentHoursStr = String(now.getHours()).padStart(2, '0');
+      const currentMinutesStr = String(now.getMinutes()).padStart(2, '0');
+      const timeStr = `${currentHoursStr}:${currentMinutesStr}`; // e.g. "16:30"
+      
+      const daysAbbreviationMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const dayName = daysAbbreviationMap[now.getDay()]; // e.g. "thu"
+      
+      const todayStrStr = now.toISOString().split('T')[0];
+      const matchKey = `${timeStr}-${dayName}-${todayStrStr}`;
+      
+      // Let's use a functional state updater to check lastTriggeredTimeKey in real-time
+      setLastTriggeredTimeKey(prev => {
+        if (prev === matchKey) {
+          return prev; // already triggered
+        }
+        
+        // Look for any active reminder that matches this time and day
+        const matchedReminder = reminders.find(rem => {
+          return rem.isEnabled && rem.timeString === timeStr && rem.days.includes(dayName);
+        });
+        
+        if (matchedReminder) {
+          setActiveReminderTriggered(matchedReminder);
+          
+          // Play chime tone
+          if (preferences.soundOn) {
+            playCompletionSound(preferences.volume);
+          }
+          return matchKey;
+        }
+        
+        return prev;
+      });
+      
+    }, 5000);
+    
+    return () => clearInterval(timer);
+  }, [reminders, preferences]);
 
   // Compute Active Daily Completed Streaks
   const calculateStreak = (histLogs: DhikrHistory[]) => {
@@ -346,6 +436,7 @@ export default function App() {
         setCurrentCount(0);
         setHistory([]);
         setPreferences(DEFAULT_PREFERENCES);
+        setReminders(DEFAULT_REMINDERS);
         setStreak(0);
         setActiveTab('counter');
         localStorage.clear();
@@ -415,6 +506,53 @@ export default function App() {
             )}
           </AnimatePresence>
 
+          {/* GENTLE SCHEDULER REMINDER ALERTS */}
+          <AnimatePresence>
+            {activeReminderTriggered && (
+              <motion.div
+                initial={{ opacity: 0, y: -80, x: '-50%' }}
+                animate={{ opacity: 1, y: 0, x: '-50%' }}
+                exit={{ opacity: 0, y: -80, x: '-50%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                className="absolute top-4 left-1/2 -translate-x-1/2 w-[92%] z-50 bg-slate-900 border border-amber-500/40 text-slate-100 p-4 rounded-3xl shadow-2xl flex flex-col gap-3.5"
+              >
+                <div className="flex gap-2.5 items-start">
+                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/15 animate-pulse shrink-0">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest block">Gentle Remembrance Alert</span>
+                    <h4 className="text-xs font-black truncate leading-tight text-slate-50">{activeReminderTriggered.label}</h4>
+                    <span className="text-[10px] text-slate-400 font-medium block mt-0.5">Time to chant: <span className="text-slate-200 font-bold">{activeReminderTriggered.dhikrName}</span></span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 border-t border-slate-800/60 pt-3">
+                  <button
+                    onClick={() => setActiveReminderTriggered(null)}
+                    className="flex-1 py-1.5 rounded-xl border border-slate-800 text-slate-400 font-black text-2xs hover:bg-slate-800 hover:text-white transition-all cursor-pointer"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCurrentDhikrId(activeReminderTriggered.dhikrId);
+                      setCurrentCount(0);
+                      setActiveTab('counter');
+                      setActiveReminderTriggered(null);
+                      if (preferences.soundOn) {
+                        playCompletionSound(preferences.volume);
+                      }
+                    }}
+                    className="flex-[2] py-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-2xs shadow-md shadow-amber-950/20 hover:opacity-95 transition-all text-center flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    Start Chanting Now 📿
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="flex-1 min-h-0 relative">
             {activeTab === 'counter' && (
               <CounterScreen
@@ -451,6 +589,7 @@ export default function App() {
                 streak={streak}
                 allTimeCount={history.reduce((sum, current) => sum + current.count, 0) + currentCount}
                 onClearHistory={handleClearHistory}
+                dhikrs={dhikrs}
               />
             )}
 
@@ -459,6 +598,9 @@ export default function App() {
                 preferences={preferences}
                 onChangePreferences={(diff) => setPreferences((prev) => ({ ...prev, ...diff }))}
                 onResetAllData={handleResetAllData}
+                reminders={reminders}
+                onUpdateReminders={setReminders}
+                dhikrs={dhikrs}
               />
             )}
 

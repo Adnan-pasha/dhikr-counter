@@ -32,3 +32,14 @@ export interface DailyLog {
   date: string; // YYYY-MM-DD
   count: number;
 }
+
+export interface DhikrReminder {
+  id: string;
+  dhikrId: string;
+  dhikrName: string;
+  timeString: string; // e.g., "05:30"
+  days: string[]; // ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+  label: string; // e.g., "Fajr Morning", "Asr Afternoon", "Tahajjud"
+  isEnabled: boolean;
+}
+

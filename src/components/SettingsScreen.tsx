@@ -1,20 +1,71 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import { Settings, Volume2, Sparkles, Sliders, Smartphone, HelpCircle, User } from 'lucide-react';
-import { UserPreferences, SoundTone, AppTheme } from '../types';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Settings, Volume2, Sparkles, Sliders, Smartphone, HelpCircle, User, Clock, Plus, Trash2, Bell } from 'lucide-react';
+import { UserPreferences, SoundTone, AppTheme, DhikrReminder, Dhikr } from '../types';
 import { playBeadSound, playCompletionSound } from '../audio';
 
 interface SettingsScreenProps {
   preferences: UserPreferences;
   onChangePreferences: (prefs: Partial<UserPreferences>) => void;
   onResetAllData: () => void;
+  reminders: DhikrReminder[];
+  onUpdateReminders: React.Dispatch<React.SetStateAction<DhikrReminder[]>>;
+  dhikrs: Dhikr[];
 }
 
 export default function SettingsScreen({
   preferences,
   onChangePreferences,
   onResetAllData,
+  reminders = [],
+  onUpdateReminders,
+  dhikrs = [],
 }: SettingsScreenProps) {
+  
+  // Scheduler Editor Form States
+  const [isAddingReminder, setIsAddingReminder] = useState(false);
+  const [newReminderDhikrId, setNewReminderDhikrId] = useState(dhikrs[0]?.id || 'subhanallah');
+  const [newReminderTime, setNewReminderTime] = useState('08:00');
+  const [newReminderDays, setNewReminderDays] = useState<string[]>(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+  const [newReminderLabel, setNewReminderLabel] = useState('Daily Tasbih Duty');
+
+  const handleToggleReminder = (id: string, isEnabled: boolean) => {
+    onUpdateReminders(prev => prev.map(rem => rem.id === id ? { ...rem, isEnabled } : rem));
+  };
+
+  const handleDeleteReminder = (id: string) => {
+    onUpdateReminders(prev => prev.filter(rem => rem.id !== id));
+  };
+
+  const handleToggleDaySelection = (day: string) => {
+    setNewReminderDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day) 
+        : [...prev, day]
+    );
+  };
+
+  const handleAddReminder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReminderLabel.trim()) return;
+    
+    // Find dhikr
+    const matchingDhikr = dhikrs.find(d => d.id === newReminderDhikrId) || dhikrs[0];
+    const itemEnName = matchingDhikr ? matchingDhikr.nameEn : 'SubhanAllah';
+
+    const fresh: DhikrReminder = {
+      id: 'rem_' + Math.random().toString(36).substring(2, 9),
+      dhikrId: newReminderDhikrId,
+      dhikrName: itemEnName,
+      timeString: newReminderTime,
+      days: newReminderDays.length > 0 ? newReminderDays : ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+      label: newReminderLabel.trim(),
+      isEnabled: true
+    };
+
+    onUpdateReminders(prev => [...prev, fresh]);
+    setIsAddingReminder(false);
+  };
   
   // Custom switch component wrapper
   const Switch = ({ 
@@ -207,6 +258,188 @@ export default function SettingsScreen({
               checked={preferences.autoAdvance}
               onChange={(val) => onChangePreferences({ autoAdvance: val })}
             />
+          </div>
+        </div>
+
+        {/* Card: Schedules and Gentle Reminders */}
+        <div id="reminders_section_card" className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 select-none">
+              <Bell className="w-3.5 h-3.5 text-amber-400" /> Schedules & Reminders
+            </h3>
+            {!isAddingReminder && (
+              <button
+                id="btn_open_reminder_creator"
+                onClick={() => setIsAddingReminder(true)}
+                className="py-1 px-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-450 border border-amber-500/15 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3 h-3" /> Add New
+              </button>
+            )}
+          </div>
+
+          {/* Form Creator Drawer */}
+          <AnimatePresence>
+            {isAddingReminder && (
+              <motion.form
+                id="form_reminder_creator"
+                onSubmit={handleAddReminder}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-3.5 rounded-xl bg-slate-950 border border-slate-850 space-y-3.5 overflow-hidden"
+              >
+                <div className="flex justify-between items-center border-b border-slate-900 pb-2">
+                  <span className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Configure New Auto-Reminder</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingReminder(false)}
+                    className="text-[10px] text-slate-500 hover:text-slate-350 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                {/* Input: Label string */}
+                <div className="space-y-1">
+                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Reminder Name</label>
+                  <input
+                    id="input_reminder_label"
+                    type="text"
+                    required
+                    value={newReminderLabel}
+                    onChange={(e) => setNewReminderLabel(e.target.value)}
+                    placeholder="e.g. Morning Prayer, Bedtime Dhikr"
+                    className="w-full text-xs py-2 px-3 rounded-xl bg-slate-900/50 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 font-medium font-sans"
+                  />
+                </div>
+
+                {/* Dropdown Selection: Dhikr items */}
+                <div className="space-y-1">
+                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Choose Dhikr</label>
+                  <select
+                    id="select_reminder_dhikr"
+                    value={newReminderDhikrId}
+                    onChange={(e) => setNewReminderDhikrId(e.target.value)}
+                    className="w-full text-xs font-bold py-2 px-3 rounded-xl bg-slate-900/50 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500 cursor-pointer font-sans"
+                  >
+                    {dhikrs.map((d) => (
+                      <option key={d.id} value={d.id} className="bg-slate-950 text-slate-200">
+                        {d.nameEn} (Ar: {d.nameAr.slice(0, 10)}...)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Time picker */}
+                <div className="space-y-1">
+                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Reminder Time</label>
+                  <input
+                    id="input_reminder_time"
+                    type="time"
+                    required
+                    value={newReminderTime}
+                    onChange={(e) => setNewReminderTime(e.target.value)}
+                    className="w-full text-xs font-mono py-2 px-3 rounded-xl bg-slate-900/50 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500 cursor-pointer"
+                  />
+                </div>
+
+                {/* Weekdays pickers */}
+                <div className="space-y-1.5">
+                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Repeat Days</label>
+                  <div className="flex justify-between">
+                    {[
+                      { key: 'sun', label: 'S' },
+                      { key: 'mon', label: 'M' },
+                      { key: 'tue', label: 'T' },
+                      { key: 'wed', label: 'W' },
+                      { key: 'thu', label: 'T' },
+                      { key: 'fri', label: 'F' },
+                      { key: 'sat', label: 'S' },
+                    ].map((day) => {
+                      const active = newReminderDays.includes(day.key);
+                      return (
+                        <button
+                          key={day.key}
+                          type="button"
+                          onClick={() => handleToggleDaySelection(day.key)}
+                          className={`w-7 h-7 rounded-lg text-2xs font-extrabold transition-all cursor-pointer ${
+                            active
+                              ? 'bg-amber-500 text-slate-950 shadow-sm'
+                              : 'bg-slate-900 text-slate-500 border border-slate-800'
+                          }`}
+                        >
+                          {day.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* CTA Submit */}
+                <button
+                  id="btn_submit_reminder_schedule"
+                  type="submit"
+                  className="w-full py-2 bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-2xs uppercase tracking-wider rounded-xl hover:opacity-95 transition-all shadow-md shadow-amber-950/20 cursor-pointer font-sans"
+                >
+                  Create Schedule 🔔
+                </button>
+              </motion.form>
+            )}
+          </AnimatePresence>
+
+          {/* List of Scheduled Items */}
+          <div className="space-y-2.5">
+            {reminders.length === 0 ? (
+              <div className="text-center py-5 rounded-xl bg-slate-950/20 border border-dashed border-slate-800">
+                <Clock className="w-5 h-5 text-slate-650 mx-auto opacity-40 mb-1.5" />
+                <p className="text-[10px] text-slate-500 font-bold select-none font-sans">No auto reminder schedules active</p>
+                <p className="text-[9px] text-slate-600 mt-0.5 px-6 font-sans">Add specific fajr, asr or bedtime prayer reminders above to chant automatically</p>
+              </div>
+            ) : (
+              reminders.map((rem) => (
+                <div
+                  id={`reminder_row_${rem.id}`}
+                  key={rem.id}
+                  className={`p-3 rounded-xl border flex justify-between items-center transition-all ${
+                    rem.isEnabled
+                      ? 'bg-slate-900/40 border-slate-800'
+                      : 'bg-slate-900/15 border-slate-900/40 opacity-60'
+                  }`}
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-1.5 mb-1 bg-transparent">
+                      <span className="text-xs font-black font-mono text-amber-450">{rem.timeString}</span>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 truncate font-sans">{rem.label}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <p className="text-[9px] text-slate-400 font-bold truncate font-sans">
+                        Praise: <span className="text-slate-200 font-black">{rem.dhikrName}</span>
+                      </p>
+                      <p className="text-[8px] text-slate-500 lowercase font-medium tracking-tight font-sans">
+                        repeat: {rem.days.length === 7 ? 'Every day' : rem.days.join(', ')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions (Toggle & Delete) */}
+                  <div className="flex items-center gap-2.5 shrink-0 bg-transparent">
+                    <Switch
+                      id={`switch_rem_${rem.id}`}
+                      checked={rem.isEnabled}
+                      onChange={(checked) => handleToggleReminder(rem.id, checked)}
+                    />
+                    <button
+                      id={`btn_delete_reminder_${rem.id}`}
+                      onClick={() => handleDeleteReminder(rem.id)}
+                      className="p-1 rounded-lg text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
