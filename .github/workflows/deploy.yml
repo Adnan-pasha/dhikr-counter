@@ -1,10 +1,9 @@
-# Workflow to build and deploy your React/Vite site to GitHub Pages
-name: Deploy static content to Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"] # Runs every time you commit or push to main
-  workflow_dispatch: # Allows you to trigger the build manually
+    branches:
+      - main  # Change to 'master' if your repo's default branch is master
 
 permissions:
   contents: read
@@ -13,7 +12,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -29,10 +28,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
+          # We omit 'cache' here to bypass the strict "lock file not found" block
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build production files
         run: npm run build
@@ -43,7 +42,7 @@ jobs:
       - name: Upload production artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist' # Deploys the built Vite output folder
+          path: './dist'
 
       - name: Deploy to GitHub Pages
         id: deployment
