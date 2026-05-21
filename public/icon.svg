@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#0b1329" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+
+    <!-- Golden Metallic Gradient -->
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="30%" stop-color="#fbbf24" />
+      <stop offset="70%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+
+    <!-- Glowing Effect -->
+    <radialGradient id="glow-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Base App Frame Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg-grad)" />
+
+  <!-- Subtle Ambient Glow -->
+  <circle cx="256" cy="256" r="220" fill="url(#glow-grad)" />
+
+  <!-- Inner Ornate Ring -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="url(#gold-grad)" stroke-width="2" stroke-dasharray="6,6" opacity="0.4" />
+
+  <!-- Outer Beads Circle (33 Beads represented in a beautifully styled circle) -->
+  <g id="beads" stroke="url(#gold-grad)" stroke-width="1.5">
+    <!-- Main outer ring connecting the beads -->
+    <circle cx="256" cy="256" r="160" fill="none" stroke="url(#gold-grad)" stroke-width="1" opacity="0.2" />
+
+    <!-- 33 Segmented Beads -->
+    <!-- We'll distribute stylish gold beads around the outer circle -->
+    <circle cx="256" cy="96" r="11" fill="url(#gold-grad)" />
+    <circle cx="286" cy="98" r="9" fill="url(#gold-grad)" />
+    <circle cx="316" cy="104" r="9" fill="url(#gold-grad)" />
+    <circle cx="344" cy="115" r="9" fill="url(#gold-grad)" />
+    <circle cx="370" cy="131" r="9" fill="url(#gold-grad)" />
+    <circle cx="392" cy="151" r="9" fill="url(#gold-grad)" />
+    <circle cx="408" cy="175" r="9" fill="url(#gold-grad)" />
+    <circle cx="415" cy="202" r="9" fill="url(#gold-grad)" />
+    <circle cx="416" cy="230" r="9" fill="url(#gold-grad)" />
+    
+    <!-- Right Center Leader Bead -->
+    <circle cx="416" cy="256" r="11" fill="url(#gold-grad)" />
+    
+    <circle cx="415" cy="282" r="9" fill="url(#gold-grad)" />
+    <circle cx="408" cy="309" r="9" fill="url(#gold-grad)" />
+    <circle cx="392" cy="333" r="9" fill="url(#gold-grad)" />
+    <circle cx="370" cy="353" r="9" fill="url(#gold-grad)" />
+    <circle cx="344" cy="369" r="9" fill="url(#gold-grad)" />
+    <circle cx="316" cy="380" r="9" fill="url(#gold-grad)" />
+    <circle cx="286" cy="386" r="9" fill="url(#gold-grad)" />
+    
+    <!-- Bottom Center Bead -->
+    <circle cx="256" cy="388" r="11" fill="url(#gold-grad)" />
+    
+    <circle cx="226" cy="386" r="9" fill="url(#gold-grad)" />
+    <circle cx="196" cy="380" r="9" fill="url(#gold-grad)" />
+    <circle cx="168" cy="369" r="9" fill="url(#gold-grad)" />
+    <circle cx="142" cy="353" r="9" fill="url(#gold-grad)" />
+    <circle cx="120" cy="333" r="9" fill="url(#gold-grad)" />
+    <circle cx="104" cy="309" r="9" fill="url(#gold-grad)" />
+    <circle cx="97" cy="282" r="9" fill="url(#gold-grad)" />
+    
+    <!-- Left Center Bead -->
+    <circle cx="96" cy="256" r="11" fill="url(#gold-grad)" />
+    
+    <circle cx="97" cy="230" r="9" fill="url(#gold-grad)" />
+    <circle cx="104" cy="202" r="9" fill="url(#gold-grad)" />
+    <circle cx="120" cy="175" r="9" fill="url(#gold-grad)" />
+    <circle cx="142" cy="151" r="9" fill="url(#gold-grad)" />
+    <circle cx="168" cy="131" r="9" fill="url(#gold-grad)" />
+    <circle cx="196" cy="115" r="9" fill="url(#gold-grad)" />
+    <circle cx="226" cy="104" r="9" fill="url(#gold-grad)" />
+  </g>
+
+  <!-- Central Crest Ornament: Elegant Crescent and Counter Centerpoint -->
+  <g transform="translate(256, 256)">
+    <!-- Crescent Moon -->
+    <path d="M-5,-45 A42,42 0 1,0 45,5 A48,48 0 1,1 -5,-45 Z" fill="url(#gold-grad)" filter="drop-shadow(0 4px 12px rgba(0,0,0,0.4))" />
+    
+    <!-- Central Star / Diamond Sparkle -->
+    <path d="M 12,-18 L 16,-28 L 20,-18 L 30,-14 L 20,-10 L 16,0 L 12,-10 L 2,-14 Z" fill="#ffffff" opacity="0.95" filter="drop-shadow(0px 2px 5px rgba(251,191,36,0.6))" />
+  </g>
+
+  <!-- Tasbih Hanging Tassel / Minaret Shape Accent on the Bottom center -->
+  <g transform="translate(256, 256)" stroke="url(#gold-grad)" stroke-width="1.5" fill="none">
+    <path d="M-10,132 L10,132 L5,165 L-5,165 Z" fill="url(#gold-grad)" opacity="0.9" />
+    <path d="M0,165 L0,205" stroke-width="2.5" />
+    <!-- Tassel Bottom -->
+    <circle cx="0" cy="208" r="5" fill="url(#gold-grad)" />
+  </g>
+</svg>

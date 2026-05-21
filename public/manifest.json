@@ -1,0 +1,25 @@
+{
+  "name": "Tasbih Spiritual Counter",
+  "short_name": "Tasbih",
+  "description": "A premium, beautifully-designed interactive spiritual counter (Tasbih) with multiple prayers, history logs, audio feedback, haptics, and custom themes.",
+  "start_url": "./",
+  "id": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
