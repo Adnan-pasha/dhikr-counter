@@ -41,6 +41,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
   // Users can drag or use sliders to rotate their direction to orient towards Mecca
   const [heading, setHeading] = useState<number>(0); // 0 = facing north
   const [isLiveSensors, setIsLiveSensors] = useState<boolean>(false);
+  const [iosNeedsPermission, setIosNeedsPermission] = useState<boolean>(false);
   
   const dialRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -96,28 +97,65 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
     );
   };
 
-  // Connect Device Orientation Compass Sensors
+  // Auto trigger GPS on load
   useEffect(() => {
-    let supported = false;
+    requestGPSLocation();
+  }, []);
 
+  // Check if iOS permissions are required for compass
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      window.DeviceOrientationEvent &&
+      typeof (window.DeviceOrientationEvent as any).requestPermission === 'function'
+    ) {
+      setIosNeedsPermission(true);
+    }
+  }, []);
+
+  // Request Compass sensor permission for iOS
+  const requestCompassPermission = async () => {
+    try {
+      const DeviceOrientationEventAny = DeviceOrientationEvent as any;
+      if (typeof DeviceOrientationEventAny.requestPermission === 'function') {
+        const response = await DeviceOrientationEventAny.requestPermission();
+        if (response === 'granted') {
+          setIosNeedsPermission(false);
+          const handleOrientation = (e: DeviceOrientationEvent) => {
+            if ('webkitCompassHeading' in e) {
+              setHeading(e.webkitCompassHeading as number);
+              setIsLiveSensors(true);
+            }
+          };
+          window.addEventListener('deviceorientation', handleOrientation);
+          setIsLiveSensors(true);
+        } else {
+          setGpsError('Compass orientation permission was denied.');
+        }
+      }
+    } catch (e) {
+      console.error('Compass activation failed:', e);
+      setGpsError('Compass sensor calibration requires a secure secure context or user permission.');
+    }
+  };
+
+  // Connect Device Orientation Compass Sensors (Android & general fallback)
+  useEffect(() => {
     const handleOrientation = (e: DeviceOrientationEvent) => {
       // iOS specific webkitCompassHeading
       if ('webkitCompassHeading' in e) {
         setHeading(e.webkitCompassHeading as number);
         setIsLiveSensors(true);
-        supported = true;
-      } else if (e.alpha !== null && (e as any).absolute) {
-        // Android absolute alpha sensor
+      } else if (e.alpha !== null) {
+        // Android alpha sensor orientation
         setHeading(360 - e.alpha);
         setIsLiveSensors(true);
-        supported = true;
       }
     };
 
-    // Listen only on mounting
-    if (window.DeviceOrientationEvent) {
+    // Listen only on mounting if interactive request isn't active
+    if (window.DeviceOrientationEvent && typeof (window.DeviceOrientationEvent as any).requestPermission !== 'function') {
       window.addEventListener('deviceorientation', handleOrientation);
-      // Wait a moment, and try absolute
       window.addEventListener('deviceorientationabsolute', handleOrientation);
     }
 
@@ -212,15 +250,27 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
           </h1>
           <p className="text-xs text-slate-400 mt-1 font-medium select-none">Locate the sacred direction to Kaaba</p>
         </div>
-        <button
-          id="btn_gps_location_request"
-          onClick={requestGPSLocation}
-          className={`px-3 py-1.5 rounded-full cursor-pointer bg-slate-800 hover:bg-slate-700 border border-slate-700 text-2xs font-bold text-amber-400 flex items-center gap-1 transition-all ${gpsLoading ? 'animate-pulse' : ''}`}
-          disabled={gpsLoading}
-        >
-          <MapPin className="w-3.5 h-3.5" />
-          {gpsLoading ? 'Locating...' : 'Use GPS'}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {iosNeedsPermission && (
+            <button
+              id="btn_request_compass_permission"
+              onClick={requestCompassPermission}
+              className="px-2.5 py-1.5 rounded-full cursor-pointer bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-2xs font-bold text-amber-400 flex items-center gap-1 transition-all"
+            >
+              <Navigation className="w-3 h-3 text-amber-500" />
+              Calibrate
+            </button>
+          )}
+          <button
+            id="btn_gps_location_request"
+            onClick={requestGPSLocation}
+            className={`px-3 py-1.5 rounded-full cursor-pointer bg-slate-800 hover:bg-slate-700 border border-slate-700 text-2xs font-bold text-amber-400 flex items-center gap-1 transition-all ${gpsLoading ? 'animate-pulse' : ''}`}
+            disabled={gpsLoading}
+          >
+            <MapPin className="w-3.5 h-3.5" />
+            {gpsLoading ? 'Locating...' : 'Use GPS'}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col items-center justify-between gap-4">
@@ -330,7 +380,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
         {/* Location metrics readings */}
         <div id="qibla_location_details" className="text-center space-y-1.5 shrink-0 select-none w-full max-w-xs">
           <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center justify-center gap-1 leading-none">
-            <MapPin className="w-3 h-3 text-amber-500" /> Location Registry
+            <MapPin className="w-3 h-3 text-amber-500" /> Current Location
           </p>
           <p className="text-base font-black text-slate-100 leading-none">
             {locationName}
