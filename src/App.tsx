@@ -121,7 +121,7 @@ export default function App() {
     { dhikrs, currentDhikrId, currentCount, history, preferences, reminders },
   );
 
-  useReminderScheduler(reminders, preferences, setActiveReminderTriggered);
+  const { dismissReminder } = useReminderScheduler(reminders, preferences, setActiveReminderTriggered);
 
 
   const activeDhikr = dhikrs.find((d) => d.id === currentDhikrId) || SYSTEM_DHIKRS[0];
@@ -259,21 +259,21 @@ export default function App() {
 
                 <div className="flex gap-2 border-t border-slate-800/60 pt-3">
                   <button
-                    onClick={() => setActiveReminderTriggered(null)}
-                    className="flex-1 py-1.5 rounded-xl border border-slate-800 text-slate-400 font-black text-2xs hover:bg-slate-800 hover:text-white transition-all cursor-pointer"
-                  >
-                    Skip
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCurrentDhikrId(activeReminderTriggered.dhikrId);
-                      setCurrentCount(0);
-                      setActiveTab('counter');
-                      setActiveReminderTriggered(null);
-                      if (preferences.soundOn) {
-                        playCompletionSound(preferences.volume);
-                      }
-                    }}
+  onClick={() => dismissReminder()}
+  className="flex-1 py-1.5 rounded-xl border border-slate-800 text-slate-400 font-black text-2xs hover:bg-slate-800 hover:text-white transition-all cursor-pointer"
+>
+  Skip
+</button>
+<button
+  onClick={() => {
+    setCurrentDhikrId(activeReminderTriggered.dhikrId);
+    setCurrentCount(0);
+    setActiveTab('counter');
+    dismissReminder();
+    if (preferences.soundOn) {
+      playCompletionSound(preferences.volume);
+    }
+  }}
                     className="flex-[2] py-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-2xs shadow-md shadow-amber-950/20 hover:opacity-95 transition-all text-center flex items-center justify-center gap-1 cursor-pointer"
                   >
                     Start Chanting Now 📿
