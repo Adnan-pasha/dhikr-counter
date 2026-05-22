@@ -87,11 +87,12 @@ export default function DhikrLibrary({
         </div>
         
         <button
-          id="btn_add_dhikr_trigger"
-          onClick={() => setIsAdding(true)}
-          className="p-2 rounded-full cursor-pointer bg-slate-800 text-amber-400 border border-slate-700 hover:bg-slate-700 hover:scale-105 transition-all"
-          title="Add Custom Prayer"
-        >
+  id="btn_add_dhikr_trigger"
+  aria-label="Add custom prayer"
+  onClick={() => setIsAdding(true)}
+  className="p-2 rounded-full cursor-pointer bg-slate-800 text-amber-400 border border-slate-700 hover:bg-slate-700 hover:scale-105 transition-all"
+  title="Add Custom Prayer"
+>
           <Plus className="w-5 h-5 stroke-[2.5]" />
         </button>
       </div>
@@ -235,6 +236,8 @@ export default function DhikrLibrary({
                           : 'bg-slate-800/80 text-slate-500 border-slate-700/80 hover:text-amber-400 hover:border-amber-500/30'
                       }`}
                       title={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
+aria-label={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
+>
                     >
                       <Check className={`w-3.5 h-3.5 stroke-[3] transition-transform ${isCompleted ? 'scale-100' : 'scale-90 opacity-60'}`} />
                     </button>
@@ -247,8 +250,9 @@ export default function DhikrLibrary({
                           onDeleteDhikr(dhikr.id);
                         }}
                         className="p-1.5 rounded-md text-slate-450 hover:text-red-400 hover:bg-slate-800 transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        title="Delete Custom Dhikr"
-                      >
+title="Delete Custom Dhikr"
+aria-label="Delete custom dhikr"
+>
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
@@ -284,10 +288,11 @@ export default function DhikrLibrary({
               <div className="flex justify-between items-center mb-5">
                 <h2 className="text-lg font-black text-slate-50 tracking-tight leading-none">Add Custom Prayer</h2>
                 <button
-                  id="btn_add_dhikr_close"
-                  onClick={() => setIsAdding(false)}
-                  className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-slate-100 cursor-pointer"
-                >
+  id="btn_add_dhikr_close"
+  aria-label="Close add prayer form"
+  onClick={() => setIsAdding(false)}
+  className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-slate-100 cursor-pointer"
+>
                   <X className="w-4 h-4" />
                 </button>
               </div>
