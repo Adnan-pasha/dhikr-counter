@@ -22,3 +22,53 @@ test("README no longer points to Gemini API setup", () => {
   assert.doesNotMatch(readme, /GEMINI_API_KEY/);
   assert.match(readme, /Dhikr Counter/);
 });
+
+test("main mounts App inside AppErrorBoundary", () => {
+  const main = readFileSync("src/main.tsx", "utf8");
+  assert.match(main, /<AppErrorBoundary>/);
+});
+
+test("counter keyboard shortcut ignores typing contexts", () => {
+  const file = readFileSync("src/components/CounterScreen.tsx", "utf8");
+  assert.match(file, /isTypingContext/);
+  assert.match(file, /target\.tagName === 'INPUT'/);
+  assert.match(file, /target\.tagName === 'TEXTAREA'/);
+  assert.match(file, /target\.isContentEditable/);
+});
+
+
+test('main wires service worker update UX handlers', () => {
+  const main = readFileSync('src/main.tsx', 'utf8');
+  assert.match(main, /updatefound/);
+  assert.match(main, /SKIP_WAITING/);
+  assert.match(main, /controllerchange/);
+});
+
+test('app uses extracted reminder and connectivity hooks', () => {
+  const app = readFileSync('src/App.tsx', 'utf8');
+  assert.match(app, /useReminderScheduler/);
+  assert.match(app, /useConnectivityStatus/);
+  assert.match(app, /usePersistentAppState/);
+  assert.match(app, /useDhikrActions/);
+  assert.match(app, /useCounterFlow/);
+  assert.match(app, /useHistoryActions/);
+});
+
+
+test('service worker handles SKIP_WAITING message', () => {
+  const sw = readFileSync('public/sw.js', 'utf8');
+  assert.match(sw, /addEventListener\('message'/);
+  assert.match(sw, /SKIP_WAITING/);
+  assert.match(sw, /self\.skipWaiting\(\)/);
+});
+
+
+test('telemetry is wired for SW and reminders', () => {
+  const main = readFileSync('src/main.tsx', 'utf8');
+  const hooks = readFileSync('src/hooks.ts', 'utf8');
+  const eb = readFileSync('src/components/AppErrorBoundary.tsx', 'utf8');
+  assert.match(main, /trackEvent\('sw_update_prompt_shown'/);
+  assert.match(main, /trackEvent\('sw_registration_failed'/);
+  assert.match(hooks, /trackEvent\('reminder_triggered'/);
+  assert.match(eb, /trackEvent\('app_error_boundary_catch'/);
+});

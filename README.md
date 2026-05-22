@@ -28,7 +28,15 @@ A mobile-first React + Vite dhikr counter app with a library, streak/history tra
    ```bash
    npm run lint
    ```
+5. Run tests:
+   ```bash
+   node tests/regressions.test.mjs
+   npx tsx tests/domain.test.mjs
+   ```
 
 ## Notes
 - App data (dhikrs, counts, history, preferences, reminders) is stored in browser `localStorage`.
 - No external API key is required for the core local app flow.
+
+## Telemetry
+- Lightweight client telemetry events are buffered in browser localStorage under `tasbih_telemetry_events` for troubleshooting in non-production builds.

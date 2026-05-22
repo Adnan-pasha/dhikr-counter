@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Coordinates, CalculationMethod, PrayerTimes, Madhab } from 'adhan';
 import { AppTheme } from '../types';
+import { safeParseJSON, sanitizeAzanSettings } from '../domain';
 
 interface QiblaScreenProps {
   theme: AppTheme;
@@ -139,12 +140,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
   const [currentUrlTrying, setCurrentUrlTrying] = useState<string | null>(null);
   
   const [azanSettings, setAzanSettings] = useState<Record<string, boolean>>(() => {
-    try {
-      const stored = localStorage.getItem('tasbih_azan_settings');
-      return stored ? JSON.parse(stored) : { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true };
-    } catch {
-      return { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true };
-    }
+    return sanitizeAzanSettings(safeParseJSON(localStorage.getItem('tasbih_azan_settings'), null));
   });
 
   const handleToggleAzanSetting = (id: string) => {
