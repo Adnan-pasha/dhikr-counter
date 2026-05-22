@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Circle, Trophy, Settings as SettingsIcon, Heart, Landmark, CircleDot, HelpCircle, Compass, RotateCcw, AlertTriangle, WifiOff, Cloud, Clock } from 'lucide-react';
-import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder } from './types';
+import { BookOpen, Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder } from './types';
 
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
@@ -9,7 +8,8 @@ import DhikrLibrary from './components/DhikrLibrary';
 import StatsScreen from './components/StatsScreen';
 import SettingsScreen from './components/SettingsScreen';
 import QiblaScreen from './components/QiblaScreen';
-import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
+import ReminderBanner from './components/ReminderBanner';
+import ConfirmModal from './components/ConfirmModal';import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 
 // Default Traditional System Dhikrs
 const SYSTEM_DHIKRS: Dhikr[] = [
@@ -236,52 +236,18 @@ export default function App() {
             )}
           </AnimatePresence>
 
-          {/* GENTLE SCHEDULER REMINDER ALERTS */}
-          <AnimatePresence>
-            {activeReminderTriggered && (
-              <motion.div
-                initial={{ opacity: 0, y: -80, x: '-50%' }}
-                animate={{ opacity: 1, y: 0, x: '-50%' }}
-                exit={{ opacity: 0, y: -80, x: '-50%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                className="absolute top-4 left-1/2 -translate-x-1/2 w-[92%] z-50 bg-slate-900 border border-amber-500/40 text-slate-100 p-4 rounded-3xl shadow-2xl flex flex-col gap-3.5"
-              >
-                <div className="flex gap-2.5 items-start">
-                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/15 animate-pulse shrink-0">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest block">Gentle Remembrance Alert</span>
-                    <h4 className="text-xs font-black truncate leading-tight text-slate-50">{activeReminderTriggered.label}</h4>
-                    <span className="text-[10px] text-slate-400 font-medium block mt-0.5">Time to chant: <span className="text-slate-200 font-bold">{activeReminderTriggered.dhikrName}</span></span>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 border-t border-slate-800/60 pt-3">
-                  <button
-  onClick={() => dismissReminder()}
-  className="flex-1 py-1.5 rounded-xl border border-slate-800 text-slate-400 font-black text-2xs hover:bg-slate-800 hover:text-white transition-all cursor-pointer"
->
-  Skip
-</button>
-<button
-  onClick={() => {
-    setCurrentDhikrId(activeReminderTriggered.dhikrId);
-    setCurrentCount(0);
-    setActiveTab('counter');
-    dismissReminder();
-    if (preferences.soundOn) {
-      playCompletionSound(preferences.volume);
-    }
-  }}
-                    className="flex-[2] py-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-2xs shadow-md shadow-amber-950/20 hover:opacity-95 transition-all text-center flex items-center justify-center gap-1 cursor-pointer"
-                  >
-                    Start Chanting Now 📿
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+   {/* GENTLE SCHEDULER REMINDER ALERTS */}
+          <ReminderBanner
+            reminder={activeReminderTriggered}
+            preferences={preferences}
+            onDismiss={dismissReminder}
+            onStartChanting={(dhikrId) => {
+              setCurrentDhikrId(dhikrId);
+              setCurrentCount(0);
+              setActiveTab('counter');
+              dismissReminder();
+            }}
+          />
 
           <div className="flex-1 min-h-0 relative">
             {activeTab === 'counter' && (
@@ -392,48 +358,11 @@ export default function App() {
             </button>
           </div>
 
-          {/* BEAUTIFUL STATEFUL CUSTOM DIALOG MODAL OVERLAY */}
-          <AnimatePresence>
-            {confirmModal && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xs">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  className="w-full max-w-xs p-5 rounded-3xl bg-slate-900 border border-slate-800 text-slate-100 shadow-2xl flex flex-col items-center text-center"
-                >
-                  <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4">
-                    <AlertTriangle className="w-6 h-6 animate-pulse" />
-                  </div>
-                  
-                  <h3 className="text-sm font-black tracking-tight mb-2 select-none">
-                    {confirmModal.title}
-                  </h3>
-                  
-                  <p className="text-2xs text-slate-400 font-medium leading-relaxed mb-6 px-1 select-none">
-                    {confirmModal.message}
-                  </p>
-                  
-                  <div className="flex w-full gap-3">
-                    <button
-                      id="btn_confirm_cancel"
-                      onClick={() => setConfirmModal(null)}
-                      className="flex-1 py-2 rounded-xl border border-slate-800 text-slate-300 font-bold text-2xs select-none hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      id="btn_confirm_action"
-                      onClick={confirmModal.onConfirm}
-                      className="flex-1 py-2 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-2xs select-none hover:opacity-95 shadow-md shadow-amber-950/20 cursor-pointer"
-                    >
-                      Confirm
-                    </button>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
+          {/* CONFIRM MODAL */}
+          <ConfirmModal
+            modal={confirmModal}
+            onCancel={() => setConfirmModal(null)}
+          />
         </div>
 
       </div>
