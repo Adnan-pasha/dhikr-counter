@@ -112,7 +112,13 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
     'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan4.mp3',
     'https://raw.githubusercontent.com/farafarizul/myazan/master/assets/audio/azan2.mp3',
     'https://www.islamcan.com/audio/adhan/mecca.mp3',
-    'https://archive.org/download/AdhanMakkah/Adhan-Makkah.mp3'
+    'https://archive.org/download/AdhanMakkah/Adhan-Makkah.mp3',
+    // Hot backup pool: if Mecca mirrors are blocked on a region/network, fall back
+    // to the same CDN family used by Medina so users still hear a real adhan stream.
+    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan3.mp3',
+    'https://raw.githubusercontent.com/farafarizul/myazan/master/assets/audio/azan3.mp3',
+    'https://www.islamcan.com/audio/adhan/azan1.mp3',
+    'https://archive.org/download/AdhanMedina/Adhan-Medina.mp3'
   ];
   const MEDINA_AZAN_URLS = [
     'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan3.mp3',
