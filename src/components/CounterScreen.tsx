@@ -189,10 +189,11 @@ export default function CounterScreen({
         style={{ pointerEvents: isFocusMode ? 'none' : 'auto' }}
       >
         <button
-          id="btn_dhikr_selector"
-          onClick={onNavigateToLibrary}
-          className="flex flex-col items-start focus:outline-none text-left group max-w-[70%]"
-        >
+  id="btn_dhikr_selector"
+  aria-label="Change active dhikr"
+  onClick={onNavigateToLibrary}
+  className="flex flex-col items-start focus:outline-none text-left group max-w-[70%]"
+>
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Active Chant</span>
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-bold text-lg text-slate-100 truncate group-hover:text-amber-400 transition-colors">
@@ -325,11 +326,11 @@ export default function CounterScreen({
           {/* Giant Click Target button inside Circle */}
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-20">
             <button
-              id="tap_bead_clicker"
-              ref={buttonRef}
-              onClick={handleTap}
-              className={`relative w-48 h-48 rounded-full flex flex-col items-center justify-center bg-slate-900/60 border border-slate-800/80 backdrop-blur-md shadow-2xl hover:scale-103 cursor-pointer select-none transition-transform duration-100 focus:outline-none`}
-              style={{
+  id="tap_bead_clicker"
+  aria-label="Tap to count dhikr"
+  ref={buttonRef}
+  onClick={handleTap}
+  className={`relative w-48 h-48 rounded-full flex flex-col items-center justify-center bg-slate-900/60 border border-slate-800/80 backdrop-blur-md shadow-2xl hover:scale-103 cursor-pointer select-none transition-transform duration-100 focus:outline-none`}        style={{
                 boxShadow: preferences.theme === 'midnight' 
                   ? '0 20px 45px -15px rgba(239, 68, 68, 0.15), inset 0 2px 4px rgba(255,255,255,0.02)'
                   : '0 20px 45px -15px rgba(0,0,0,0.5), inset 0 2.5px 4px rgba(255,255,255,0.03)'
@@ -463,11 +464,12 @@ export default function CounterScreen({
             {/* Tap to Exit buttons */}
             <div className="pb-8">
               <button
-                id="btn_focus_exit"
-                onClick={() => setIsFocusMode(false)}
-                className="px-6 py-2.5 rounded-full bg-neutral-900 border border-neutral-850 hover:bg-neutral-800 text-neutral-300 text-xs font-bold tracking-widest uppercase cursor-pointer select-none"
-              >
-                Exit Focus
+  id="btn_focus_exit"
+  aria-label="Exit focus mode"
+  onClick={() => setIsFocusMode(false)}
+  className="px-6 py-2.5 rounded-full bg-neutral-900 border border-neutral-850 hover:bg-neutral-800 text-neutral-300 text-xs font-bold tracking-widest uppercase cursor-pointer select-none"
+>
+  Exit Focus
               </button>
             </div>
           </motion.div>
