@@ -362,7 +362,14 @@ export default function SettingsScreen({
                   </div>
                   <button
                     type="button"
-                    onClick={() => setIsAddingReminder(false)}
+                    onClick={() => {
+  setIsAddingReminder(false);
+  setNewReminderLabel('Daily Tasbih Duty');
+  setTimeHour('08');
+  setTimeMinute('00');
+  setTimePeriod('AM');
+  setNewReminderDays(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+}}
                     className="text-[10px] text-slate-500 hover:text-red-400 font-bold transition-colors cursor-pointer"
                   >
                     Close Form
@@ -394,10 +401,10 @@ export default function SettingsScreen({
                     className="w-full text-xs font-bold py-2 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer font-sans"
                   >
                     {dhikrs.map((d) => (
-                      <option key={d.id} value={d.id} className="bg-slate-950 text-slate-200">
-                        {d.nameEn} ({d.nameAr.slice(0, 12)}...)
-                      </option>
-                    ))}
+  <option key={d.id} value={d.id} className="bg-slate-950 text-slate-200">
+    {d.nameEn} — {d.meaning}
+  </option>
+))}
                   </select>
                 </div>
  
