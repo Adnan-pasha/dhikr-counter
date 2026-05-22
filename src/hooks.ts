@@ -24,8 +24,10 @@ export const useConnectivityStatus = (setIsOnline: (value: boolean) => void) => 
 export const useReminderScheduler = (
   reminders: DhikrReminder[],
   preferences: UserPreferences,
-  setActiveReminderTriggered: (value: DhikrReminder | null) => void,
+  setActiveReminderTriggered: React.Dispatch<React.SetStateAction<DhikrReminder | null>>,
 ) => {
+  const reminderQueueRef = React.useRef<DhikrReminder[]>([]);
+
   useEffect(() => {
     let lastActiveAt: Date | null = null;
 
@@ -41,8 +43,10 @@ export const useReminderScheduler = (
       const newlyTriggered = uniqueCandidates.filter((rem) => shouldTriggerReminderOccurrence(rem.id, rem.timeString, now));
       if (newlyTriggered.length === 0) return;
 
-      setActiveReminderTriggered(newlyTriggered[newlyTriggered.length - 1]);
-      trackEvent('reminder_triggered', { count: newlyTriggered.length, reason, reminderId: newlyTriggered[newlyTriggered.length - 1].id });
+      reminderQueueRef.current = [...reminderQueueRef.current, ...newlyTriggered];
+      setActiveReminderTriggered((current) => current ?? reminderQueueRef.current.shift() ?? null);
+
+      trackEvent('reminder_triggered', { count: newlyTriggered.length, reason, reminderId: newlyTriggered[0].id });
       if (preferences.soundOn) {
         playCompletionSound(preferences.volume);
       }
@@ -66,6 +70,13 @@ export const useReminderScheduler = (
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [reminders, preferences, setActiveReminderTriggered]);
+
+  const dismissReminder = React.useCallback(() => {
+    const next = reminderQueueRef.current.shift() ?? null;
+    setActiveReminderTriggered(next);
+  }, [setActiveReminderTriggered]);
+
+  return { dismissReminder };
 };
 
 
