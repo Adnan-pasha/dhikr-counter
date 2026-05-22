@@ -20,14 +20,36 @@ export const safeParseJSON = <T>(raw: string | null, fallback: T): T => {
 
 export const sanitizeDhikrs = (value: unknown, fallback: Dhikr[]): Dhikr[] => {
   if (!Array.isArray(value)) return fallback;
+  const VALID_CATEGORIES = ['morning','evening','daily','istighfar','salawat','protection','sleep','quranic','motivation'];
+  const VALID_DIFFICULTIES = ['easy', 'medium', 'long'];
+  const VALID_TIMES = ['morning', 'evening', 'after-salah', 'anytime', 'sleep'];
   const cleaned = value.filter((d): d is Dhikr => {
-    return isObject(d)
-      && isString(d.id)
-      && isString(d.nameAr)
-      && isString(d.nameEn)
-      && isString(d.meaning)
-      && isNumber(d.targetCount)
-      && (d.isSystem === undefined || isBool(d.isSystem));
+    if (!isObject(d)) return false;
+    if (!isString(d.id)) return false;
+    if (!isString(d.nameAr)) return false;
+    if (!isString(d.nameEn)) return false;
+    if (!isString(d.meaning)) return false;
+    if (!isNumber(d.targetCount)) return false;
+    if (d.isSystem !== undefined && !isBool(d.isSystem)) return false;
+    // Optional extended fields — drop silently if malformed
+    if (d.transliteration !== undefined && !isString(d.transliteration)) return false;
+    if (d.benefits !== undefined && !isString(d.benefits)) return false;
+    if (d.reference !== undefined && !isString(d.reference)) return false;
+    if (d.sourceBook !== undefined && !isString(d.sourceBook)) return false;
+    if (d.notes !== undefined && !isString(d.notes)) return false;
+    if (d.audioUrl !== undefined && !isString(d.audioUrl)) return false;
+    if (d.isFeatured !== undefined && !isBool(d.isFeatured)) return false;
+    if (d.difficulty !== undefined && !VALID_DIFFICULTIES.includes(d.difficulty as string)) return false;
+    if (d.time !== undefined && !VALID_TIMES.includes(d.time as string)) return false;
+    if (d.category !== undefined) {
+      if (!Array.isArray(d.category)) return false;
+      if (!(d.category as unknown[]).every((c) => isString(c) && VALID_CATEGORIES.includes(c))) return false;
+    }
+    if (d.tags !== undefined) {
+      if (!Array.isArray(d.tags)) return false;
+      if (!(d.tags as unknown[]).every(isString)) return false;
+    }
+    return true;
   });
   return cleaned.length > 0 ? cleaned : fallback;
 };
