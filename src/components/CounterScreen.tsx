@@ -257,7 +257,7 @@ export default function CounterScreen({
           </div>
         )}
 
-        {/* PRIMARY ARABIC CALLIGRAPHY PREVIEW */}
+        {/* Primary Arabic calligraphy preview */}
         <AnimatePresence mode="wait">
           <motion.div 
             key={currentDhikr.id}
@@ -267,7 +267,7 @@ export default function CounterScreen({
             transition={{ duration: 0.4 }}
             className={`text-center max-w-sm flex flex-col items-center mb-6`}
           >
-            <span className="text-4xl md:text-5xl font-arabic font-semibold text-slate-800 dark:text-neutral-100 leading-normal tracking-wide min-h-[50px] mb-2 px-4 select-none">
+            <span className="text-4xl md:text-5xl font-arabic font-semibold text-slate-100 leading-normal tracking-wide min-h-[50px] mb-2 px-4 select-none">
               {currentDhikr.nameAr}
             </span>
             <span className="text-xs text-slate-500 font-medium italic dark:text-neutral-400 text-center max-w-[85%] leading-relaxed select-none">

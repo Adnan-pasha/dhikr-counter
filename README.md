@@ -1,20 +1,34 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Dhikr Counter
 
-# Run and deploy your AI Studio app
+A mobile-first React + Vite dhikr counter app with a library, streak/history tracking, reminders, and Qibla tools.
 
-This contains everything you need to run your app locally.
+## Tech Stack
+- React 19 + TypeScript
+- Vite 6
+- Tailwind CSS 4
+- Framer Motion (`motion`)
 
-View your app in AI Studio: https://ai.studio/apps/9cefb519-0ac4-48f4-a9c2-48f1890c4b61
+## Run locally
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js 20+ and npm.
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+3. Build for production:
+   ```bash
+   npm run build
+   ```
+4. Type-check:
+   ```bash
+   npm run lint
+   ```
+
+## Notes
+- App data (dhikrs, counts, history, preferences, reminders) is stored in browser `localStorage`.
+- No external API key is required for the core local app flow.

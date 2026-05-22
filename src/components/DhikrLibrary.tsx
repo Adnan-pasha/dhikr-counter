@@ -161,14 +161,14 @@ export default function DhikrLibrary({
                 id={`dhikr_card_${dhikr.id}`}
                 key={dhikr.id}
                 whileTap={{ scale: 0.98 }}
-                className={`relative p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-center group ${
+                className={`relative p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-start gap-3 overflow-hidden group ${
                   isActive
                     ? 'bg-slate-900 border-amber-500/50 shadow-[0_0_15px_rgba(242,158,11,0.08)]'
                     : 'bg-slate-900/40 border-slate-800/80 hover:border-slate-700'
                 }`}
                 onClick={() => onSelectDhikr(dhikr.id)}
               >
-                <div className="flex-1 pr-3">
+                <div className="flex-1 min-w-0 pr-3">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
                     <h3 className={`font-bold text-base transition-colors ${
                       isActive ? 'text-amber-400' : 'text-slate-200'
@@ -209,8 +209,8 @@ export default function DhikrLibrary({
                 </div>
 
                 {/* Arabic script & action delete */}
-                <div className="flex flex-col items-end gap-2.5 shrink-0 select-none">
-                  <span className="text-xl font-arabic font-bold text-slate-100 select-none leading-none">
+                <div className="flex flex-col items-end gap-2.5 shrink-0 w-[42%] max-w-[180px] select-none">
+                  <span className="text-lg sm:text-xl font-arabic font-bold text-slate-100 select-none leading-tight text-right max-w-full truncate">
                     {dhikr.nameAr}
                   </span>
 

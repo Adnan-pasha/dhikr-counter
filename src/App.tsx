@@ -658,7 +658,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('settings')}`}
             >
               <SettingsIcon className="w-5 h-5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Option</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">Options</span>
             </button>
           </div>
 
