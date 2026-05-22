@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder } from './types';
-
+import { BookOpen, Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';
+import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder } from './types';
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
 import DhikrLibrary from './components/DhikrLibrary';
 import StatsScreen from './components/StatsScreen';
 import SettingsScreen from './components/SettingsScreen';
-import QiblaScreen from './components/QiblaScreen';
 import ReminderBanner from './components/ReminderBanner';
-import ConfirmModal from './components/ConfirmModal';import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
+import ConfirmModal from './components/ConfirmModal';
+import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 
+const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
 // Default Traditional System Dhikrs
 const SYSTEM_DHIKRS: Dhikr[] = [
   {
@@ -301,7 +302,13 @@ export default function App() {
             )}
 
             {activeTab === 'qibla' && (
-              <QiblaScreen theme={preferences.theme} />
+              <Suspense fallback={
+                <div className="flex-1 flex items-center justify-center bg-[#0f172a]">
+                  <span className="text-amber-400 text-xs font-bold animate-pulse">Loading Qibla...</span>
+                </div>
+              }>
+                <QiblaScreen theme={preferences.theme} />
+              </Suspense>
             )}
           </div>
 
@@ -310,6 +317,7 @@ export default function App() {
             {/* Tab: Counter */}
             <button
               id="tab_trigger_counter"
+              aria-label="Bead counter"
               onClick={() => setActiveTab('counter')}
               className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('counter')}`}
             >
@@ -320,6 +328,7 @@ export default function App() {
             {/* Tab: Library */}
             <button
               id="tab_trigger_library"
+              aria-label="Dhikr library"
               onClick={() => setActiveTab('library')}
               className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('library')}`}
             >
@@ -330,6 +339,7 @@ export default function App() {
             {/* Tab: Qibla */}
             <button
               id="tab_trigger_qibla"
+              aria-label="Qibla compass"
               onClick={() => setActiveTab('qibla')}
               className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('qibla')}`}
             >
@@ -340,6 +350,7 @@ export default function App() {
             {/* Tab: Stats */}
             <button
               id="tab_trigger_stats"
+              aria-label="Stats"
               onClick={() => setActiveTab('stats')}
               className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('stats')}`}
             >
@@ -350,6 +361,7 @@ export default function App() {
             {/* Tab: Settings */}
             <button
               id="tab_trigger_settings"
+              aria-label="Options"
               onClick={() => setActiveTab('settings')}
               className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('settings')}`}
             >
