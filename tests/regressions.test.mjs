@@ -72,3 +72,30 @@ test('telemetry is wired for SW and reminders', () => {
   assert.match(hooks, /trackEvent\('reminder_triggered'/);
   assert.match(eb, /trackEvent\('app_error_boundary_catch'/);
 });
+
+test('ReminderBanner is extracted into its own component', () => {
+  const app = readFileSync('src/App.tsx', 'utf8');
+  const banner = readFileSync('src/components/ReminderBanner.tsx', 'utf8');
+  assert.match(app, /ReminderBanner/);
+  assert.doesNotMatch(app, /Gentle Remembrance Alert/);
+  assert.match(banner, /Gentle Remembrance Alert/);
+  assert.match(banner, /onDismiss/);
+  assert.match(banner, /onStartChanting/);
+});
+
+test('ConfirmModal is extracted into its own component', () => {
+  const app = readFileSync('src/App.tsx', 'utf8');
+  const modal = readFileSync('src/components/ConfirmModal.tsx', 'utf8');
+  assert.match(app, /ConfirmModal/);
+  assert.doesNotMatch(app, /AlertTriangle/);
+  assert.match(modal, /AlertTriangle/);
+  assert.match(modal, /onCancel/);
+});
+
+test('SW update uses in-app banner instead of window.confirm', () => {
+  const main = readFileSync('src/main.tsx', 'utf8');
+  assert.doesNotMatch(main, /window\.confirm/);
+  assert.match(main, /sw-update-banner/);
+  assert.match(main, /sw-update-confirm/);
+  assert.match(main, /sw-update-dismiss/);
+});
