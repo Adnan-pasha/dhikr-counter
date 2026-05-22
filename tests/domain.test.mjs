@@ -161,9 +161,9 @@ test('shouldTriggerReminderOccurrence dedupes occurrence key', () => {
   };
 
   const now = new Date('2026-05-22T16:30:00.000Z');
-  assert.equal(shouldTriggerReminderOccurrence('rem_a', now), true);
-  assert.equal(shouldTriggerReminderOccurrence('rem_a', now), false);
-  const key = buildReminderOccurrenceKey('rem_a', now);
+  assert.equal(shouldTriggerReminderOccurrence('rem_a', '16:30', now), true);
+  assert.equal(shouldTriggerReminderOccurrence('rem_a', '16:30', now), false);
+  const key = buildReminderOccurrenceKey('rem_a', '16:30', now);
   assert.match(localStorage.getItem('tasbih_reminder_trigger_log') || '', new RegExp(key.replace(/[|]/g, '\|')));
 });
 
@@ -184,10 +184,25 @@ test('shouldTriggerReminderOccurrence prunes previous-day keys', () => {
 
   localStorage.setItem('tasbih_reminder_trigger_log', JSON.stringify(['old|12:00|thu|2026-05-21']));
   const now = new Date('2026-05-22T16:30:00.000Z');
-  assert.equal(shouldTriggerReminderOccurrence('rem_b', now), true);
+  assert.equal(shouldTriggerReminderOccurrence('rem_b', '16:30', now), true);
   const raw = localStorage.getItem('tasbih_reminder_trigger_log') || '[]';
   assert.doesNotMatch(raw, /2026-05-21/);
   assert.match(raw, /2026-05-22/);
+});
+
+test('shouldTriggerReminderOccurrence dedupes across polling minutes for same scheduled reminder time', () => {
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => { store.set(k, String(v)); },
+    removeItem: (k) => { store.delete(k); },
+    clear: () => { store.clear(); },
+  };
+
+  const firstPoll = new Date('2026-05-22T16:35:00.000Z');
+  const secondPoll = new Date('2026-05-22T16:36:00.000Z');
+  assert.equal(shouldTriggerReminderOccurrence('rem_c', '16:30', firstPoll), true);
+  assert.equal(shouldTriggerReminderOccurrence('rem_c', '16:30', secondPoll), false);
 });
 
 
