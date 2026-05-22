@@ -192,9 +192,9 @@ const getReminderRuntimeInfo = (now: Date): ReminderRuntimeInfo => {
   return { dayName, dateStr, timeStr };
 };
 
-export const buildReminderOccurrenceKey = (reminderId: string, now: Date): string => {
-  const { dayName, dateStr, timeStr } = getReminderRuntimeInfo(now);
-  return `${reminderId}|${timeStr}|${dayName}|${dateStr}`;
+export const buildReminderOccurrenceKey = (reminderId: string, scheduledTime: string, now: Date): string => {
+  const { dayName, dateStr } = getReminderRuntimeInfo(now);
+  return `${reminderId}|${scheduledTime}|${dayName}|${dateStr}`;
 };
 
 export const findDueReminders = (reminders: DhikrReminder[], now: Date): DhikrReminder[] => {
@@ -202,8 +202,8 @@ export const findDueReminders = (reminders: DhikrReminder[], now: Date): DhikrRe
   return reminders.filter((rem) => rem.isEnabled && rem.timeString === timeStr && rem.days.includes(dayName));
 };
 
-export const shouldTriggerReminderOccurrence = (reminderId: string, now: Date): boolean => {
-  const key = buildReminderOccurrenceKey(reminderId, now);
+export const shouldTriggerReminderOccurrence = (reminderId: string, scheduledTime: string, now: Date): boolean => {
+  const key = buildReminderOccurrenceKey(reminderId, scheduledTime, now);
   const raw = safeParseJSON(localStorage.getItem(REMINDER_TRIGGER_KEY), [] as string[]);
   const existing = Array.isArray(raw) ? raw.filter((v): v is string => typeof v === 'string') : [];
   if (existing.includes(key)) return false;

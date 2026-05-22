@@ -38,7 +38,7 @@ export const useReminderScheduler = (
       if (candidates.length === 0) return;
 
       const uniqueCandidates = candidates.filter((rem, idx, arr) => arr.findIndex((x) => x.id === rem.id) === idx);
-      const newlyTriggered = uniqueCandidates.filter((rem) => shouldTriggerReminderOccurrence(rem.id, now));
+      const newlyTriggered = uniqueCandidates.filter((rem) => shouldTriggerReminderOccurrence(rem.id, rem.timeString, now));
       if (newlyTriggered.length === 0) return;
 
       setActiveReminderTriggered(newlyTriggered[newlyTriggered.length - 1]);
