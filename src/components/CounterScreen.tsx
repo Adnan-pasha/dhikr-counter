@@ -60,6 +60,14 @@ export default function CounterScreen({
   // Keyboard shortcut for counting (Space/Enter)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isTypingContext = !!target && (
+        target.tagName === 'INPUT'
+        || target.tagName === 'TEXTAREA'
+        || target.isContentEditable
+      );
+      if (isTypingContext) return;
+
       if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         handleTap();
@@ -67,7 +75,7 @@ export default function CounterScreen({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentDhikr, currentCount]);
+  }, [onIncrement]);
 
   const target = currentDhikr.targetCount || 100; // default for infinity progress view
   const progressRatio = currentDhikr.targetCount > 0 
