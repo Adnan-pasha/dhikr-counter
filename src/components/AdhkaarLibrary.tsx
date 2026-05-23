@@ -12,8 +12,8 @@ interface AdhkaarLibraryProps {
   favouriteIds: string[];
   onToggleFavourite: (id: string) => void;
   onSelectDhikr: (id: string) => void;
+  onNavigateToRoutine: () => void;
 }
-
 const DIFFICULTY_META = {
   easy:   { label: 'Short',  color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
   medium: { label: 'Medium', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
@@ -25,7 +25,7 @@ const ALL_CATEGORIES: AdhkaarCategory[] = [
   'salawat', 'protection', 'sleep', 'quranic', 'motivation',
 ];
 
-export default function AdhkaarLibrary({ currentDhikrId, favouriteIds, onToggleFavourite, onSelectDhikr }: AdhkaarLibraryProps) {
+export default function AdhkaarLibrary({ currentDhikrId, favouriteIds, onToggleFavourite, onSelectDhikr, onNavigateToRoutine }: AdhkaarLibraryProps) {
   const [activeCategory, setActiveCategory] = useState<AdhkaarCategory | 'all'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
@@ -180,6 +180,7 @@ export default function AdhkaarLibrary({ currentDhikrId, favouriteIds, onToggleF
                 onToggleExpand={() => toggleExpand(dhikr.id)}
                 onToggleFavourite={() => onToggleFavourite(dhikr.id)}
                 onSelect={() => onSelectDhikr(dhikr.id)}
+                onAddToRoutine={onNavigateToRoutine}
               />
             ))
           )}
@@ -199,9 +200,10 @@ interface AdhkaarCardProps {
   onToggleExpand: () => void;
   onToggleFavourite: () => void;
   onSelect: () => void;
+  onAddToRoutine: () => void;
 }
 
-function AdhkaarCard({ dhikr, idx, isActive, isFavourite, isExpanded, onToggleExpand, onToggleFavourite, onSelect }: AdhkaarCardProps) {
+function AdhkaarCard({ dhikr, idx, isActive, isFavourite, isExpanded, onToggleExpand, onToggleFavourite, onSelect, onAddToRoutine }: AdhkaarCardProps) {
   const diffMeta = dhikr.difficulty ? DIFFICULTY_META[dhikr.difficulty] : null;
   const primaryCategory = dhikr.category?.[0];
   const catMeta = primaryCategory ? CATEGORY_META[primaryCategory] : null;
@@ -301,6 +303,13 @@ function AdhkaarCard({ dhikr, idx, isActive, isFavourite, isExpanded, onToggleEx
             }`}
           >
             <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-rose-400' : ''}`} />
+          </button>
+          <button
+            aria-label="Add to routine"
+            onClick={onAddToRoutine}
+            className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-[10px] font-black border border-slate-700 text-slate-400 hover:text-amber-400 hover:border-amber-500/30 hover:bg-slate-800 transition-all cursor-pointer"
+          >
+            🌅
           </button>
           <button
             aria-label={isExpanded ? 'Hide details' : 'Show benefits and reference'}
