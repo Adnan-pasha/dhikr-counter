@@ -1379,20 +1379,22 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
             </div>
 
             {/* Top row with location & state details */}
-<div className="flex justify-between items-center z-10 bg-transparent gap-2 min-w-0">
-  <div className="flex items-center gap-2 min-w-0 flex-1">
-    <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-    <div className="min-w-0">
-      <span className="text-4xs font-black uppercase tracking-widest text-slate-400 block leading-none">Selected Region</span>
-      <h3 className="text-xs font-black text-slate-100 truncate mt-1 leading-tight">{locationName}</h3>
+<div className="flex flex-col gap-2 z-10 bg-transparent w-full">
+  <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+      <MapPin className="w-3 h-3 text-amber-500 shrink-0" />
+      <span className="text-4xs font-black uppercase tracking-widest text-slate-400 leading-none whitespace-nowrap">Selected Region</span>
+    </div>
+    <div className="flex items-center gap-1.5 shrink-0">
+      <span className="text-4xs font-black uppercase tracking-widest text-amber-500 leading-none whitespace-nowrap">Active Interval</span>
+      <span className="px-2 py-0.5 rounded bg-slate-950 font-black text-3xs text-slate-100 border border-slate-800 whitespace-nowrap">
+        {activePrayer.label}
+      </span>
     </div>
   </div>
-  <div className="text-right bg-transparent flex flex-col items-end shrink-0 ml-2">
-    <span className="text-4xs font-black uppercase tracking-widest text-amber-500 block leading-none whitespace-nowrap">Active Interval</span>
-    <span className="inline-block mt-1 px-2 py-0.5 rounded bg-slate-950 font-black text-3xs text-slate-100 border border-slate-850 whitespace-nowrap">
-      {activePrayer.label}
-    </span>
-  </div>
+  <h3 className="text-sm font-black text-slate-100 truncate leading-tight">
+    {locationName}
+  </h3>
 </div>
 
             {/* Centered centerpiece visual area */}
