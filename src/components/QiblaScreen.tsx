@@ -791,32 +791,34 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
 
   // Minute-wise Background Auto Alarm Watcher (Plays sound if enabled and app open!)
   const lastAlarmTriggerTime = useRef<string>('');
+  const [azanAlert, setAzanAlert] = useState<string | null>(null);
+
   useEffect(() => {
     const watchForPrayerTimes = () => {
       const nowClock = new Date();
       const currentMinKey = `${nowClock.getFullYear()}-${nowClock.getMonth()}-${nowClock.getDate()} ${nowClock.getHours()}:${nowClock.getMinutes()}`;
-      
+
       if (lastAlarmTriggerTime.current === currentMinKey) return;
 
       prayersList.forEach(p => {
-        if (!p.isAzan) return; // ignore non-sounding events like Sunrise
-        if (!azanSettings[p.id]) return; // muted
+        if (!p.isAzan) return;
+        if (!azanSettings[p.id]) return;
 
         const pt = p.time;
-        if (
-          nowClock.getHours() === pt.getHours() &&
-          nowClock.getMinutes() === pt.getMinutes()
-        ) {
+        const diffMs = nowClock.getTime() - pt.getTime();
+        // Trigger if within a 2-minute window after prayer time
+        if (diffMs >= 0 && diffMs < 120000) {
           lastAlarmTriggerTime.current = currentMinKey;
-          // Trigger Azan automatically!
+          setAzanAlert(`🕌 ${p.label} Prayer Time`);
           playAzan(selectedAzanSound === 'mecca' ? MECCA_AZAN_URLS : MEDINA_AZAN_URLS, `${p.label} Prayer`);
         }
       });
     };
 
-    const interval = setInterval(watchForPrayerTimes, 30000); // scan twice a minute
+    watchForPrayerTimes(); // run immediately on mount
+    const interval = setInterval(watchForPrayerTimes, 5000); // check every 5 seconds
     return () => clearInterval(interval);
-  }, [prayerTimes, azanSettings, selectedAzanSound]);
+  }, [prayersList, azanSettings, selectedAzanSound]);
 
   // Theme support mapper
   const getThemePalette = (currentTheme: AppTheme) => {
@@ -1421,6 +1423,26 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
               </div>
             </div>
           </div>
+
+          {/* Azan Alert Banner */}
+          {azanAlert && (
+            <div className="mx-1 mb-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🕌</span>
+                <div>
+                  <p className="text-sm font-black text-amber-400">{azanAlert}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">It is time for prayer. Allahu Akbar!</p>
+                </div>
+              </div>
+              <button
+                aria-label="Dismiss azan alert"
+                onClick={() => setAzanAlert(null)}
+                className="text-slate-500 hover:text-slate-300 cursor-pointer p-1"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {/* Interactive Prayer Times Grid Listing */}
           <div className="flex flex-col gap-1.5">
