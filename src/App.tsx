@@ -11,6 +11,7 @@ import ReminderBanner from './components/ReminderBanner';
 import ConfirmModal from './components/ConfirmModal';
 import AdhkaarLibrary from './components/AdhkaarLibrary';
 import RoutineBuilder from './components/RoutineBuilder';
+import { getMorningRoutine, getEveningRoutine } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
@@ -136,12 +137,21 @@ export default function App() {
 
 
 
+  const activeRoutine = React.useMemo(() => {
+    const morningIds = getMorningRoutine().map((d) => d.id);
+    const eveningIds = getEveningRoutine().map((d) => d.id);
+    if (morningIds.includes(currentDhikrId)) return getMorningRoutine();
+    if (eveningIds.includes(currentDhikrId)) return getEveningRoutine();
+    return null;
+  }, [currentDhikrId]);
+
   const { handleIncrement, handleReset } = useCounterFlow({
     activeDhikr,
     currentCount,
     preferences,
     dhikrs,
     currentDhikrId,
+    activeRoutine,
     setCurrentCount,
     setCurrentDhikrId,
     setHistory,
