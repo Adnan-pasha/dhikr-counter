@@ -177,14 +177,17 @@ export default function DhikrLibrary({
                 id={`dhikr_card_${dhikr.id}`}
                 key={dhikr.id}
                 whileTap={{ scale: 0.98 }}
-                className={`relative p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-start gap-3 overflow-hidden group ${
+                className={`relative p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-3 overflow-hidden group ${
                   isActive
                     ? 'bg-slate-900 border-amber-500/50 shadow-[0_0_15px_rgba(242,158,11,0.08)]'
+                    : editingDhikr?.id === dhikr.id
+                    ? 'bg-slate-900 border-amber-500/30'
                     : 'bg-slate-900/40 border-slate-800/80 hover:border-slate-700'
                 }`}
                 onClick={() => onSelectDhikr(dhikr.id)}
               >
-                <div className="flex-1 min-w-0 pr-3">
+                <div className="flex justify-between items-start gap-3 w-full">
+                <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
                     <h3 className={`font-bold text-base transition-colors ${
                       isActive ? 'text-amber-400' : 'text-slate-200'
@@ -231,29 +234,24 @@ export default function DhikrLibrary({
                   </span>
 
                   <div className="flex items-center gap-1.5">
-                    {/* Active target check indicator */}
-                    {isActive && (
-                      <span className="p-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/15" title="Active selection">
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      </span>
-                    )}
-
-                    {/* Direct check completion switch */}
+                    {/* Complete toggle — shows active indicator if currently selected */}
                     <button
                       id={`btn_toggle_complete_${dhikr.id}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleCompleteToday(dhikr.id);
                       }}
-                      className={`p-1 rounded-md border transition-all cursor-pointer ${
+                      className={`p-1.5 rounded-md border transition-all cursor-pointer ${
                         isCompleted
-                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-505/25'
+                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                          : isActive
+                          ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
                           : 'bg-slate-800/80 text-slate-500 border-slate-700/80 hover:text-amber-400 hover:border-amber-500/30'
                       }`}
-                      title={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
-aria-label={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
->
-                      <Check className={`w-3.5 h-3.5 stroke-[3] transition-transform ${isCompleted ? 'scale-100' : 'scale-90 opacity-60'}`} />
+                      title={isCompleted ? 'Mark as Pending' : 'Mark as Completed today'}
+                      aria-label={isCompleted ? 'Mark as Pending' : 'Mark as Completed today'}
+                    >
+                      <Check className={`w-3.5 h-3.5 stroke-[3] transition-transform ${isCompleted || isActive ? 'scale-100' : 'scale-90 opacity-60'}`} />
                     </button>
                     
                     {!dhikr.isSystem && (
@@ -356,6 +354,7 @@ aria-label={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
                           Save Changes ✓
                         </button>
                       </div>
+                    </div>
                     </div>
                   </motion.div>
                 )}
