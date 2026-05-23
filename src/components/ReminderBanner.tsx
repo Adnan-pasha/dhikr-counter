@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Clock } from 'lucide-react';
+import { Clock, X } from 'lucide-react';
 import { DhikrReminder, UserPreferences } from '../types';
 import { playCompletionSound } from '../audio';
 
@@ -21,43 +21,52 @@ export default function ReminderBanner({
     <AnimatePresence>
       {reminder && (
         <motion.div
-          initial={{ opacity: 0, y: -80, x: '-50%' }}
-          animate={{ opacity: 1, y: 0, x: '-50%' }}
-          exit={{ opacity: 0, y: -80, x: '-50%' }}
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-          className="absolute top-4 left-1/2 -translate-x-1/2 w-[92%] z-50 bg-slate-900 border border-amber-500/40 text-slate-100 p-4 rounded-3xl shadow-2xl flex flex-col gap-3.5"
+          className="w-full overflow-hidden z-50 bg-amber-500/10 border-b border-amber-500/30"
         >
-          <div className="flex gap-2.5 items-start">
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/15 animate-pulse shrink-0">
-              <Clock className="w-4 h-4" />
+          <div className="px-4 py-3 flex items-center gap-3">
+            {/* Icon */}
+            <div className="p-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/20 shrink-0">
+              <Clock className="w-3.5 h-3.5 animate-pulse" />
             </div>
+
+            {/* Text */}
             <div className="flex-1 min-w-0">
-              <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest block">Gentle Remembrance Alert</span>
-              <h4 className="text-xs font-black truncate leading-tight text-slate-50">{reminder.label}</h4>
-              <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-                Time to chant: <span className="text-slate-200 font-bold">{reminder.dhikrName}</span>
+              <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block leading-none">
+                Gentle Remembrance Alert
+              </span>
+              <h4 className="text-xs font-black text-slate-50 truncate leading-tight mt-0.5">
+                {reminder.label}
+              </h4>
+              <span className="text-[10px] text-slate-400 font-medium">
+                {reminder.dhikrName}
               </span>
             </div>
-          </div>
 
-          <div className="flex gap-2 border-t border-slate-800/60 pt-3">
-            <button
-              onClick={onDismiss}
-              className="flex-1 py-1.5 rounded-xl border border-slate-800 text-slate-400 font-black text-2xs hover:bg-slate-800 hover:text-white transition-all cursor-pointer"
-            >
-              Skip
-            </button>
-            <button
-              onClick={() => {
-                onStartChanting(reminder.dhikrId);
-                if (preferences.soundOn) {
-                  playCompletionSound(preferences.volume);
-                }
-              }}
-              className="flex-[2] py-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-2xs shadow-md shadow-amber-950/20 hover:opacity-95 transition-all text-center flex items-center justify-center gap-1 cursor-pointer"
-            >
-              Start Chanting Now 📿
-            </button>
+            {/* Action buttons */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => {
+                  onStartChanting(reminder.dhikrId);
+                  if (preferences.soundOn) {
+                    playCompletionSound(preferences.volume);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-[10px] shadow-md cursor-pointer hover:opacity-90 transition-opacity whitespace-nowrap"
+              >
+                Start 📿
+              </button>
+              <button
+                onClick={onDismiss}
+                aria-label="Dismiss reminder"
+                className="p-1.5 rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
           </div>
         </motion.div>
       )}
