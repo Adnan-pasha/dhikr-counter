@@ -158,6 +158,14 @@ export default function App() {
     setConfirmModal,
   });
 
+  const handleEditDhikr = (id: string, nameEn: string, nameAr: string, meaning: string, targetCount: number) => {
+    setDhikrs((prev) =>
+      prev.map((d) =>
+        d.id === id ? { ...d, nameEn, nameAr, meaning, targetCount } : d
+      )
+    );
+  };
+
   const { handleAddDhikr, handleDeleteDhikr, handleToggleCompleteToday } = useDhikrActions({
     dhikrs,
     currentDhikrId,
@@ -288,6 +296,7 @@ export default function App() {
                   setActiveTab('counter');
                 }}
                 onAddDhikr={handleAddDhikr}
+                onEditDhikr={handleEditDhikr}
                 onDeleteDhikr={handleDeleteDhikr}
                 onToggleCompleteToday={handleToggleCompleteToday}
               />
