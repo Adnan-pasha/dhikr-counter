@@ -238,7 +238,6 @@ export default function DhikrLibrary({
                       title={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
 aria-label={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
 >
-                    >
                       <Check className={`w-3.5 h-3.5 stroke-[3] transition-transform ${isCompleted ? 'scale-100' : 'scale-90 opacity-60'}`} />
                     </button>
                     
