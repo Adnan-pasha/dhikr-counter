@@ -8,6 +8,7 @@ interface RoutineBuilderProps {
   currentDhikrId: string;
   completedTodayIds: string[];
   onStartDhikr: (id: string) => void;
+  onNavigateToAdhkaar: () => void;
 }
 
 type RoutineType = 'morning' | 'evening';
@@ -43,6 +44,7 @@ export default function RoutineBuilder({
   currentDhikrId,
   completedTodayIds,
   onStartDhikr,
+  onNavigateToAdhkaar,
 }: RoutineBuilderProps) {
   const [activeRoutine, setActiveRoutine] = useState<RoutineType>('morning');
   const meta = ROUTINE_META[activeRoutine];
@@ -63,6 +65,12 @@ export default function RoutineBuilder({
         <p className="text-[10px] text-slate-400 font-medium">
           Structured adhkaar sequences from authentic sunnah
         </p>
+        <button
+          onClick={onNavigateToAdhkaar}
+          className="mt-2 flex items-center gap-1.5 text-[10px] font-black text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+        >
+          <span>📖</span> Explore full Adhkaar Library →
+        </button>
 
         {/* Routine toggle */}
         <div className="flex gap-2 mt-4">
