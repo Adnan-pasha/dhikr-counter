@@ -11,53 +11,12 @@ import ReminderBanner from './components/ReminderBanner';
 import ConfirmModal from './components/ConfirmModal';
 import AdhkaarLibrary from './components/AdhkaarLibrary';
 import RoutineBuilder from './components/RoutineBuilder';
-import { getMorningRoutine, getEveningRoutine } from './adhkaar-data';
+import { getMorningRoutine, getEveningRoutine, ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
-// Default Traditional System Dhikrs
-const SYSTEM_DHIKRS: Dhikr[] = [
-  {
-    id: 'subhanallah',
-    nameAr: 'سُبْحَانَ ٱللَّٰهِ',
-    nameEn: 'SubhanAllah',
-    meaning: 'Glory be to Allah',
-    targetCount: 33,
-    isSystem: true,
-  },
-  {
-    id: 'alhamdulillah',
-    nameAr: 'ٱلْحَمْدُ لِلَّٰهِ',
-    nameEn: 'Alhamdulillah',
-    meaning: 'All praise is due to Allah',
-    targetCount: 33,
-    isSystem: true,
-  },
-  {
-    id: 'allahuakbar',
-    nameAr: 'ٱللَّٰهُ أَكْبَرُ',
-    nameEn: 'Allahu Akbar',
-    meaning: 'Allah is the Greatest',
-    targetCount: 34,
-    isSystem: true,
-  },
-  {
-    id: 'astaghfirullah',
-    nameAr: 'أَسْتَغْفِرُ ٱللَّٰهَ',
-    nameEn: 'Astaghfirullah',
-    meaning: 'I seek forgiveness from Allah',
-    targetCount: 100,
-    isSystem: true,
-  },
-  {
-    id: 'lailahaillallah',
-    nameAr: 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ',
-    nameEn: 'La ilaha illa Allah',
-    meaning: 'There is no god but Allah',
-    targetCount: 100,
-    isSystem: true,
-  },
-];
+// Use the full rich ADHKAAR_LIBRARY as system dhikrs
+const SYSTEM_DHIKRS: Dhikr[] = ADHKAAR_LIBRARY;
 
 // Default Preferences
 const DEFAULT_PREFERENCES: UserPreferences = {
