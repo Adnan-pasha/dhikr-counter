@@ -8,9 +8,10 @@ interface DhikrLibraryProps {
   currentDhikrId: string;
   history: DhikrHistory[];
   onSelectDhikr: (id: string) => void;
-  onAddDhikr: (dhikr: Omit<Dhikr, 'id' | 'isSystem'>) => void;
+  onAddDhikr: (nameEn: string, nameAr: string, meaning: string, targetCount: number) => void;
+  onEditDhikr: (id: string, nameEn: string, nameAr: string, meaning: string, targetCount: number) => void;
   onDeleteDhikr: (id: string) => void;
-  onToggleCompleteToday: (id: string) => void;
+  onToggleCompleteToday: (dhikrId: string) => void;
 }
 
 export default function DhikrLibrary({
@@ -19,10 +20,16 @@ export default function DhikrLibrary({
   history,
   onSelectDhikr,
   onAddDhikr,
+  onEditDhikr,
   onDeleteDhikr,
   onToggleCompleteToday,
 }: DhikrLibraryProps) {
   const [isAdding, setIsAdding] = useState(false);
+  const [editingDhikr, setEditingDhikr] = useState<Dhikr | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editNameAr, setEditNameAr] = useState('');
+  const [editMeaning, setEditMeaning] = useState('');
+  const [editCount, setEditCount] = useState('33');
   const [newEn, setNewEn] = useState('');
   const [newAr, setNewAr] = useState('');
   const [newMeaning, setNewMeaning] = useState('');
@@ -242,18 +249,36 @@ aria-label={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
                     </button>
                     
                     {!dhikr.isSystem && (
-                      <button
-                        id={`btn_delete_dhikr_${dhikr.id}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteDhikr(dhikr.id);
-                        }}
-                        className="p-1.5 rounded-md text-slate-450 hover:text-red-400 hover:bg-slate-800 transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
-title="Delete Custom Dhikr"
-aria-label="Delete custom dhikr"
->
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <>
+                        <button
+                          aria-label={`Edit ${dhikr.nameEn}`}
+                          title="Edit Dhikr"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingDhikr(dhikr);
+                            setEditName(dhikr.nameEn);
+                            setEditNameAr(dhikr.nameAr);
+                            setEditMeaning(dhikr.meaning);
+                            setEditCount(String(dhikr.targetCount));
+                            setIsAdding(false);
+                          }}
+                          className="p-1.5 rounded-md text-slate-450 hover:text-amber-400 hover:bg-slate-800 transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          id={`btn_delete_dhikr_${dhikr.id}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteDhikr(dhikr.id);
+                          }}
+                          className="p-1.5 rounded-md text-slate-450 hover:text-red-400 hover:bg-slate-800 transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          title="Delete Custom Dhikr"
+                          aria-label="Delete custom dhikr"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -262,6 +287,74 @@ aria-label="Delete custom dhikr"
           })
         )}
       </div>
+
+      {/* Edit Dhikr Form */}
+      <AnimatePresence>
+        {editingDhikr && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="mx-4 mb-3 p-4 rounded-2xl bg-slate-800/60 border border-amber-500/30"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Edit Dhikr</span>
+              <button
+                aria-label="Close edit form"
+                onClick={() => setEditingDhikr(null)}
+                className="text-[10px] text-slate-500 hover:text-red-400 font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+            <div className="space-y-2">
+              <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="English name"
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+              />
+              <input
+                value={editNameAr}
+                onChange={(e) => setEditNameAr(e.target.value)}
+                placeholder="Arabic text (optional)"
+                dir="rtl"
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-right"
+              />
+              <input
+                value={editMeaning}
+                onChange={(e) => setEditMeaning(e.target.value)}
+                placeholder="Meaning / description"
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+              />
+              <input
+                type="number"
+                value={editCount}
+                onChange={(e) => setEditCount(e.target.value)}
+                placeholder="Target count"
+                min="1"
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+              />
+              <button
+                onClick={() => {
+                  if (!editName.trim()) return;
+                  onEditDhikr(
+                    editingDhikr.id,
+                    editName.trim(),
+                    editNameAr.trim(),
+                    editMeaning.trim(),
+                    Math.max(1, parseInt(editCount) || 33),
+                  );
+                  setEditingDhikr(null);
+                }}
+                className="w-full py-2 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-xs cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                Save Changes ✓
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Add Custom Dhikr Modal Sheet */}
       <AnimatePresence>
