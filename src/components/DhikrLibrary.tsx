@@ -176,7 +176,7 @@ export default function DhikrLibrary({
               <motion.div
                 id={`dhikr_card_${dhikr.id}`}
                 key={dhikr.id}
-                whileTap={{ scale: 0.98 }}
+                whileTap={editingDhikr?.id === dhikr.id ? {} : { scale: 0.98 }}
                 className={`relative p-4 rounded-2xl border transition-all cursor-pointer flex flex-col gap-3 overflow-hidden group ${
                   isActive
                     ? 'bg-slate-900 border-amber-500/50 shadow-[0_0_15px_rgba(242,158,11,0.08)]'
@@ -184,7 +184,10 @@ export default function DhikrLibrary({
                     ? 'bg-slate-900 border-amber-500/30'
                     : 'bg-slate-900/40 border-slate-800/80 hover:border-slate-700'
                 }`}
-                onClick={() => onSelectDhikr(dhikr.id)}
+                onClick={() => {
+                  if (editingDhikr?.id === dhikr.id) return;
+                  onSelectDhikr(dhikr.id);
+                }}
               >
                 <div className="flex justify-between items-start gap-3 w-full">
                 <div className="flex-1 min-w-0">
@@ -292,6 +295,7 @@ export default function DhikrLibrary({
                     )}
                   </div>
                 </div>
+                </div>
               {/* Inline edit form — expands inside the card */}
               <AnimatePresence>
                 {editingDhikr?.id === dhikr.id && (
@@ -354,7 +358,6 @@ export default function DhikrLibrary({
                           Save Changes ✓
                         </button>
                       </div>
-                    </div>
                     </div>
                   </motion.div>
                 )}
