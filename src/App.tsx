@@ -365,7 +365,7 @@ export default function App() {
           </div>
 
           {/* BOTTOM NAVIGATION TAB BAR */}
-          <div className="h-16 shrink-0 border-t border-slate-100 dark:border-neutral-900 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md flex items-center justify-around px-2 select-none z-30">
+          <div className="h-16 shrink-0 border-t border-slate-100 dark:border-neutral-900 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md flex items-center overflow-x-auto px-1 select-none z-30 scrollbar-hide gap-1">
             {/* Tab: Counter */}
             <button
               id="tab_trigger_counter"
