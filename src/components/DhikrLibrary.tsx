@@ -263,14 +263,18 @@ aria-label={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
                           title="Edit Dhikr"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setEditingDhikr(dhikr);
+                            setEditingDhikr(editingDhikr?.id === dhikr.id ? null : dhikr);
                             setEditName(dhikr.nameEn);
                             setEditNameAr(dhikr.nameAr);
                             setEditMeaning(dhikr.meaning);
                             setEditCount(String(dhikr.targetCount));
                             setIsAdding(false);
                           }}
-                          className="p-1.5 rounded-md text-slate-450 hover:text-amber-400 hover:bg-slate-800 transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          className={`p-1.5 rounded-md transition-all cursor-pointer border ${
+                            editingDhikr?.id === dhikr.id
+                              ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                              : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-amber-400 hover:border-amber-500/30'
+                          }`}
                         >
                           ✏️
                         </button>
@@ -280,7 +284,7 @@ aria-label={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
                             e.stopPropagation();
                             onDeleteDhikr(dhikr.id);
                           }}
-                          className="p-1.5 rounded-md text-slate-450 hover:text-red-400 hover:bg-slate-800 transition-all cursor-pointer opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          className="p-1.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700 hover:text-red-400 hover:border-red-500/30 transition-all cursor-pointer"
                           title="Delete Custom Dhikr"
                           aria-label="Delete custom dhikr"
                         >
@@ -290,15 +294,81 @@ aria-label={isCompleted ? "Mark as Pending" : "Mark as Completed today"}
                     )}
                   </div>
                 </div>
+              {/* Inline edit form — expands inside the card */}
+              <AnimatePresence>
+                {editingDhikr?.id === dhikr.id && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 pt-3 border-t border-amber-500/20 space-y-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-amber-500 mb-2">Editing — {dhikr.nameEn}</p>
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="English name"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+                      />
+                      <input
+                        value={editNameAr}
+                        onChange={(e) => setEditNameAr(e.target.value)}
+                        placeholder="Arabic text (optional)"
+                        dir="rtl"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-right"
+                      />
+                      <input
+                        value={editMeaning}
+                        onChange={(e) => setEditMeaning(e.target.value)}
+                        placeholder="Meaning / description"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+                      />
+                      <input
+                        type="number"
+                        value={editCount}
+                        onChange={(e) => setEditCount(e.target.value)}
+                        placeholder="Target count"
+                        min="1"
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingDhikr(null)}
+                          className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-400 font-black text-xs cursor-pointer hover:bg-slate-800 transition-all"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!editName.trim()) return;
+                            onEditDhikr(
+                              dhikr.id,
+                              editName.trim(),
+                              editNameAr.trim(),
+                              editMeaning.trim(),
+                              Math.max(1, parseInt(editCount) || 33),
+                            );
+                            setEditingDhikr(null);
+                          }}
+                          className="flex-[2] py-2 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-xs cursor-pointer hover:opacity-90 transition-opacity"
+                        >
+                          Save Changes ✓
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               </motion.div>
             );
           })
         )}
       </div>
 
-      {/* Edit Dhikr Form */}
+      {/* Old Edit Dhikr Form — now inline above, keep this empty */}
       <AnimatePresence>
-        {editingDhikr && (
+        {false && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
