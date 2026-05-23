@@ -309,3 +309,159 @@ export const findMissedReminderCandidates = (
     return mins > 0 && mins <= policy.catchUpWindowMinutes && mins <= sleptMinutes;
   });
 };
+
+// ─── Motivational Messages ───────────────────────────────────────────────────
+
+export const getMotivationalMessage = (streak: number): { arabic: string; english: string; note: string } => {
+  const hour = new Date().getHours();
+
+  if (hour >= 4 && hour < 9) {
+    return {
+      arabic: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً',
+      english: 'Our Lord, give us good in this world',
+      note: streak > 0
+        ? `Masha'Allah! ${streak}-day streak 🌅 The early morning is the most blessed time for dhikr.`
+        : 'Beautiful — you are remembering Allah in the blessed morning hours.',
+    };
+  }
+  if (hour >= 9 && hour < 12) {
+    return {
+      arabic: 'سُبْحَانَ ٱللَّٰهِ وَبِحَمْدِهِ',
+      english: 'Glory be to Allah and praise belongs to Him',
+      note: streak > 0
+        ? `${streak} days strong! Keep going — consistency is beloved to Allah.`
+        : 'Every bead counts. Start your streak today!',
+    };
+  }
+  if (hour >= 12 && hour < 15) {
+    return {
+      arabic: 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ',
+      english: 'O Allah, send blessings upon Muhammad ﷺ',
+      note: streak > 0
+        ? `${streak}-day streak! Send Salawat on the Prophet ﷺ between your tasks.`
+        : 'The afternoon is a great time to build your dhikr habit.',
+    };
+  }
+  if (hour >= 15 && hour < 18) {
+    return {
+      arabic: 'أَسْتَغْفِرُ ٱللَّٰهَ',
+      english: 'I seek forgiveness from Allah',
+      note: streak > 0
+        ? `${streak} days of remembrance! Asr time — the witnessed hour.`
+        : 'The Prophet ﷺ said seek forgiveness often. Begin your journey.',
+    };
+  }
+  if (hour >= 18 && hour < 21) {
+    return {
+      arabic: 'أَعُوذُ بِكَلِمَاتِ ٱللَّٰهِ ٱلتَّامَّاتِ',
+      english: 'I seek refuge in the perfect words of Allah',
+      note: streak > 0
+        ? `${streak}-day streak! Evening adhkaar protect you through the night.`
+        : 'Evening is the perfect time to start your adhkaar routine.',
+    };
+  }
+  return {
+    arabic: 'حَسْبِيَ ٱللَّٰهُ لَا إِلَٰهَ إِلَّا هُوَ',
+    english: 'Allah is sufficient for me, there is no god but Him',
+    note: streak > 0
+      ? `${streak} nights of devotion! The night remembrance is precious.`
+      : 'The night is a time of peace — remember Allah before sleep.',
+  };
+};
+
+// ─── Achievements ─────────────────────────────────────────────────────────────
+
+export interface Achievement {
+  id: string;
+  title: string;
+  desc: string;
+  req: string;
+  isUnlocked: boolean;
+  colorClass: string;
+}
+
+export const computeAchievements = (
+  history: { dhikrId: string; count: number; timestamp: string }[],
+  streak: number,
+  allTimeCount: number,
+  dhikrs: { id: string; isSystem?: boolean }[],
+): Achievement[] => {
+  const totalForDhikr = (id: string) =>
+    history.filter((h) => h.dhikrId === id).reduce((s, h) => s + h.count, 0);
+
+  const hasRecitedInHours = (from: number, to: number) =>
+    history.some((h) => {
+      const hr = new Date(h.timestamp).getHours();
+      return to > from ? hr >= from && hr < to : hr >= from || hr < to;
+    });
+
+  return [
+    {
+      id: 'sayyidul_master',
+      title: 'Master of Forgiveness',
+      req: 'Recite Sayyidul Istighfar at least once',
+      desc: 'Recited the Master of Forgiveness — the key to Jannah in the morning.',
+      isUnlocked: totalForDhikr('sayyidul-istighfar') >= 1,
+      colorClass: 'bg-rose-500/20 border-rose-500/30 text-rose-300',
+    },
+    {
+      id: 'ayatul_kursi',
+      title: 'Throne Verse Guardian',
+      req: 'Recite Ayatul Kursi 10+ times total',
+      desc: 'Sought protection through the greatest verse in the Quran.',
+      isUnlocked: totalForDhikr('ayatul-kursi') >= 10,
+      colorClass: 'bg-cyan-500/20 border-cyan-500/30 text-cyan-300',
+    },
+    {
+      id: 'three_quls',
+      title: '3 Quls Shield',
+      req: 'Recite all 3 Quls (Ikhlas, Falaq, Naas)',
+      desc: 'Surrounded yourself with the complete shield of the 3 Quls.',
+      isUnlocked:
+        totalForDhikr('surah-ikhlas') >= 1 &&
+        totalForDhikr('surah-falaq') >= 1 &&
+        totalForDhikr('surah-naas') >= 1,
+      colorClass: 'bg-teal-500/20 border-teal-500/30 text-teal-300',
+    },
+    {
+      id: 'darood_lover',
+      title: 'Lover of the Prophet ﷺ',
+      req: 'Send 100+ Salawat (Darood Ibrahim)',
+      desc: 'Allah sends 10 blessings for every Salawat. 100 sent — 1000 received!',
+      isUnlocked: totalForDhikr('darood-ibrahim') >= 100,
+      colorClass: 'bg-yellow-500/20 border-yellow-500/30 text-yellow-300',
+    },
+    {
+      id: 'streak_7',
+      title: 'Week Warrior',
+      req: 'Maintain a 7-day streak',
+      desc: 'Seven consecutive days of remembrance. The angels record your devotion.',
+      isUnlocked: streak >= 7,
+      colorClass: 'bg-orange-500/20 border-orange-500/30 text-orange-300',
+    },
+    {
+      id: 'streak_30',
+      title: 'Blessed Month',
+      req: 'Maintain a 30-day streak',
+      desc: 'A full month of consistent dhikr. SubhanAllah — this is true steadfastness.',
+      isUnlocked: streak >= 30,
+      colorClass: 'bg-amber-500/20 border-amber-500/30 text-amber-300',
+    },
+    {
+      id: 'morning_warrior',
+      title: 'Morning Warrior',
+      req: 'Recite dhikr between 4 AM and 9 AM',
+      desc: 'Greeted the day with Allah\'s remembrance in the blessed Fajr hours.',
+      isUnlocked: hasRecitedInHours(4, 9),
+      colorClass: 'bg-amber-500/20 border-amber-500/30 text-amber-300',
+    },
+    {
+      id: 'ten_thousand',
+      title: 'Ten Thousand Beads',
+      req: 'Reach 10,000 total beads all-time',
+      desc: 'Ten thousand beads of remembrance! You have truly made dhikr a way of life.',
+      isUnlocked: allTimeCount >= 10000,
+      colorClass: 'bg-purple-500/20 border-purple-500/30 text-purple-300',
+    },
+  ];
+};
