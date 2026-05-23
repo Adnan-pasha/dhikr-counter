@@ -110,6 +110,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'counter' | 'library' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>('counter');
   const [streak, setStreak] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
   const [confirmModal, setConfirmModal] = useState<{
     title: string;
     message: string;
@@ -120,8 +121,8 @@ export default function App() {
 
   usePersistentAppState(
     { defaultDhikrs: SYSTEM_DHIKRS, defaultPreferences: DEFAULT_PREFERENCES, defaultReminders: DEFAULT_REMINDERS },
-    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak },
-    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders },
+    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds },
+    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds },
   );
 
   const { dismissReminder } = useReminderScheduler(reminders, preferences, setActiveReminderTriggered);
@@ -285,6 +286,12 @@ export default function App() {
             {activeTab === 'adhkaar' && (
               <AdhkaarLibrary
                 currentDhikrId={currentDhikrId}
+                favouriteIds={favouriteIds}
+                onToggleFavourite={(id) =>
+                  setFavouriteIds((prev) =>
+                    prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+                  )
+                }
                 onSelectDhikr={(id) => {
                   setCurrentDhikrId(id);
                   setCurrentCount(0);
@@ -292,7 +299,7 @@ export default function App() {
                 }}
               />
             )}
-
+            
             {activeTab === 'routine' && (
               <RoutineBuilder
                 currentDhikrId={currentDhikrId}
