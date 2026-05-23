@@ -299,6 +299,7 @@ export default function App() {
                 onEditDhikr={handleEditDhikr}
                 onDeleteDhikr={handleDeleteDhikr}
                 onToggleCompleteToday={handleToggleCompleteToday}
+                onNavigateToAdhkaar={() => setActiveTab('adhkaar')}
               />
             )}
 
@@ -316,6 +317,7 @@ export default function App() {
                   setCurrentCount(0);
                   setActiveTab('counter');
                 }}
+                onNavigateToRoutine={() => setActiveTab('routine')}
               />
             )}
             
@@ -338,6 +340,7 @@ export default function App() {
                   setCurrentCount(0);
                   setActiveTab('counter');
                 }}
+                onNavigateToAdhkaar={() => setActiveTab('adhkaar')}
               />
             )}
             
