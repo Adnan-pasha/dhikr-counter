@@ -20,6 +20,7 @@ import {
   Compass
 } from 'lucide-react';
 import { DhikrHistory, DailyLog, Dhikr } from '../types';
+import { getMotivationalMessage, computeAchievements } from '../domain';
 
 interface StatsScreenProps {
   history: DhikrHistory[];
@@ -240,7 +241,8 @@ export default function StatsScreen({
         desc: 'Completed a grand milestone of over 1,000 beads chanted. SubhanAllah!',
         isUnlocked: allTimeCount >= 1000,
         colorClass: 'bg-purple-500/20 border-purple-500/30 text-purple-300'
-      }
+      },
+      ...computeAchievements(history, streak, allTimeCount, dhikrs),
     ];
   };
 
@@ -361,6 +363,22 @@ export default function StatsScreen({
           Spiritual Journey
         </h1>
         <p className="text-xs text-slate-400 mt-1 font-medium">Daily streaks, interactive maps, level progression & authentic advice</p>
+
+        {/* Motivational banner */}
+        {(() => {
+          const msg = getMotivationalMessage(streak);
+          return (
+            <div className="mt-3 p-3 rounded-2xl bg-amber-500/8 border border-amber-500/20">
+              <p className="text-base font-arabic text-amber-300 text-right leading-relaxed">
+                {msg.arabic}
+              </p>
+              <p className="text-[10px] text-slate-400 italic mt-1">{msg.english}</p>
+              <p className="text-[10px] text-amber-400/80 font-semibold mt-1.5 leading-relaxed">
+                {msg.note}
+              </p>
+            </div>
+          );
+        })()}
       </div>
 
       {/* STATS SUB NAV BAR (Overview, Calendar, Levels, Hadiths) */}
