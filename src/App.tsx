@@ -200,6 +200,19 @@ export default function App() {
 
         {/* INNER SCREEN CONTAINER (THE ACTUAL APPLET CORES) */}
         <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-neutral-950 relative overflow-hidden">
+
+          {/* GENTLE SCHEDULER REMINDER ALERTS — outside overflow-hidden */}
+          <ReminderBanner
+            reminder={activeReminderTriggered}
+            preferences={preferences}
+            onDismiss={dismissReminder}
+            onStartChanting={(dhikrId) => {
+              setCurrentDhikrId(dhikrId);
+              setCurrentCount(0);
+              setActiveTab('counter');
+              dismissReminder();
+            }}
+          />
           
           {/* OFFLINE STATUS PILLED BANNER (PWA CAPABLE) */}
           <AnimatePresence>
@@ -217,20 +230,7 @@ export default function App() {
             )}
           </AnimatePresence>
 
-   {/* GENTLE SCHEDULER REMINDER ALERTS */}
-          <ReminderBanner
-            reminder={activeReminderTriggered}
-            preferences={preferences}
-            onDismiss={dismissReminder}
-            onStartChanting={(dhikrId) => {
-              setCurrentDhikrId(dhikrId);
-              setCurrentCount(0);
-              setActiveTab('counter');
-              dismissReminder();
-            }}
-          />
-
-          <div className="flex-1 min-h-0 relative">
+   <div className="flex-1 min-h-0 relative">
             {activeTab === 'counter' && (
               <CounterScreen
                 currentDhikr={activeDhikr}
