@@ -10,6 +10,7 @@ import SettingsScreen from './components/SettingsScreen';
 import ReminderBanner from './components/ReminderBanner';
 import ConfirmModal from './components/ConfirmModal';
 import AdhkaarLibrary from './components/AdhkaarLibrary';
+import RoutineBuilder from './components/RoutineBuilder';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
@@ -106,7 +107,7 @@ export default function App() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [reminders, setReminders] = useState<DhikrReminder[]>([]);
   const [activeReminderTriggered, setActiveReminderTriggered] = useState<DhikrReminder | null>(null);
-  const [activeTab, setActiveTab] = useState<'counter' | 'library' | 'adhkaar' | 'stats' | 'settings' | 'qibla'>('counter');
+  const [activeTab, setActiveTab] = useState<'counter' | 'library' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>('counter');
   const [streak, setStreak] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [confirmModal, setConfirmModal] = useState<{
@@ -291,6 +292,29 @@ export default function App() {
                 }}
               />
             )}
+
+            {activeTab === 'routine' && (
+              <RoutineBuilder
+                currentDhikrId={currentDhikrId}
+                completedTodayIds={history
+                  .filter((h) => {
+                    const today = new Date();
+                    const d = new Date(h.timestamp);
+                    return (
+                      d.getFullYear() === today.getFullYear() &&
+                      d.getMonth() === today.getMonth() &&
+                      d.getDate() === today.getDate()
+                    );
+                  })
+                  .map((h) => h.dhikrId)}
+                onStartDhikr={(id) => {
+                  setCurrentDhikrId(id);
+                  setCurrentCount(0);
+                  setActiveTab('counter');
+                }}
+              />
+            )}
+            
             {activeTab === 'stats' && (
               <StatsScreen
                 history={history}
