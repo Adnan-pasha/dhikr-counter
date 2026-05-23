@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   BookOpen, Star, ChevronDown, ChevronUp,
-  Clock, BookMarked, Tag, Sparkles, Play, Heart
+  Clock, BookMarked, Tag, Sparkles, Play, Heart, Search, X
 } from 'lucide-react';
 import { Dhikr, AdhkaarCategory, CATEGORY_META } from '../types';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
@@ -30,10 +30,22 @@ export default function AdhkaarLibrary({ currentDhikrId, favouriteIds, onToggleF
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [showFavouritesOnly, setShowFavouritesOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredDhikrs = ADHKAAR_LIBRARY.filter((d) => {
     if (showFavouritesOnly && !favouriteIds.includes(d.id)) return false;
     if (showFeaturedOnly && !d.isFeatured) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matches =
+        d.nameEn.toLowerCase().includes(q) ||
+        d.meaning.toLowerCase().includes(q) ||
+        d.nameAr.includes(q) ||
+        d.transliteration?.toLowerCase().includes(q) ||
+        d.benefits?.toLowerCase().includes(q) ||
+        d.tags?.some((t) => t.toLowerCase().includes(q));
+      if (!matches) return false;
+    }
     if (activeCategory === 'all') return true;
     return d.category?.includes(activeCategory);
   });
@@ -82,6 +94,32 @@ export default function AdhkaarLibrary({ currentDhikrId, favouriteIds, onToggleF
               Featured
             </button>
           </div>
+        </div>
+
+        {/* Search bar */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setActiveCategory('all');
+              setShowFeaturedOnly(false);
+              setShowFavouritesOnly(false);
+            }}
+            placeholder="Search by name, meaning, tag..."
+            className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              aria-label="Clear search"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         {/* Category filter pills */}
