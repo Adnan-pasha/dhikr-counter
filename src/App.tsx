@@ -9,6 +9,7 @@ import StatsScreen from './components/StatsScreen';
 import SettingsScreen from './components/SettingsScreen';
 import ReminderBanner from './components/ReminderBanner';
 import ConfirmModal from './components/ConfirmModal';
+import AdhkaarLibrary from './components/AdhkaarLibrary';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
@@ -105,7 +106,7 @@ export default function App() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [reminders, setReminders] = useState<DhikrReminder[]>([]);
   const [activeReminderTriggered, setActiveReminderTriggered] = useState<DhikrReminder | null>(null);
-  const [activeTab, setActiveTab] = useState<'counter' | 'library' | 'stats' | 'settings' | 'qibla'>('counter');
+  const [activeTab, setActiveTab] = useState<'counter' | 'library' | 'adhkaar' | 'stats' | 'settings' | 'qibla'>('counter');
   const [streak, setStreak] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [confirmModal, setConfirmModal] = useState<{
@@ -280,6 +281,16 @@ export default function App() {
               />
             )}
 
+            {activeTab === 'adhkaar' && (
+              <AdhkaarLibrary
+                currentDhikrId={currentDhikrId}
+                onSelectDhikr={(id) => {
+                  setCurrentDhikrId(id);
+                  setCurrentCount(0);
+                  setActiveTab('counter');
+                }}
+              />
+            )}
             {activeTab === 'stats' && (
               <StatsScreen
                 history={history}
