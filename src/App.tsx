@@ -347,6 +347,17 @@ export default function App() {
               <span className="text-[10px] font-bold uppercase tracking-wider">Library</span>
             </button>
 
+            {/* Tab: Adhkaar */}
+            <button
+              id="tab_trigger_adhkaar"
+              aria-label="Adhkaar library"
+              onClick={() => setActiveTab('adhkaar')}
+              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('adhkaar')}`}
+            >
+              <span className="text-lg leading-none">📖</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">Adhkaar</span>
+            </button>
+
             {/* Tab: Qibla */}
             <button
               id="tab_trigger_qibla"
