@@ -230,6 +230,7 @@ interface CounterFlowDeps {
   preferences: UserPreferences;
   dhikrs: Dhikr[];
   currentDhikrId: string;
+  activeRoutine: Dhikr[] | null;
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
   setCurrentDhikrId: React.Dispatch<React.SetStateAction<string>>;
   setHistory: React.Dispatch<React.SetStateAction<DhikrHistory[]>>;
@@ -268,15 +269,19 @@ export const useCounterFlow = (deps: CounterFlowDeps) => {
       deps.setHistory((prev) => [...prev, newLog]);
 
       if (deps.preferences.autoAdvance) {
-        const currentIndex = deps.dhikrs.findIndex((d) => d.id === deps.currentDhikrId);
+        // If in a routine, advance through routine sequence; else cycle library
+        const sequence = deps.activeRoutine ?? deps.dhikrs;
+        const currentIndex = sequence.findIndex((d) => d.id === deps.currentDhikrId);
         if (currentIndex !== -1) {
-          const nextIndex = (currentIndex + 1) % deps.dhikrs.length;
-          const nextDhikr = deps.dhikrs[nextIndex];
-
-          setTimeout(() => {
-            deps.setCurrentDhikrId(nextDhikr.id);
-            deps.setCurrentCount(0);
-          }, 1200);
+          const nextIndex = currentIndex + 1;
+          // Don't wrap in routine — stop at end; wrap freely in library
+          if (deps.activeRoutine ? nextIndex < sequence.length : true) {
+            const nextDhikr = sequence[deps.activeRoutine ? nextIndex : nextIndex % sequence.length];
+            setTimeout(() => {
+              deps.setCurrentDhikrId(nextDhikr.id);
+              deps.setCurrentCount(0);
+            }, 1200);
+          }
         }
       }
     }
