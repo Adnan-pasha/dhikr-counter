@@ -319,6 +319,18 @@ function AdhkaarCard({ dhikr, idx, isActive, isFavourite, isExpanded, onToggleEx
           >
             <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-rose-400' : ''}`} />
           </button>
+
+          <button
+            aria-label={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+            onClick={onToggleFavourite}
+            className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+              isFavourite
+                ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-rose-400'
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-rose-400' : ''}`} />
+          </button>
           <button
             aria-label={isExpanded ? 'Hide details' : 'Show benefits and reference'}
             onClick={onToggleExpand}
