@@ -1381,23 +1381,27 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
             </div>
 
             {/* Top row with location & state details */}
-<div className="flex flex-col gap-2 z-10 bg-transparent w-full">
-  <div className="flex items-center justify-between gap-2">
-    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-      <MapPin className="w-3 h-3 text-amber-500 shrink-0" />
-      <span className="text-4xs font-black uppercase tracking-widest text-slate-400 leading-none whitespace-nowrap">Selected Region</span>
-    </div>
-    <div className="flex items-center gap-1.5 shrink-0">
-      <span className="text-4xs font-black uppercase tracking-widest text-amber-500 leading-none whitespace-nowrap">Active Interval</span>
-      <span className="px-2 py-0.5 rounded bg-slate-950 font-black text-3xs text-slate-100 border border-slate-800 whitespace-nowrap">
-        {activePrayer.label}
-      </span>
-    </div>
-  </div>
-  <h3 className="text-sm font-black text-slate-100 truncate leading-tight">
-    {locationName}
-  </h3>
-</div>
+            <div className="z-10 w-full">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-4xs font-black uppercase tracking-widest text-slate-400 leading-none">
+                  Selected Region
+                </span>
+                <span className="text-4xs font-black uppercase tracking-widest text-amber-500 leading-none">
+                  Active Interval
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <MapPin className="w-3 h-3 text-amber-500 shrink-0" />
+                  <h3 className="text-xs font-black text-slate-100 truncate leading-tight">
+                    {locationName}
+                  </h3>
+                </div>
+                <span className="px-2 py-0.5 rounded bg-slate-950 font-black text-3xs text-slate-100 border border-slate-800 whitespace-nowrap shrink-0">
+                  {activePrayer.label}
+                </span>
+              </div>
+            </div>
 
             {/* Centered centerpiece visual area */}
             <div className="py-4 border-t border-slate-800/40 flex flex-col justify-center items-center z-10 bg-transparent text-center">
