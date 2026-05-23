@@ -273,8 +273,6 @@ function AdhkaarCard({ dhikr, idx, isActive, isFavourite, isExpanded, onToggleEx
             {isExpanded ? 'Less' : 'Fazail'}
           </button>
         </div>
-          
-        </div>
       </div>
 
       {/* Expandable detail */}
