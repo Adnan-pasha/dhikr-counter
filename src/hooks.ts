@@ -97,6 +97,7 @@ interface PersistenceSetters {
   setPreferences: (value: UserPreferences) => void;
   setReminders: (value: DhikrReminder[]) => void;
   setStreak: (value: number) => void;
+  setFavouriteIds: (value: string[]) => void;
 }
 
 export const usePersistentAppState = (
@@ -109,6 +110,7 @@ export const usePersistentAppState = (
     history: DhikrHistory[];
     preferences: UserPreferences;
     reminders: DhikrReminder[];
+    favouriteIds: string[];
   },
 ) => {
   useEffect(() => {
@@ -124,6 +126,8 @@ export const usePersistentAppState = (
     setters.setHistory(hydrated.history);
     setters.setPreferences(hydrated.preferences);
     setters.setReminders(hydrated.reminders);
+    const savedFavs = localStorage.getItem('tasbih_favourites');
+    setters.setFavouriteIds(savedFavs ? JSON.parse(savedFavs) : []);
   }, []);
 
   useEffect(() => {
@@ -137,6 +141,7 @@ export const usePersistentAppState = (
   }, [state.history]);
   useEffect(() => { localStorage.setItem('tasbih_preferences', JSON.stringify(state.preferences)); }, [state.preferences]);
   useEffect(() => { localStorage.setItem('tasbih_reminders', JSON.stringify(state.reminders)); }, [state.reminders]);
+  useEffect(() => { localStorage.setItem('tasbih_favourites', JSON.stringify(state.favouriteIds)); }, [state.favouriteIds]);
 };
 
 
