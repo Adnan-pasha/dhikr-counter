@@ -8,10 +8,11 @@ interface DhikrLibraryProps {
   currentDhikrId: string;
   history: DhikrHistory[];
   onSelectDhikr: (id: string) => void;
-  onAddDhikr: (nameEn: string, nameAr: string, meaning: string, targetCount: number) => void;
+  onAddDhikr: (dhikr: Omit<Dhikr, 'id' | 'isSystem'>) => void;
   onEditDhikr: (id: string, nameEn: string, nameAr: string, meaning: string, targetCount: number) => void;
   onDeleteDhikr: (id: string) => void;
-  onToggleCompleteToday: (dhikrId: string) => void;
+  onToggleCompleteToday: (id: string) => void;
+  onNavigateToAdhkaar: () => void;
 }
 
 export default function DhikrLibrary({
@@ -23,6 +24,7 @@ export default function DhikrLibrary({
   onEditDhikr,
   onDeleteDhikr,
   onToggleCompleteToday,
+  onNavigateToAdhkaar,
 }: DhikrLibraryProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingDhikr, setEditingDhikr] = useState<Dhikr | null>(null);
@@ -91,6 +93,12 @@ export default function DhikrLibrary({
             Dhikr Library
           </h1>
           <p className="text-xs text-slate-400 mt-1 font-medium select-none">Select a traditional prayer or create custom chants</p>
+          <button
+            onClick={onNavigateToAdhkaar}
+            className="mt-2 flex items-center gap-1.5 text-[10px] font-black text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+          >
+            <span>📖</span> Browse full Adhkaar Library →
+          </button>
         </div>
         
         <button
