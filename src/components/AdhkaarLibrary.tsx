@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   BookOpen, Star, ChevronDown, ChevronUp,
-  Clock, BookMarked, Tag, Sparkles, Play
+  Clock, BookMarked, Tag, Sparkles, Play, Heart
 } from 'lucide-react';
 import { Dhikr, AdhkaarCategory, CATEGORY_META } from '../types';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
 
 interface AdhkaarLibraryProps {
   currentDhikrId: string;
+  favouriteIds: string[];
+  onToggleFavourite: (id: string) => void;
   onSelectDhikr: (id: string) => void;
 }
 
@@ -23,12 +25,14 @@ const ALL_CATEGORIES: AdhkaarCategory[] = [
   'salawat', 'protection', 'sleep', 'quranic', 'motivation',
 ];
 
-export default function AdhkaarLibrary({ currentDhikrId, onSelectDhikr }: AdhkaarLibraryProps) {
+export default function AdhkaarLibrary({ currentDhikrId, favouriteIds, onToggleFavourite, onSelectDhikr }: AdhkaarLibraryProps) {
   const [activeCategory, setActiveCategory] = useState<AdhkaarCategory | 'all'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
+  const [showFavouritesOnly, setShowFavouritesOnly] = useState(false);
 
   const filteredDhikrs = ADHKAAR_LIBRARY.filter((d) => {
+    if (showFavouritesOnly && !favouriteIds.includes(d.id)) return false;
     if (showFeaturedOnly && !d.isFeatured) return false;
     if (activeCategory === 'all') return true;
     return d.category?.includes(activeCategory);
@@ -52,18 +56,32 @@ export default function AdhkaarLibrary({ currentDhikrId, onSelectDhikr }: Adhkaa
               {filteredDhikrs.length} duas &amp; adhkaar from authentic sources
             </p>
           </div>
-          <button
-            aria-label={showFeaturedOnly ? 'Show all adhkaar' : 'Show featured only'}
-            onClick={() => setShowFeaturedOnly((v) => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all cursor-pointer ${
-              showFeaturedOnly
-                ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-amber-400'
-            }`}
-          >
-            <Star className="w-3 h-3" />
-            Featured
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              aria-label={showFavouritesOnly ? 'Show all adhkaar' : 'Show favourites only'}
+              onClick={() => { setShowFavouritesOnly((v) => !v); setShowFeaturedOnly(false); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all cursor-pointer ${
+                showFavouritesOnly
+                  ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-rose-400'
+              }`}
+            >
+              <Heart className="w-3 h-3" />
+              {favouriteIds.length > 0 ? favouriteIds.length : ''}
+            </button>
+            <button
+              aria-label={showFeaturedOnly ? 'Show all adhkaar' : 'Show featured only'}
+              onClick={() => { setShowFeaturedOnly((v) => !v); setShowFavouritesOnly(false); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all cursor-pointer ${
+                showFeaturedOnly
+                  ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-amber-400'
+              }`}
+            >
+              <Star className="w-3 h-3" />
+              Featured
+            </button>
+          </div>
         </div>
 
         {/* Category filter pills */}
@@ -119,8 +137,10 @@ export default function AdhkaarLibrary({ currentDhikrId, onSelectDhikr }: Adhkaa
                 dhikr={dhikr}
                 idx={idx}
                 isActive={dhikr.id === currentDhikrId}
+                isFavourite={favouriteIds.includes(dhikr.id)}
                 isExpanded={expandedId === dhikr.id}
                 onToggleExpand={() => toggleExpand(dhikr.id)}
+                onToggleFavourite={() => onToggleFavourite(dhikr.id)}
                 onSelect={() => onSelectDhikr(dhikr.id)}
               />
             ))
@@ -136,12 +156,14 @@ interface AdhkaarCardProps {
   dhikr: Dhikr;
   idx: number;
   isActive: boolean;
+  isFavourite: boolean;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  onToggleFavourite: () => void;
   onSelect: () => void;
 }
 
-function AdhkaarCard({ dhikr, idx, isActive, isExpanded, onToggleExpand, onSelect }: AdhkaarCardProps) {
+function AdhkaarCard({ dhikr, idx, isActive, isFavourite, isExpanded, onToggleExpand, onToggleFavourite, onSelect }: AdhkaarCardProps) {
   const diffMeta = dhikr.difficulty ? DIFFICULTY_META[dhikr.difficulty] : null;
   const primaryCategory = dhikr.category?.[0];
   const catMeta = primaryCategory ? CATEGORY_META[primaryCategory] : null;
@@ -230,6 +252,72 @@ function AdhkaarCard({ dhikr, idx, isActive, isExpanded, onToggleExpand, onSelec
           >
             <Play className="w-3 h-3" />
             {isActive ? 'Currently Active' : 'Start Reciting'}
+          </button>
+          <button
+            aria-label={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+            onClick={onToggleFavourite}
+            className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+              isFavourite
+                ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-rose-400'
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-rose-400' : ''}`} />
+          </button>
+          <button
+            aria-label={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+            onClick={onToggleFavourite}
+            className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+              isFavourite
+                ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-rose-400'
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-rose-400' : ''}`} />
+          </button>
+          <button
+            aria-label={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+            onClick={onToggleFavourite}
+            className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+              isFavourite
+                ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-rose-400'
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-rose-400' : ''}`} />
+          </button>
+          <button
+            aria-label={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+            onClick={onToggleFavourite}
+            className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+              isFavourite
+                ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-rose-400'
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-rose-400' : ''}`} />
+          </button>
+          <button
+            aria-label={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+            onClick={onToggleFavourite}
+            className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+              isFavourite
+                ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-rose-400'
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-rose-400' : ''}`} />
+          </button>
+          <button
+            aria-label={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+            onClick={onToggleFavourite}
+            className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+              isFavourite
+                ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-rose-400'
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-rose-400' : ''}`} />
           </button>
           <button
             aria-label={isExpanded ? 'Hide details' : 'Show benefits and reference'}
