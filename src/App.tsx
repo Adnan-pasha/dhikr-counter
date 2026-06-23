@@ -9,8 +9,8 @@ import SettingsScreen from './components/SettingsScreen';
 import ReminderBanner from './components/ReminderBanner';
 import ConfirmModal from './components/ConfirmModal';
 import AdhkaarLibrary from './components/AdhkaarLibrary';
-import RoutineBuilder from './components/RoutineBuilder';
-import { getMorningRoutine, getEveningRoutine, ADHKAAR_LIBRARY } from './adhkaar-data';
+import RoutineManager from './components/RoutineManager';
+import { ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
@@ -96,13 +96,15 @@ export default function App() {
 
 
 
+  // Find active routine based on current dhikr — use persisted routines for auto-advance
   const activeRoutine = React.useMemo(() => {
-    const morningIds = getMorningRoutine().map((d) => d.id);
-    const eveningIds = getEveningRoutine().map((d) => d.id);
-    if (morningIds.includes(currentDhikrId)) return getMorningRoutine();
-    if (eveningIds.includes(currentDhikrId)) return getEveningRoutine();
-    return null;
-  }, [currentDhikrId]);
+    const matched = routines.find(r => r.dhikrIds.includes(currentDhikrId));
+    if (!matched) return null;
+    const allAvailable = [...ADHKAAR_LIBRARY, ...dhikrs];
+    return matched.dhikrIds
+      .map((id: string) => allAvailable.find((d: Dhikr) => d.id === id))
+      .filter(Boolean) as Dhikr[];
+  }, [currentDhikrId, routines, dhikrs]);
 
   const { handleIncrement, handleReset } = useCounterFlow({
     activeDhikr,
@@ -269,7 +271,9 @@ export default function App() {
             )}
             
             {activeTab === 'routine' && (
-              <RoutineBuilder
+              <RoutineManager
+                routines={routines}
+                customDhikrs={dhikrs.filter(d => !d.isSystem)}
                 currentDhikrId={currentDhikrId}
                 completedTodayIds={history
                   .filter((h) => {
@@ -286,6 +290,22 @@ export default function App() {
                   setCurrentDhikrId(id);
                   setCurrentCount(0);
                   setActiveTab('counter');
+                }}
+                onAddRoutine={(routine) => {
+                  const newRoutine = {
+                    ...routine,
+                    id: `routine-${Date.now()}`,
+                    createdAt: new Date().toISOString(),
+                  };
+                  setRoutines(prev => [...prev, newRoutine]);
+                }}
+                onEditRoutine={(id, name, emoji, dhikrIds) => {
+                  setRoutines(prev =>
+                    prev.map(r => r.id === id ? { ...r, name, emoji, dhikrIds } : r)
+                  );
+                }}
+                onDeleteRoutine={(id) => {
+                  setRoutines(prev => prev.filter(r => r.id !== id));
                 }}
                 onNavigateToAdhkaar={() => setActiveTab('adhkaar')}
               />
