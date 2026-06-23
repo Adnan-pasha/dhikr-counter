@@ -1,10 +1,9 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';
+import { Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';
 import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder, Routine } from './types';
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
-import DhikrLibrary from './components/DhikrLibrary';
 import StatsScreen from './components/StatsScreen';
 import SettingsScreen from './components/SettingsScreen';
 import ReminderBanner from './components/ReminderBanner';
@@ -67,7 +66,7 @@ export default function App() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [reminders, setReminders] = useState<DhikrReminder[]>([]);
   const [activeReminderTriggered, setActiveReminderTriggered] = useState<DhikrReminder | null>(null);
-  const [activeTab, setActiveTab] = useState<'counter' | 'library' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>('counter');
+  const [activeTab, setActiveTab] = useState<'counter' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>('counter');
   const [streak, setStreak] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
@@ -241,31 +240,15 @@ export default function App() {
                 onIncrement={handleIncrement}
                 onReset={handleReset}
                 onToggleSound={() => setPreferences(prev => ({ ...prev, soundOn: !prev.soundOn }))}
-                onNavigateToLibrary={() => setActiveTab('library')}
-              />
-            )}
-
-            {activeTab === 'library' && (
-              <DhikrLibrary
-                dhikrs={dhikrs}
-                currentDhikrId={currentDhikrId}
-                history={history}
-                onSelectDhikr={(id) => {
-                  setCurrentDhikrId(id);
-                  setCurrentCount(0);
-                  setActiveTab('counter');
-                }}
-                onAddDhikr={handleAddDhikr}
-                onEditDhikr={handleEditDhikr}
-                onDeleteDhikr={handleDeleteDhikr}
-                onToggleCompleteToday={handleToggleCompleteToday}
-                onNavigateToAdhkaar={() => setActiveTab('adhkaar')}
+                onNavigateToLibrary={() => setActiveTab('adhkaar')}
               />
             )}
 
             {activeTab === 'adhkaar' && (
               <AdhkaarLibrary
+                customDhikrs={dhikrs.filter(d => !d.isSystem)}
                 currentDhikrId={currentDhikrId}
+                history={history}
                 favouriteIds={favouriteIds}
                 onToggleFavourite={(id) =>
                   setFavouriteIds((prev) =>
@@ -277,6 +260,10 @@ export default function App() {
                   setCurrentCount(0);
                   setActiveTab('counter');
                 }}
+                onAddCustomDhikr={handleAddDhikr}
+                onEditCustomDhikr={handleEditDhikr}
+                onDeleteCustomDhikr={handleDeleteDhikr}
+                onToggleCompleteToday={handleToggleCompleteToday}
                 onNavigateToRoutine={() => setActiveTab('routine')}
               />
             )}
@@ -350,17 +337,7 @@ export default function App() {
             </button>
 
             {/* Tab: Library */}
-            <button
-              id="tab_trigger_library"
-              aria-label="Dhikr library"
-              onClick={() => setActiveTab('library')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('library')}`}
-            >
-              <BookOpen className="w-5 h-5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Library</span>
-            </button>
-
-            {/* Tab: Adhkaar */}
+            {/* Tab: Adhkaar (unified library) */}
             <button
               id="tab_trigger_adhkaar"
               aria-label="Adhkaar library"

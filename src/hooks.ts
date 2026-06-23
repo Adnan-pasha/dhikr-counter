@@ -160,7 +160,7 @@ interface DhikrActionDeps {
   setDhikrs: React.Dispatch<React.SetStateAction<Dhikr[]>>;
   setCurrentDhikrId: React.Dispatch<React.SetStateAction<string>>;
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
-  setActiveTab: React.Dispatch<React.SetStateAction<'counter' | 'library' | 'adhkaar' | 'stats' | 'settings' | 'qibla'>>;
+  setActiveTab: React.Dispatch<React.SetStateAction<'counter' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>>;
   setHistory: React.Dispatch<React.SetStateAction<DhikrHistory[]>>;
   setConfirmModal: React.Dispatch<React.SetStateAction<{ title: string; message: string; onConfirm: () => void; } | null>>;
 }
@@ -316,7 +316,7 @@ interface HistoryFlowDeps {
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
   setPreferences: React.Dispatch<React.SetStateAction<UserPreferences>>;
   setReminders: React.Dispatch<React.SetStateAction<DhikrReminder[]>>;
-  setActiveTab: React.Dispatch<React.SetStateAction<'counter' | 'library' | 'adhkaar' | 'stats' | 'settings' | 'qibla'>>;
+  setActiveTab: React.Dispatch<React.SetStateAction<'counter' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>>;
   setConfirmModal: React.Dispatch<React.SetStateAction<{ title: string; message: string; onConfirm: () => void; } | null>>;
   systemDhikrs: Dhikr[];
   defaultPreferences: UserPreferences;
