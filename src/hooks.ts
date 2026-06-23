@@ -1,6 +1,7 @@
 import React from 'react';
 import { useEffect } from 'react';
-import { DhikrReminder, UserPreferences } from './types';
+import { DhikrReminder, UserPreferences, Routine } from './types';
+import { DEFAULT_ROUTINES } from './adhkaar-data';
 import { findDueReminders, shouldTriggerReminderOccurrence, findCatchUpReminderCandidates, findMissedReminderCandidates } from './domain';
 import { playBeadSound, playCompletionSound } from './audio';
 import { trackEvent } from './telemetry';
@@ -98,6 +99,7 @@ interface PersistenceSetters {
   setReminders: (value: DhikrReminder[]) => void;
   setStreak: (value: number) => void;
   setFavouriteIds: (value: string[]) => void;
+  setRoutines: (value: Routine[]) => void;
 }
 
 export const usePersistentAppState = (
@@ -111,6 +113,7 @@ export const usePersistentAppState = (
     preferences: UserPreferences;
     reminders: DhikrReminder[];
     favouriteIds: string[];
+    routines: Routine[];
   },
 ) => {
   useEffect(() => {
@@ -128,6 +131,8 @@ export const usePersistentAppState = (
     setters.setReminders(hydrated.reminders);
     const savedFavs = localStorage.getItem('tasbih_favourites');
     setters.setFavouriteIds(savedFavs ? JSON.parse(savedFavs) : []);
+    const savedRoutines = localStorage.getItem('tasbih_routines');
+    setters.setRoutines(savedRoutines ? JSON.parse(savedRoutines) : DEFAULT_ROUTINES);
   }, []);
 
   useEffect(() => {
@@ -142,6 +147,7 @@ export const usePersistentAppState = (
   useEffect(() => { localStorage.setItem('tasbih_preferences', JSON.stringify(state.preferences)); }, [state.preferences]);
   useEffect(() => { localStorage.setItem('tasbih_reminders', JSON.stringify(state.reminders)); }, [state.reminders]);
   useEffect(() => { localStorage.setItem('tasbih_favourites', JSON.stringify(state.favouriteIds)); }, [state.favouriteIds]);
+  useEffect(() => { localStorage.setItem('tasbih_routines', JSON.stringify(state.routines)); }, [state.routines]);
 };
 
 

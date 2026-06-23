@@ -70,6 +70,17 @@ export interface DhikrReminder {
   isEnabled: boolean;
 }
 
+export interface Routine {
+  id: string;
+  name: string;            // e.g. "My Fajr Routine"
+  emoji: string;           // e.g. "🌅"
+  dhikrIds: string[];      // ordered list of dhikr IDs from Adhkaar Library
+  reminderTime?: string;   // optional HH:MM
+  reminderDays?: string[]; // ['mon','tue',...] optional
+  isSystem?: boolean;      // true for pre-seeded Morning/Evening defaults
+  createdAt: string;       // ISO string
+}
+
 // Adhkaar category metadata for UI display
 export const CATEGORY_META: Record<AdhkaarCategory, { label: string; emoji: string; color: string }> = {
   morning:    { label: 'Morning',    emoji: '🌅', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';
-import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder } from './types';
+import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder, Routine } from './types';
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
 import DhikrLibrary from './components/DhikrLibrary';
@@ -71,6 +71,7 @@ export default function App() {
   const [streak, setStreak] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
+  const [routines, setRoutines] = useState<Routine[]>([]);
   const [confirmModal, setConfirmModal] = useState<{
     title: string;
     message: string;
@@ -81,8 +82,8 @@ export default function App() {
 
   usePersistentAppState(
     { defaultDhikrs: SYSTEM_DHIKRS, defaultPreferences: DEFAULT_PREFERENCES, defaultReminders: DEFAULT_REMINDERS },
-    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds },
-    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds },
+    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds, setRoutines },
+    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines },
   );
 
   const { dismissReminder } = useReminderScheduler(reminders, preferences, setActiveReminderTriggered);

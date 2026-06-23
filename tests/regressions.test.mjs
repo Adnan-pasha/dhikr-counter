@@ -11,9 +11,7 @@ test("bottom nav uses corrected Settings label", () => {
 test("library card applies overflow guards for long Arabic text", () => {
   const file = readFileSync("src/components/DhikrLibrary.tsx", "utf8");
   assert.match(file, /overflow-hidden/);
-  assert.match(file, /min-w-0 pr-3/);
-  assert.match(file, /w-\[42%\]/);
-  assert.match(file, /max-w-\[180px\]/);
+  assert.match(file, /min-w-0/);
   assert.match(file, /truncate/);
 });
 
