@@ -3,7 +3,7 @@
  * Sources: Fazail-e-Amaal, Hisnul Muslim, Sahih al-Bukhari,
  *          Sahih Muslim, Abu Dawood, Jami' at-Tirmidhi
  */
-import { Dhikr } from './types';
+import { Dhikr, Routine } from './types';
 
 export const ADHKAAR_LIBRARY: Dhikr[] = [
   {
@@ -295,3 +295,57 @@ export const getMorningRoutine = (): Dhikr[] =>
 // Helper: get evening routine (ordered)
 export const getEveningRoutine = (): Dhikr[] =>
   ADHKAAR_LIBRARY.filter((d) => d.category?.includes('evening')).slice(0, 6);
+
+// ─── Default System Routines ────────────────────────────────────────────────
+
+export const DEFAULT_ROUTINES: Routine[] = [
+  {
+    id: 'routine-morning',
+    name: 'Morning Routine',
+    emoji: '🌅',
+    dhikrIds: [
+      'astaghfirullah',
+      'sayyidul-istighfar',
+      'ayatul-kursi',
+      'surah-ikhlas',
+      'surah-falaq',
+      'surah-naas',
+      'subhanallah',
+      'alhamdulillah',
+      'allahuakbar',
+      'darood-ibrahim',
+    ],
+    isSystem: true,
+    createdAt: new Date(0).toISOString(),
+  },
+  {
+    id: 'routine-evening',
+    name: 'Evening Routine',
+    emoji: '🌙',
+    dhikrIds: [
+      'astaghfirullah',
+      'ayatul-kursi',
+      'surah-ikhlas',
+      'surah-falaq',
+      'surah-naas',
+      'subhanallahi-wa-bihamdihi',
+      'darood-ibrahim',
+    ],
+    isSystem: true,
+    createdAt: new Date(0).toISOString(),
+  },
+  {
+    id: 'routine-after-salah',
+    name: 'After Salah',
+    emoji: '🤲',
+    dhikrIds: [
+      'subhanallah',
+      'alhamdulillah',
+      'allahuakbar',
+      'ayatul-kursi',
+      'darood-ibrahim',
+    ],
+    isSystem: true,
+    createdAt: new Date(0).toISOString(),
+  },
+];

@@ -1,17 +1,16 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';
-import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder } from './types';
+import { Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';
+import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder, Routine } from './types';
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
-import DhikrLibrary from './components/DhikrLibrary';
 import StatsScreen from './components/StatsScreen';
 import SettingsScreen from './components/SettingsScreen';
 import ReminderBanner from './components/ReminderBanner';
 import ConfirmModal from './components/ConfirmModal';
 import AdhkaarLibrary from './components/AdhkaarLibrary';
-import RoutineBuilder from './components/RoutineBuilder';
-import { getMorningRoutine, getEveningRoutine, ADHKAAR_LIBRARY } from './adhkaar-data';
+import RoutineManager from './components/RoutineManager';
+import { ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
@@ -67,10 +66,11 @@ export default function App() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [reminders, setReminders] = useState<DhikrReminder[]>([]);
   const [activeReminderTriggered, setActiveReminderTriggered] = useState<DhikrReminder | null>(null);
-  const [activeTab, setActiveTab] = useState<'counter' | 'library' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>('counter');
+  const [activeTab, setActiveTab] = useState<'counter' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>('counter');
   const [streak, setStreak] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
+  const [routines, setRoutines] = useState<Routine[]>([]);
   const [confirmModal, setConfirmModal] = useState<{
     title: string;
     message: string;
@@ -81,8 +81,8 @@ export default function App() {
 
   usePersistentAppState(
     { defaultDhikrs: SYSTEM_DHIKRS, defaultPreferences: DEFAULT_PREFERENCES, defaultReminders: DEFAULT_REMINDERS },
-    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds },
-    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds },
+    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds, setRoutines },
+    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines },
   );
 
   const { dismissReminder } = useReminderScheduler(reminders, preferences, setActiveReminderTriggered);
@@ -96,13 +96,15 @@ export default function App() {
 
 
 
+  // Find active routine based on current dhikr — use persisted routines for auto-advance
   const activeRoutine = React.useMemo(() => {
-    const morningIds = getMorningRoutine().map((d) => d.id);
-    const eveningIds = getEveningRoutine().map((d) => d.id);
-    if (morningIds.includes(currentDhikrId)) return getMorningRoutine();
-    if (eveningIds.includes(currentDhikrId)) return getEveningRoutine();
-    return null;
-  }, [currentDhikrId]);
+    const matched = routines.find(r => r.dhikrIds.includes(currentDhikrId));
+    if (!matched) return null;
+    const allAvailable = [...ADHKAAR_LIBRARY, ...dhikrs];
+    return matched.dhikrIds
+      .map((id: string) => allAvailable.find((d: Dhikr) => d.id === id))
+      .filter(Boolean) as Dhikr[];
+  }, [currentDhikrId, routines, dhikrs]);
 
   const { handleIncrement, handleReset } = useCounterFlow({
     activeDhikr,
@@ -240,31 +242,15 @@ export default function App() {
                 onIncrement={handleIncrement}
                 onReset={handleReset}
                 onToggleSound={() => setPreferences(prev => ({ ...prev, soundOn: !prev.soundOn }))}
-                onNavigateToLibrary={() => setActiveTab('library')}
-              />
-            )}
-
-            {activeTab === 'library' && (
-              <DhikrLibrary
-                dhikrs={dhikrs}
-                currentDhikrId={currentDhikrId}
-                history={history}
-                onSelectDhikr={(id) => {
-                  setCurrentDhikrId(id);
-                  setCurrentCount(0);
-                  setActiveTab('counter');
-                }}
-                onAddDhikr={handleAddDhikr}
-                onEditDhikr={handleEditDhikr}
-                onDeleteDhikr={handleDeleteDhikr}
-                onToggleCompleteToday={handleToggleCompleteToday}
-                onNavigateToAdhkaar={() => setActiveTab('adhkaar')}
+                onNavigateToLibrary={() => setActiveTab('adhkaar')}
               />
             )}
 
             {activeTab === 'adhkaar' && (
               <AdhkaarLibrary
+                customDhikrs={dhikrs.filter(d => !d.isSystem)}
                 currentDhikrId={currentDhikrId}
+                history={history}
                 favouriteIds={favouriteIds}
                 onToggleFavourite={(id) =>
                   setFavouriteIds((prev) =>
@@ -276,12 +262,18 @@ export default function App() {
                   setCurrentCount(0);
                   setActiveTab('counter');
                 }}
+                onAddCustomDhikr={handleAddDhikr}
+                onEditCustomDhikr={handleEditDhikr}
+                onDeleteCustomDhikr={handleDeleteDhikr}
+                onToggleCompleteToday={handleToggleCompleteToday}
                 onNavigateToRoutine={() => setActiveTab('routine')}
               />
             )}
             
             {activeTab === 'routine' && (
-              <RoutineBuilder
+              <RoutineManager
+                routines={routines}
+                customDhikrs={dhikrs.filter(d => !d.isSystem)}
                 currentDhikrId={currentDhikrId}
                 completedTodayIds={history
                   .filter((h) => {
@@ -298,6 +290,22 @@ export default function App() {
                   setCurrentDhikrId(id);
                   setCurrentCount(0);
                   setActiveTab('counter');
+                }}
+                onAddRoutine={(routine) => {
+                  const newRoutine = {
+                    ...routine,
+                    id: `routine-${Date.now()}`,
+                    createdAt: new Date().toISOString(),
+                  };
+                  setRoutines(prev => [...prev, newRoutine]);
+                }}
+                onEditRoutine={(id, name, emoji, dhikrIds) => {
+                  setRoutines(prev =>
+                    prev.map(r => r.id === id ? { ...r, name, emoji, dhikrIds } : r)
+                  );
+                }}
+                onDeleteRoutine={(id) => {
+                  setRoutines(prev => prev.filter(r => r.id !== id));
                 }}
                 onNavigateToAdhkaar={() => setActiveTab('adhkaar')}
               />
@@ -349,17 +357,7 @@ export default function App() {
             </button>
 
             {/* Tab: Library */}
-            <button
-              id="tab_trigger_library"
-              aria-label="Dhikr library"
-              onClick={() => setActiveTab('library')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('library')}`}
-            >
-              <BookOpen className="w-5 h-5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Library</span>
-            </button>
-
-            {/* Tab: Adhkaar */}
+            {/* Tab: Adhkaar (unified library) */}
             <button
               id="tab_trigger_adhkaar"
               aria-label="Adhkaar library"
