@@ -70,6 +70,29 @@ export interface DhikrReminder {
   isEnabled: boolean;
 }
 
+export type SalahName = 'fajr' | 'sunrise' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
+
+export interface SalahLog {
+  date: string;       // YYYY-MM-DD
+  prayers: Partial<Record<SalahName, boolean>>;
+}
+
+export const SALAH_META: Record<SalahName, { label: string; arabicName: string; emoji: string; time: string }> = {
+  fajr:    { label: 'Fajr',    arabicName: 'الفجر',   emoji: '🌄', time: 'Pre-dawn' },
+  sunrise: { label: 'Sunrise', arabicName: 'الشروق',  emoji: '🌅', time: 'After sunrise (Ishraq)' },
+  dhuhr:   { label: 'Dhuhr',   arabicName: 'الظهر',   emoji: '☀️', time: 'Midday' },
+  asr:     { label: 'Asr',     arabicName: 'العصر',   emoji: '🌤️', time: 'Afternoon' },
+  maghrib: { label: 'Maghrib', arabicName: 'المغرب',  emoji: '🌇', time: 'Sunset' },
+  isha:    { label: 'Isha',    arabicName: 'العشاء',  emoji: '🌙', time: 'Night' },
+};
+
+// Hijri month names
+export const HIJRI_MONTHS = [
+  'Muharram','Safar','Rabi al-Awwal','Rabi al-Thani',
+  'Jumada al-Awwal','Jumada al-Thani','Rajab',"Sha'ban",
+  'Ramadan','Shawwal','Dhul Qa\'dah','Dhul Hijjah',
+];
+
 export interface Routine {
   id: string;
   name: string;            // e.g. "My Fajr Routine"

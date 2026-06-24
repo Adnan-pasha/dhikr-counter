@@ -1,10 +1,11 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';
-import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder, Routine } from './types';
+import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder, Routine, SalahLog, SalahName } from './types';
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
 import HomeScreen from './components/HomeScreen';
+import SalahTracker from './components/SalahTracker';
 import StatsScreen from './components/StatsScreen';
 import SettingsScreen from './components/SettingsScreen';
 import ReminderBanner from './components/ReminderBanner';
@@ -67,11 +68,12 @@ export default function App() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [reminders, setReminders] = useState<DhikrReminder[]>([]);
   const [activeReminderTriggered, setActiveReminderTriggered] = useState<DhikrReminder | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'counter' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'stats' | 'settings' | 'qibla'>('home');
   const [streak, setStreak] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
+  const [salahLogs, setSalahLogs] = useState<SalahLog[]>([]);
   const [confirmModal, setConfirmModal] = useState<{
     title: string;
     message: string;
@@ -82,8 +84,8 @@ export default function App() {
 
   usePersistentAppState(
     { defaultDhikrs: SYSTEM_DHIKRS, defaultPreferences: DEFAULT_PREFERENCES, defaultReminders: DEFAULT_REMINDERS },
-    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds, setRoutines },
-    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines },
+    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds, setRoutines, setSalahLogs },
+    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs },
   );
 
   const { dismissReminder } = useReminderScheduler(reminders, preferences, setActiveReminderTriggered);
@@ -334,7 +336,26 @@ export default function App() {
                 onNavigateToAdhkaar={() => setActiveTab('adhkaar')}
               />
             )}
-            
+
+            {activeTab === 'salah' && (
+              <SalahTracker
+                salahLogs={salahLogs}
+                onTogglePrayer={(date, prayer) => {
+                  setSalahLogs(prev => {
+                    const existing = prev.find(l => l.date === date);
+                    if (existing) {
+                      return prev.map(l =>
+                        l.date === date
+                          ? { ...l, prayers: { ...l.prayers, [prayer]: !l.prayers[prayer as SalahName] } }
+                          : l
+                      );
+                    }
+                    return [...prev, { date, prayers: { [prayer]: true } }];
+                  });
+                }}
+              />
+            )}
+
             {activeTab === 'stats' && (
               <StatsScreen
                 history={history}
@@ -412,6 +433,17 @@ export default function App() {
             >
               <span className="text-lg leading-none">🌅</span>
               <span className="text-[10px] font-bold uppercase tracking-wider">Routine</span>
+            </button>
+
+            {/* Tab: Salah */}
+            <button
+              id="tab_trigger_salah"
+              aria-label="Salah tracker"
+              onClick={() => setActiveTab('salah')}
+              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('salah')}`}
+            >
+              <span className="text-lg leading-none">🕌</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">Salah</span>
             </button>
 
             {/* Tab: Qibla */}
