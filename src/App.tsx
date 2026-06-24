@@ -4,6 +4,7 @@ import { Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'l
 import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder, Routine } from './types';
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
+import HomeScreen from './components/HomeScreen';
 import StatsScreen from './components/StatsScreen';
 import SettingsScreen from './components/SettingsScreen';
 import ReminderBanner from './components/ReminderBanner';
@@ -66,7 +67,7 @@ export default function App() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [reminders, setReminders] = useState<DhikrReminder[]>([]);
   const [activeReminderTriggered, setActiveReminderTriggered] = useState<DhikrReminder | null>(null);
-  const [activeTab, setActiveTab] = useState<'counter' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>('counter');
+  const [activeTab, setActiveTab] = useState<'home' | 'counter' | 'adhkaar' | 'routine' | 'stats' | 'settings' | 'qibla'>('home');
   const [streak, setStreak] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
@@ -233,6 +234,29 @@ export default function App() {
           </AnimatePresence>
 
    <div className="flex-1 min-h-0 relative">
+            {activeTab === 'home' && (
+              <HomeScreen
+                streak={streak}
+                history={history}
+                routines={routines}
+                currentDhikrId={currentDhikrId}
+                preferences={preferences}
+                favouriteIds={favouriteIds}
+                customDhikrs={dhikrs.filter(d => !d.isSystem)}
+                onNavigateTo={(tab) => setActiveTab(tab)}
+                onStartDhikr={(id) => {
+                  setCurrentDhikrId(id);
+                  setCurrentCount(0);
+                  setActiveTab('counter');
+                }}
+                onStartRoutine={(routineId, firstDhikrId) => {
+                  setCurrentDhikrId(firstDhikrId);
+                  setCurrentCount(0);
+                  setActiveTab('counter');
+                }}
+              />
+            )}
+
             {activeTab === 'counter' && (
               <CounterScreen
                 currentDhikr={activeDhikr}
@@ -345,6 +369,17 @@ export default function App() {
 
           {/* BOTTOM NAVIGATION TAB BAR */}
           <div className="h-16 shrink-0 border-t border-slate-100 dark:border-neutral-900 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md flex items-center overflow-x-auto px-1 select-none z-30 scrollbar-hide gap-1">
+            {/* Tab: Home */}
+            <button
+              id="tab_trigger_home"
+              aria-label="Home dashboard"
+              onClick={() => setActiveTab('home')}
+              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('home')}`}
+            >
+              <span className="text-lg leading-none">🏠</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">Home</span>
+            </button>
+
             {/* Tab: Counter */}
             <button
               id="tab_trigger_counter"
