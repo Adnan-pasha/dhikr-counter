@@ -6,6 +6,7 @@ import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
 import HomeScreen from './components/HomeScreen';
 import SalahTracker from './components/SalahTracker';
+import QuranReader from './components/QuranReader';
 import StatsScreen from './components/StatsScreen';
 import SettingsScreen from './components/SettingsScreen';
 import ReminderBanner from './components/ReminderBanner';
@@ -68,12 +69,14 @@ export default function App() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [reminders, setReminders] = useState<DhikrReminder[]>([]);
   const [activeReminderTriggered, setActiveReminderTriggered] = useState<DhikrReminder | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'stats' | 'settings' | 'qibla'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla'>('home');
   const [streak, setStreak] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [salahLogs, setSalahLogs] = useState<SalahLog[]>([]);
+  const [quranBookmarks, setQuranBookmarks] = useState<string[]>([]);
+  const [lastReadSurah, setLastReadSurah] = useState<number>(0);
   const [confirmModal, setConfirmModal] = useState<{
     title: string;
     message: string;
@@ -87,6 +90,20 @@ export default function App() {
     { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds, setRoutines, setSalahLogs },
     { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs },
   );
+
+  // Quran bookmarks & last read persistence
+  React.useEffect(() => {
+    const saved = localStorage.getItem('tasbih_quran_bookmarks');
+    if (saved) setQuranBookmarks(JSON.parse(saved));
+    const lastRead = localStorage.getItem('tasbih_quran_last_read');
+    if (lastRead) setLastReadSurah(parseInt(lastRead));
+  }, []);
+  React.useEffect(() => {
+    localStorage.setItem('tasbih_quran_bookmarks', JSON.stringify(quranBookmarks));
+  }, [quranBookmarks]);
+  React.useEffect(() => {
+    if (lastReadSurah > 0) localStorage.setItem('tasbih_quran_last_read', String(lastReadSurah));
+  }, [lastReadSurah]);
 
   const { dismissReminder } = useReminderScheduler(reminders, preferences, setActiveReminderTriggered);
 
@@ -356,6 +373,19 @@ export default function App() {
               />
             )}
 
+            {activeTab === 'quran' && (
+              <QuranReader
+                bookmarkedAyahs={quranBookmarks}
+                lastReadSurah={lastReadSurah}
+                onBookmarkToggle={(key) =>
+                  setQuranBookmarks(prev =>
+                    prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+                  )
+                }
+                onUpdateLastRead={setLastReadSurah}
+              />
+            )}
+
             {activeTab === 'stats' && (
               <StatsScreen
                 history={history}
@@ -444,6 +474,17 @@ export default function App() {
             >
               <span className="text-lg leading-none">🕌</span>
               <span className="text-[10px] font-bold uppercase tracking-wider">Salah</span>
+            </button>
+
+            {/* Tab: Quran */}
+            <button
+              id="tab_trigger_quran"
+              aria-label="Quran reader"
+              onClick={() => setActiveTab('quran')}
+              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('quran')}`}
+            >
+              <span className="text-lg leading-none">📗</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">Quran</span>
             </button>
 
             {/* Tab: Qibla */}

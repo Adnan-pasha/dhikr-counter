@@ -18,7 +18,7 @@ interface HomeScreenProps {
   preferences: UserPreferences;
   favouriteIds: string[];
   customDhikrs: Dhikr[];
-  onNavigateTo: (tab: 'counter' | 'adhkaar' | 'routine' | 'salah' | 'qibla' | 'stats' | 'settings') => void;
+  onNavigateTo: (tab: 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'qibla' | 'stats' | 'settings') => void;
   onStartDhikr: (id: string) => void;
   onStartRoutine: (routineId: string, firstDhikrId: string) => void;
 }
@@ -356,6 +356,7 @@ export default function HomeScreen({
               { icon: '📖', label: 'Adhkaar',  tab: 'adhkaar'  as const, color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
               { icon: '🌅', label: 'Routines', tab: 'routine'  as const, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
               { icon: '🕌', label: 'Salah',    tab: 'salah'    as const, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+              { icon: '📗', label: 'Quran',    tab: 'quran'    as const, color: 'text-green-400 bg-green-500/10 border-green-500/20' },
               { icon: '🧭', label: 'Qibla',    tab: 'qibla'    as const, color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
               { icon: '🏆', label: 'Stats',    tab: 'stats'    as const, color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
             ].map(({ icon, label, tab, color }) => (
