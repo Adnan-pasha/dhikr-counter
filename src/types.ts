@@ -2,6 +2,8 @@ export type SoundTone = 'wooden' | 'chime' | 'digital' | 'bowl';
 
 export type AppTheme = 'slate' | 'emerald' | 'amber' | 'indigo' | 'midnight';
 
+export type Madhab = 'hanafi' | 'shafi' | 'maliki' | 'hanbali';
+
 export type AdhkaarCategory =
   | 'morning'
   | 'evening'
@@ -53,6 +55,7 @@ export interface UserPreferences {
   autoAdvance: boolean;
   theme: AppTheme;
   volume: number; // 0 to 1
+  madhab: Madhab;
 }
 
 export interface DailyLog {

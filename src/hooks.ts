@@ -326,6 +326,7 @@ interface HistoryFlowDeps {
   systemDhikrs: Dhikr[];
   defaultPreferences: UserPreferences;
   defaultReminders: DhikrReminder[];
+  onResetOnboarding?: () => void;
 }
 
 export const useHistoryActions = (deps: HistoryFlowDeps) => {
@@ -355,6 +356,7 @@ export const useHistoryActions = (deps: HistoryFlowDeps) => {
         deps.setStreak(0);
         deps.setActiveTab('counter');
         localStorage.clear();
+        deps.onResetOnboarding?.();
         deps.setConfirmModal(null);
       }
     });

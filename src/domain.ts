@@ -1,8 +1,9 @@
-import { Dhikr, DhikrHistory, DhikrReminder, UserPreferences, SoundTone, AppTheme } from './types';
+import { Dhikr, DhikrHistory, DhikrReminder, UserPreferences, SoundTone, AppTheme, Madhab } from './types';
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const SOUND_TONES: SoundTone[] = ['wooden', 'chime', 'digital', 'bowl'];
 const THEMES: AppTheme[] = ['slate', 'emerald', 'amber', 'indigo', 'midnight'];
+const MADHABS: Madhab[] = ['hanafi', 'shafi', 'maliki', 'hanbali'];
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 const isString = (v: unknown): v is string => typeof v === 'string';
@@ -69,6 +70,7 @@ export const sanitizePreferences = (value: unknown, fallback: UserPreferences): 
   const soundTone = SOUND_TONES.includes(value.soundTone as SoundTone) ? value.soundTone as SoundTone : fallback.soundTone;
   const theme = THEMES.includes(value.theme as AppTheme) ? value.theme as AppTheme : fallback.theme;
   const volume = isNumber(value.volume) ? Math.min(1, Math.max(0, value.volume)) : fallback.volume;
+  const madhab = MADHABS.includes(value.madhab as Madhab) ? value.madhab as Madhab : fallback.madhab;
   return {
     soundOn: isBool(value.soundOn) ? value.soundOn : fallback.soundOn,
     soundTone,
@@ -76,6 +78,7 @@ export const sanitizePreferences = (value: unknown, fallback: UserPreferences): 
     autoAdvance: isBool(value.autoAdvance) ? value.autoAdvance : fallback.autoAdvance,
     theme,
     volume,
+    madhab,
   };
 };
 

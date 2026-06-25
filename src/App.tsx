@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';
-import { Dhikr, DhikrHistory, UserPreferences, AppTheme, DhikrReminder, Routine, SalahLog, SalahName } from './types';
+import { Dhikr, DhikrHistory, UserPreferences, DhikrReminder, Routine, SalahLog, SalahName, Madhab } from './types';
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
 import HomeScreen from './components/HomeScreen';
@@ -13,6 +13,7 @@ import ReminderBanner from './components/ReminderBanner';
 import ConfirmModal from './components/ConfirmModal';
 import AdhkaarLibrary from './components/AdhkaarLibrary';
 import RoutineManager from './components/RoutineManager';
+import OnboardingFlow from './components/OnboardingFlow';
 import { ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 
@@ -28,6 +29,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   autoAdvance: true,
   theme: 'emerald',
   volume: 0.5,
+  madhab: 'shafi',
 };
 
 // Default Dhikr Reminders Preset
@@ -62,6 +64,9 @@ const DEFAULT_REMINDERS: DhikrReminder[] = [
 ];
 
 export default function App() {
+  const [onboardingCompleted, setOnboardingCompleted] = useState(
+    () => localStorage.getItem('tasbih_onboarding_completed') === 'true',
+  );
   const [dhikrs, setDhikrs] = useState<Dhikr[]>([]);
   const [currentDhikrId, setCurrentDhikrId] = useState<string>('subhanallah');
   const [currentCount, setCurrentCount] = useState<number>(0);
@@ -177,7 +182,23 @@ export default function App() {
     systemDhikrs: SYSTEM_DHIKRS,
     defaultPreferences: DEFAULT_PREFERENCES,
     defaultReminders: DEFAULT_REMINDERS,
+    onResetOnboarding: () => setOnboardingCompleted(false),
   });
+
+  const handleOnboardingComplete = (
+    madhab: Madhab,
+    notificationChoice: NotificationPermission | 'unsupported' | 'skipped',
+  ) => {
+    setPreferences((prev) => ({ ...prev, madhab }));
+    localStorage.setItem('tasbih_notification_choice', notificationChoice);
+    localStorage.setItem('tasbih_onboarding_completed', 'true');
+    setOnboardingCompleted(true);
+    setActiveTab('home');
+  };
+
+  if (!onboardingCompleted) {
+    return <OnboardingFlow defaultMadhab={preferences.madhab} onComplete={handleOnboardingComplete} />;
+  }
 
   const getThemeBg = () => {
     if (preferences.theme === 'midnight') return 'bg-neutral-950 dark';

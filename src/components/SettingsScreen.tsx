@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, Volume2, Sparkles, Sliders, Smartphone, HelpCircle, User, Clock, Plus, Trash2, Bell } from 'lucide-react';
-import { UserPreferences, SoundTone, AppTheme, DhikrReminder, Dhikr } from '../types';
+import { Settings, Volume2, Sparkles, Sliders, Smartphone, HelpCircle, User, Clock, Plus, Trash2, Bell, BookOpenText, Check } from 'lucide-react';
+import { UserPreferences, SoundTone, AppTheme, DhikrReminder, Dhikr, Madhab } from '../types';
 import { playBeadSound, playCompletionSound } from '../audio';
 
 interface SettingsScreenProps {
@@ -152,6 +152,13 @@ export default function SettingsScreen({
     { id: 'midnight', label: 'Obsidian Jet', color: 'bg-[#030712] border border-slate-800', border: 'border-red-500' },
   ];
 
+  const madhabs: Array<{ id: Madhab; label: string; note: string }> = [
+    { id: 'hanafi', label: 'Hanafi', note: 'Later Asr calculation' },
+    { id: 'shafi', label: "Shafi'i", note: 'Standard Asr calculation' },
+    { id: 'maliki', label: 'Maliki', note: 'Standard Asr calculation' },
+    { id: 'hanbali', label: 'Hanbali', note: 'Standard Asr calculation' },
+  ];
+
   return (
     <div id="settings_screen_container" className="flex flex-col h-full bg-[#0f172a] text-slate-100">
       
@@ -168,6 +175,43 @@ export default function SettingsScreen({
 
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
         
+        <div className="space-y-3">
+          <div>
+            <h3 className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-slate-400">
+              <BookOpenText className="h-3.5 w-3.5" /> Prayer calculation
+            </h3>
+            <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
+              Your madhab preference determines the Asr calculation used by prayer-time features.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {madhabs.map((madhab) => {
+              const selected = preferences.madhab === madhab.id;
+              return (
+                <button
+                  key={madhab.id}
+                  type="button"
+                  onClick={() => onChangePreferences({ madhab: madhab.id })}
+                  aria-pressed={selected}
+                  className={`relative rounded-2xl border p-3 text-left transition-all ${
+                    selected
+                      ? 'border-emerald-500/50 bg-emerald-500/10'
+                      : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'
+                  }`}
+                >
+                  {selected && (
+                    <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-400 text-emerald-950">
+                      <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                    </span>
+                  )}
+                  <p className={`text-xs font-black ${selected ? 'text-emerald-300' : 'text-slate-200'}`}>{madhab.label}</p>
+                  <p className="mt-1 pr-3 text-[8px] leading-relaxed text-slate-500">{madhab.note}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Card: Themes Selection */}
         <div className="space-y-3">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 select-none">

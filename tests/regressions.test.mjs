@@ -97,3 +97,13 @@ test('SW update uses in-app banner instead of window.confirm', () => {
   assert.match(main, /sw-update-confirm/);
   assert.match(main, /sw-update-dismiss/);
 });
+
+
+test('first-time onboarding is persisted and requests notification permission', () => {
+  const app = readFileSync('src/App.tsx', 'utf8');
+  const onboarding = readFileSync('src/components/OnboardingFlow.tsx', 'utf8');
+  assert.match(app, /tasbih_onboarding_completed/);
+  assert.match(app, /<OnboardingFlow/);
+  assert.match(onboarding, /Notification\.requestPermission/);
+  assert.match(onboarding, /Choose your madhab/);
+});

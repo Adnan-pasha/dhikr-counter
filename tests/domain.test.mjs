@@ -28,6 +28,7 @@ const defaultPrefs = {
   autoAdvance: true,
   theme: 'emerald',
   volume: 0.5,
+  madhab: 'shafi',
 };
 
 const defaultReminder = [{
@@ -60,6 +61,7 @@ test('sanitizePreferences clamps and falls back invalid values', () => {
   assert.equal(result.soundTone, 'wooden');
   assert.equal(result.theme, 'emerald');
   assert.equal(result.volume, 1);
+  assert.equal(result.madhab, 'shafi');
 });
 
 test('sanitizeDhikrs drops malformed items', () => {

@@ -295,6 +295,7 @@ export default function AdhkaarLibrary({
 // ─── Card Component ───────────────────────────────────────────────────────────
 
 interface AdhkaarCardProps {
+  key?: React.Key;
   dhikr: Dhikr;
   idx: number;
   isActive: boolean;
