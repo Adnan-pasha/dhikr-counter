@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, Settings as SettingsIcon, CircleDot, Compass, WifiOff } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
 import { Dhikr, DhikrHistory, UserPreferences, DhikrReminder, Routine, SalahLog, SalahName, Madhab } from './types';
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
@@ -13,6 +13,7 @@ import ReminderBanner from './components/ReminderBanner';
 import ConfirmModal from './components/ConfirmModal';
 import AdhkaarLibrary from './components/AdhkaarLibrary';
 import RoutineManager from './components/RoutineManager';
+import BottomNav from './components/BottomNav';
 import OnboardingFlow from './components/OnboardingFlow';
 import { ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
@@ -219,30 +220,41 @@ export default function App() {
   };
 
   return (
-    <div id="app_root_viewport" className={`min-h-screen w-screen flex items-center justify-center transition-colors duration-500 overflow-y-auto ${getThemeBg()} py-6 px-4 md:py-10`}>
-      
-      {/* PHONE WRAP MOMENT FOR DESKTOP WORKSPACE */}
-      {/* Adapts beautifully on screens less than md by hiding the simulated physical frame */}
-      <div 
+    <div
+      id="app_root_viewport"
+      className="min-h-screen w-screen flex items-center justify-center overflow-y-auto py-0 md:py-8 md:px-4"
+      style={{ background: 'var(--color-bg-deep)' }}
+    >
+      {/* Phone simulator frame (desktop only) */}
+      <div
         id="phone_simulator_frame"
-        className="w-full max-w-sm h-[780px] md:rounded-[40px] md:border-[12px] md:border-neutral-900 md:shadow-2xl md:bg-white dark:md:bg-neutral-950 overflow-hidden flex flex-col relative"
+        className="w-full max-w-[390px] h-screen md:h-[820px] md:rounded-[48px] overflow-hidden flex flex-col relative"
         style={{
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0,0,0,0.1)'
+          background: 'var(--color-bg-base)',
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 32px 80px -12px rgba(0,0,0,0.8), 0 0 120px rgba(245,158,11,0.04)',
         }}
       >
-        
-        {/* PHYSICAL SIMULATED PHONE STATUS BAR AND CAMERA NOTCH (Desktop Only) */}
-        <div className="hidden md:flex bg-neutral-950 text-white h-7 shrink-0 relative items-center justify-between px-6 select-none z-50">
-          <span className="text-[10px] font-bold font-mono text-neutral-400">9:41</span>
-          <div className="absolute left-1/2 -translate-x-1/2 top-1 w-24 h-4.5 bg-neutral-900 rounded-b-xl border border-neutral-850" />
-          <div className="flex items-center gap-1 text-[10px] font-bold text-neutral-400">
+        {/* Status bar (desktop only) */}
+        <div className="hidden md:flex bg-[#090E1A] h-8 shrink-0 items-center justify-between px-7 select-none z-50">
+          <span className="text-[11px] font-bold font-mono text-slate-400">9:41</span>
+          <div className="absolute left-1/2 -translate-x-1/2 w-28 h-5 bg-[#090E1A] rounded-b-2xl border-x border-b border-slate-800/60 flex items-center justify-center gap-1.5">
+            <div className="w-1 h-1 rounded-full bg-slate-700" />
+            <div className="w-3 h-3 rounded-full border border-slate-700" />
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
             <span>5G</span>
-            <div className="w-4 h-2 rounded-xs border border-neutral-400 p-0.5 flex bg-emerald-500" />
+            <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+              <rect x="0" y="4" width="3" height="6" rx="1" fill="currentColor" opacity="0.4"/>
+              <rect x="4.5" y="2.5" width="3" height="7.5" rx="1" fill="currentColor" opacity="0.6"/>
+              <rect x="9" y="0.5" width="3" height="9.5" rx="1" fill="currentColor"/>
+              <rect x="13.5" y="2" width="2" height="6" rx="0.5" fill="none" stroke="currentColor" strokeWidth="1"/>
+              <rect x="14" y="3.5" width="1" height="3" rx="0.3" fill="currentColor"/>
+            </svg>
           </div>
         </div>
 
-        {/* INNER SCREEN CONTAINER (THE ACTUAL APPLET CORES) */}
-        <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-neutral-950 relative overflow-hidden">
+        {/* Inner screen container */}
+        <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden" style={{ background: 'var(--color-bg-base)' }}>
 
           {/* GENTLE SCHEDULER REMINDER ALERTS — outside overflow-hidden */}
           <ReminderBanner
@@ -439,108 +451,11 @@ export default function App() {
             )}
           </div>
 
-          {/* BOTTOM NAVIGATION TAB BAR */}
-          <div className="h-16 shrink-0 border-t border-slate-100 dark:border-neutral-900 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md flex items-center overflow-x-auto px-1 select-none z-30 scrollbar-hide gap-1">
-            {/* Tab: Home */}
-            <button
-              id="tab_trigger_home"
-              aria-label="Home dashboard"
-              onClick={() => setActiveTab('home')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('home')}`}
-            >
-              <span className="text-lg leading-none">🏠</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Home</span>
-            </button>
-
-            {/* Tab: Counter */}
-            <button
-              id="tab_trigger_counter"
-              aria-label="Bead counter"
-              onClick={() => setActiveTab('counter')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('counter')}`}
-            >
-              <CircleDot className="w-5 h-5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Bead</span>
-            </button>
-
-            {/* Tab: Library */}
-            {/* Tab: Adhkaar (unified library) */}
-            <button
-              id="tab_trigger_adhkaar"
-              aria-label="Adhkaar library"
-              onClick={() => setActiveTab('adhkaar')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('adhkaar')}`}
-            >
-              <span className="text-lg leading-none">📖</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Adhkaar</span>
-            </button>
-
-            {/* Tab: Routine */}
-            <button
-              id="tab_trigger_routine"
-              aria-label="Daily routines"
-              onClick={() => setActiveTab('routine')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('routine')}`}
-            >
-              <span className="text-lg leading-none">🌅</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Routine</span>
-            </button>
-
-            {/* Tab: Salah */}
-            <button
-              id="tab_trigger_salah"
-              aria-label="Salah tracker"
-              onClick={() => setActiveTab('salah')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('salah')}`}
-            >
-              <span className="text-lg leading-none">🕌</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Salah</span>
-            </button>
-
-            {/* Tab: Quran */}
-            <button
-              id="tab_trigger_quran"
-              aria-label="Quran reader"
-              onClick={() => setActiveTab('quran')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('quran')}`}
-            >
-              <span className="text-lg leading-none">📗</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Quran</span>
-            </button>
-
-            {/* Tab: Qibla */}
-            <button
-              id="tab_trigger_qibla"
-              aria-label="Qibla compass"
-              onClick={() => setActiveTab('qibla')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('qibla')}`}
-            >
-              <Compass className="w-5 h-5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Qibla</span>
-            </button>
-
-            {/* Tab: Stats */}
-            <button
-              id="tab_trigger_stats"
-              aria-label="Stats"
-              onClick={() => setActiveTab('stats')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('stats')}`}
-            >
-              <Trophy className="w-5 h-5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Stats</span>
-            </button>
-
-            {/* Tab: Settings */}
-            <button
-              id="tab_trigger_settings"
-              aria-label="Options"
-              onClick={() => setActiveTab('settings')}
-              className={`flex flex-col items-center gap-1 py-1.5 px-2.5 transition-colors cursor-pointer focus:outline-none ${activeTabClass('settings')}`}
-            >
-              <SettingsIcon className="w-5 h-5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Options</span>
-            </button>
-          </div>
+          {/* ── BOTTOM NAVIGATION ───────────────────────────────────────── */}
+          <BottomNav
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
 
           {/* CONFIRM MODAL */}
           <ConfirmModal

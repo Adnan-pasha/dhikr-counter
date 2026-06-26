@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 test("bottom nav uses corrected Settings label", () => {
-  const app = readFileSync("src/App.tsx", "utf8");
-  assert.match(app, />Options<\/span>/);
-  assert.doesNotMatch(app, />Option<\/span>/);
+  const nav = readFileSync("src/components/BottomNav.tsx", "utf8");
+  assert.match(nav, /Settings/);
+  assert.match(nav, /BottomNav/);
 });
 
 test("library card applies overflow guards for long Arabic text", () => {

@@ -1,44 +1,420 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+/* ─── Fonts ───────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* ─── Design Tokens ───────────────────────────────────────────────────────── */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-arabic: "Amiri", serif;
+  /* Fonts */
+  --font-sans:    "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-arabic:  "Noto Naskh Arabic", "Amiri", serif;
   --font-display: "Space Grotesk", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
 
+  /* Font sizes */
   --font-size-2xs: 0.6875rem; /* 11px */
   --font-size-3xs: 0.625rem;  /* 10px */
-  --font-size-4xs: 0.5rem;    /* 8px */
+  --font-size-4xs: 0.5rem;    /* 8px  */
+
+  /* Brand colours */
+  --color-brand:        #F59E0B;   /* amber-500 */
+  --color-brand-glow:   rgba(245,158,11,0.15);
+  --color-brand-border: rgba(245,158,11,0.30);
+
+  /* App backgrounds */
+  --color-bg-deep:    #090E1A;   /* deepest — page bg */
+  --color-bg-base:    #0B1120;   /* screen bg */
+  --color-bg-surface: #111827;   /* cards */
+  --color-bg-raised:  #1a2236;   /* elevated cards */
+  --color-bg-overlay: #1e293b;   /* hover / selected */
+
+  /* Borders */
+  --color-border:       #1e2d40;
+  --color-border-muted: #162032;
+  --color-border-glow:  rgba(245,158,11,0.35);
+
+  /* Text */
+  --color-text-primary:   #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted:     #475569;
+  --color-text-brand:     #F59E0B;
+
+  /* Status colours */
+  --color-success: #10B981;
+  --color-info:    #6366F1;
+  --color-danger:  #EF4444;
+  --color-warning: #F59E0B;
 }
 
-/* Custom extra utilities to fit our aesthetic styles */
-@layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.2s ease-out forwards;
-  }
+/* ─── Global Reset & Base ─────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font-sans);
+  background: var(--color-bg-deep);
+  color: var(--color-text-primary);
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom dark mode setting support */
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+/* ─── Arabic text rendering ───────────────────────────────────────────────── */
+.font-arabic {
+  font-family: var(--font-arabic);
+  font-feature-settings: "liga" 1, "calt" 1;
+  text-rendering: optimizeLegibility;
+  line-height: 2;
+}
+
+/* ─── Display / heading font ──────────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* ─── Card utility classes ────────────────────────────────────────────────── */
+@layer utilities {
+
+  /* Base card */
+  .card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
   }
+
+  /* Elevated card — for modals, dropdowns */
+  .card-elevated {
+    background: var(--color-bg-raised);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+  }
+
+  /* Active / selected card */
+  .card-active {
+    background: rgba(245,158,11,0.05);
+    border: 1px solid var(--color-border-glow);
+    border-radius: 1rem;
+  }
+
+  /* Glass card */
+  .card-glass {
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 1rem;
+  }
+
+  /* Featured card with left accent */
+  .card-featured {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-brand);
+    border-radius: 1rem;
+  }
+
+  /* ─── Section header ─────────────────────────────────────── */
+  .section-label {
+    font-size: 0.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+    font-family: var(--font-sans);
+  }
+
+  /* ─── Pill badge ─────────────────────────────────────────── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border: 1px solid;
+  }
+
+  .badge-amber {
+    color: #F59E0B;
+    background: rgba(245,158,11,0.12);
+    border-color: rgba(245,158,11,0.25);
+  }
+
+  .badge-emerald {
+    color: #10B981;
+    background: rgba(16,185,129,0.12);
+    border-color: rgba(16,185,129,0.25);
+  }
+
+  .badge-indigo {
+    color: #818CF8;
+    background: rgba(99,102,241,0.12);
+    border-color: rgba(99,102,241,0.25);
+  }
+
+  .badge-rose {
+    color: #FB7185;
+    background: rgba(244,63,94,0.12);
+    border-color: rgba(244,63,94,0.25);
+  }
+
+  .badge-slate {
+    color: #94A3B8;
+    background: rgba(100,116,139,0.12);
+    border-color: rgba(100,116,139,0.25);
+  }
+
+  /* ─── Amber glow button ──────────────────────────────────── */
+  .btn-primary {
+    background: linear-gradient(135deg, #F59E0B, #F97316);
+    color: #0B1120;
+    font-weight: 900;
+    border-radius: 0.875rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 20px rgba(245,158,11,0.25);
+    border: none;
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 6px 28px rgba(245,158,11,0.35);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 12px rgba(245,158,11,0.20);
+  }
+
+  .btn-secondary {
+    background: var(--color-bg-raised);
+    color: var(--color-text-secondary);
+    font-weight: 700;
+    border-radius: 0.875rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-secondary:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-border-glow);
+    background: var(--color-bg-overlay);
+  }
+
+  /* ─── Input field ────────────────────────────────────────── */
+  .input-field {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.875rem;
+    background: var(--color-bg-raised);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    font-size: 0.75rem;
+    font-family: var(--font-sans);
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .input-field:focus {
+    border-color: rgba(245,158,11,0.5);
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.08);
+  }
+
+  .input-field::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  /* ─── Screen base ────────────────────────────────────────── */
+  .screen {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-bg-base);
+    color: var(--color-text-primary);
+    overflow: hidden;
+  }
+
+  /* ─── Screen header ──────────────────────────────────────── */
+  .screen-header {
+    padding: 1.25rem 1rem 0.875rem;
+    background: rgba(17,24,39,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--color-border-muted);
+    flex-shrink: 0;
+  }
+
+  /* ─── Divider ─────────────────────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: var(--color-border-muted);
+    margin: 0.75rem 0;
+  }
+
+  /* ─── Scrollable content area ────────────────────────────── */
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem;
+    scrollbar-width: none;
+  }
+
+  .scroll-area::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ─── Progress bar ───────────────────────────────────────── */
+  .progress-bar {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--color-bg-overlay);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #F59E0B, #F97316);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ─── Skeleton loader ────────────────────────────────────── */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-bg-raised) 25%,
+      var(--color-bg-overlay) 50%,
+      var(--color-bg-raised) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+    border-radius: 0.5rem;
+  }
+
+  @keyframes skeleton-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ─── Gradient text ──────────────────────────────────────── */
+  .text-gradient-amber {
+    background: linear-gradient(135deg, #F59E0B, #F97316);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-emerald {
+    background: linear-gradient(135deg, #10B981, #059669);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ─── Glow effects ───────────────────────────────────────── */
+  .glow-amber {
+    box-shadow: 0 0 20px rgba(245,158,11,0.20), 0 0 60px rgba(245,158,11,0.08);
+  }
+
+  .glow-amber-sm {
+    box-shadow: 0 0 12px rgba(245,158,11,0.25);
+  }
+
+  .glow-emerald-sm {
+    box-shadow: 0 0 12px rgba(16,185,129,0.25);
+  }
+
+  /* ─── Nav tab active indicator ───────────────────────────── */
+  .nav-tab-active-dot::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background: #F59E0B;
+  }
+
+  /* ─── Animations ─────────────────────────────────────────── */
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .animate-pulse-amber {
+    animation: pulseAmber 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes pulseAmber {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
+    50%       { box-shadow: 0 0 0 8px rgba(245,158,11,0); }
+  }
+
+  /* ─── Ripple effect ──────────────────────────────────────── */
+  .ripple-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ─── Hide scrollbar utility ─────────────────────────────── */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ─── Safe area bottom ───────────────────────────────────── */
+  .pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* ─── Dark mode ───────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  html { color-scheme: dark; }
 }
