@@ -135,114 +135,104 @@ export default function HomeScreen({
   const favDhikrs = allDhikrs.filter(d => favouriteIds.includes(d.id)).slice(0, 4);
 
   return (
-    <div className="flex flex-col h-full bg-[#0f172a] text-slate-100 overflow-y-auto">
+    <div className="flex flex-col h-full overflow-y-auto scrollbar-hide" style={{ background: 'var(--color-bg-base)' }}>
 
       {/* ── Hero Header ──────────────────────────────────────────────────── */}
-      <div className="relative px-5 pt-6 pb-5 bg-gradient-to-b from-slate-900 to-[#0f172a] border-b border-slate-800/60 overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative px-5 pt-6 pb-5 overflow-hidden shrink-0"
+        style={{ background: 'linear-gradient(180deg, var(--color-bg-surface) 0%, transparent 100%)', borderBottom: '1px solid var(--color-border-muted)' }}
+      >
+        {/* Decorative glows */}
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.07) 0%, transparent 70%)' }} />
+        <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%)' }} />
 
         {/* Greeting + date */}
         <div className="relative z-10">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-500/80">
+              <p className="section-label" style={{ color: 'var(--color-text-brand)', opacity: 0.9 }}>
                 {greeting.emoji} {greeting.text}
               </p>
-              <h1 className="text-2xl font-black text-slate-50 mt-0.5 leading-tight">
+              <h1 className="font-display font-black text-2xl mt-0.5 leading-tight" style={{ color: 'var(--color-text-primary)' }}>
                 Dhikr Counter
               </h1>
-              <p className="text-[10px] text-slate-500 mt-1 font-medium">
+              <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-text-muted)' }}>
                 {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </p>
-              <p className="text-[10px] text-amber-500/70 font-medium">{hijriDate}</p>
+              <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>{hijriDate}</p>
             </div>
             {/* Live clock */}
             <div className="text-right">
-              <p className="text-2xl font-black text-slate-100 tabular-nums leading-none">
+              <p className="font-display font-black text-2xl tabular-nums leading-none" style={{ color: 'var(--color-text-primary)' }}>
                 {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
               </p>
-              <p className="text-[9px] text-slate-500 mt-1 uppercase tracking-widest">Local Time</p>
+              <p className="section-label mt-1">Local Time</p>
             </div>
           </div>
 
           {/* Stats row */}
-          <div className="flex gap-3 mt-4">
-            <div className="flex-1 bg-slate-800/60 rounded-2xl p-3 border border-slate-700/60">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Flame className="w-3.5 h-3.5 text-orange-400" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Streak</span>
+          <div className="flex gap-2.5 mt-4">
+            {[
+              { icon: <Flame className="w-3.5 h-3.5" />, label: 'Streak', value: streak, unit: 'days', color: '#FB923C' },
+              { icon: <Target className="w-3.5 h-3.5" />, label: 'Today', value: completedTodayIds.length, unit: 'adhkaar', color: '#F59E0B' },
+              { icon: <Trophy className="w-3.5 h-3.5" />, label: 'Total', value: allTimeCount >= 1000 ? `${(allTimeCount / 1000).toFixed(1)}k` : allTimeCount, unit: 'beads', color: '#FBBF24' },
+            ].map(({ icon, label, value, unit, color }) => (
+              <div key={label} className="flex-1 rounded-2xl p-3" style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)' }}>
+                <div className="flex items-center gap-1.5 mb-1.5" style={{ color }}>
+                  {icon}
+                  <span className="section-label" style={{ color: 'var(--color-text-muted)' }}>{label}</span>
+                </div>
+                <p className="font-display font-black text-xl leading-none" style={{ color }}>{value}</p>
+                <p className="text-[9px] mt-1" style={{ color: 'var(--color-text-muted)' }}>{unit}</p>
               </div>
-              <p className="text-xl font-black text-orange-400">{streak}</p>
-              <p className="text-[9px] text-slate-500">consecutive days</p>
-            </div>
-            <div className="flex-1 bg-slate-800/60 rounded-2xl p-3 border border-slate-700/60">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Target className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Today</span>
-              </div>
-              <p className="text-xl font-black text-amber-400">{completedTodayIds.length}</p>
-              <p className="text-[9px] text-slate-500">adhkaar done</p>
-            </div>
-            <div className="flex-1 bg-slate-800/60 rounded-2xl p-3 border border-slate-700/60">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Trophy className="w-3.5 h-3.5 text-yellow-400" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total</span>
-              </div>
-              <p className="text-xl font-black text-yellow-400">
-                {allTimeCount >= 1000 ? `${(allTimeCount / 1000).toFixed(1)}k` : allTimeCount}
-              </p>
-              <p className="text-[9px] text-slate-500">all-time beads</p>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="px-4 py-4 space-y-5">
+      <div className="scroll-area space-y-5">
 
         {/* ── Quick Tasbih ─────────────────────────────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-2.5">
-            <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quick Tasbih</h2>
-            <button onClick={() => onNavigateTo('counter')} className="text-[10px] font-black text-amber-400 hover:text-amber-300 cursor-pointer flex items-center gap-0.5">
+            <h2 className="section-label">Quick Tasbih</h2>
+            <button onClick={() => onNavigateTo('counter')} className="text-[10px] font-black cursor-pointer flex items-center gap-0.5 transition-colors" style={{ color: 'var(--color-text-brand)' }}>
               Open <ChevronRight className="w-3 h-3" />
             </button>
           </div>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => onStartDhikr(currentDhikrId)}
-            className="w-full bg-gradient-to-br from-slate-800 to-slate-900 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:border-amber-500/50 transition-all"
+            className="w-full card-featured rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all hover:brightness-110"
           >
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-              <span className="text-xl font-arabic text-amber-400">{currentDhikr.nameAr.slice(0, 3)}</span>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.2)' }}>
+              <span className="text-xl font-arabic" style={{ color: 'var(--color-text-brand)' }}>{currentDhikr.nameAr.slice(0, 3)}</span>
             </div>
             <div className="flex-1 text-left min-w-0">
-              <p className="text-sm font-black text-slate-100">{currentDhikr.nameEn}</p>
+              <p className="font-display font-black text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>{currentDhikr.nameEn}</p>
               {currentDhikr.transliteration && (
-                <p className="text-[10px] text-amber-400/70 italic mt-0.5">{currentDhikr.transliteration}</p>
+                <p className="text-[10px] italic mt-0.5 truncate" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>{currentDhikr.transliteration}</p>
               )}
-              <p className="text-[10px] text-slate-500 mt-0.5 truncate">{currentDhikr.meaning}</p>
+              <p className="text-[10px] mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{currentDhikr.meaning}</p>
             </div>
             <div className="shrink-0 flex flex-col items-center gap-1">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center shadow-lg shadow-amber-950/30">
-                <Play className="w-4 h-4 text-slate-950 fill-slate-950" />
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #F59E0B, #F97316)', boxShadow: '0 4px 16px rgba(245,158,11,0.3)' }}>
+                <Play className="w-4 h-4 fill-slate-950 text-slate-950" />
               </div>
-              <span className="text-[9px] text-slate-500">{currentDhikr.targetCount}×</span>
+              <span className="text-[9px] font-bold" style={{ color: 'var(--color-text-muted)' }}>{currentDhikr.targetCount}×</span>
             </div>
           </motion.button>
         </section>
 
         {/* ── Daily Ayah ──────────────────────────────────────────────────── */}
         <section>
-          <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/5 border border-indigo-500/20 rounded-2xl p-4">
+          <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.06))', border: '1px solid rgba(99,102,241,0.2)' }}>
             <div className="flex items-center gap-1.5 mb-3">
-              <Star className="w-3 h-3 text-indigo-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Ayah of the Day</span>
+              <Star className="w-3 h-3" style={{ color: '#818CF8' }} />
+              <span className="section-label" style={{ color: '#818CF8' }}>Ayah of the Day</span>
             </div>
-            <p className="text-base font-arabic text-slate-100 leading-loose text-right mb-2">{ayah.ar}</p>
-            <p className="text-[11px] text-slate-300 leading-relaxed italic">"{ayah.en}"</p>
-            <p className="text-[9px] text-indigo-400/70 font-bold mt-2">{ayah.ref}</p>
+            <p className="font-arabic text-lg leading-loose text-right mb-2" style={{ color: 'var(--color-text-primary)' }}>{ayah.ar}</p>
+            <p className="text-[11px] leading-relaxed italic" style={{ color: 'var(--color-text-secondary)' }}>"{ayah.en}"</p>
+            <p className="text-[9px] font-bold mt-2" style={{ color: '#818CF8', opacity: 0.7 }}>{ayah.ref}</p>
           </div>
         </section>
 
@@ -250,8 +240,8 @@ export default function HomeScreen({
         {todayRoutines.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-2.5">
-              <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Today's Routines</h2>
-              <button onClick={() => onNavigateTo('routine')} className="text-[10px] font-black text-amber-400 hover:text-amber-300 cursor-pointer flex items-center gap-0.5">
+              <h2 className="section-label">Today's Routines</h2>
+              <button onClick={() => onNavigateTo('routine')} className="text-[10px] font-black cursor-pointer flex items-center gap-0.5" style={{ color: 'var(--color-text-brand)' }}>
                 All <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -265,42 +255,45 @@ export default function HomeScreen({
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className={`rounded-2xl border p-3.5 ${allDone ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-900/60 border-slate-800'}`}
+                    className="rounded-2xl p-3.5"
+                    style={{
+                      background: allDone ? 'rgba(16,185,129,0.06)' : 'var(--color-bg-surface)',
+                      border: `1px solid ${allDone ? 'rgba(16,185,129,0.25)' : 'var(--color-border)'}`,
+                    }}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{routine.emoji}</span>
                         <div>
-                          <p className={`text-xs font-black leading-tight ${allDone ? 'text-emerald-400' : 'text-slate-100'}`}>
+                          <p className="text-xs font-black leading-tight" style={{ color: allDone ? '#10B981' : 'var(--color-text-primary)' }}>
                             {routine.name}
                           </p>
-                          <p className="text-[9px] text-slate-500">
+                          <p className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>
                             {routine.completed}/{routine.total} adhkaar
                           </p>
                         </div>
                       </div>
                       {allDone ? (
-                        <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25">
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-[9px] font-black text-emerald-400">Done!</span>
-                        </div>
+                        <span className="badge badge-emerald"><Check className="w-2.5 h-2.5" /> Done</span>
                       ) : (
-                        <button
+                        <motion.button
+                          whileTap={{ scale: 0.93 }}
                           onClick={() => routine.firstPending && onStartRoutine(routine.id, routine.firstPending.id)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-[9px] cursor-pointer hover:opacity-90 shadow-sm"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[9px] font-black cursor-pointer"
+                          style={{ background: 'linear-gradient(135deg, #F59E0B, #F97316)', color: '#0B1120', boxShadow: '0 2px 10px rgba(245,158,11,0.25)' }}
                         >
-                          <Play className="w-2.5 h-2.5 fill-slate-950" />
+                          <Play className="w-2.5 h-2.5 fill-current" />
                           {routine.completed === 0 ? 'Begin' : 'Continue'}
-                        </button>
+                        </motion.button>
                       )}
                     </div>
-                    {/* Progress bar */}
-                    <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="progress-bar">
                       <motion.div
-                        className={`h-full rounded-full ${allDone ? 'bg-emerald-400' : 'bg-gradient-to-r from-amber-500 to-orange-400'}`}
+                        className="progress-fill"
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
                         transition={{ duration: 0.6, ease: 'easeOut', delay: idx * 0.1 }}
+                        style={{ background: allDone ? '#10B981' : undefined }}
                       />
                     </div>
                   </motion.div>
@@ -314,8 +307,8 @@ export default function HomeScreen({
         {favDhikrs.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-2.5">
-              <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400">❤️ Favourites</h2>
-              <button onClick={() => onNavigateTo('adhkaar')} className="text-[10px] font-black text-amber-400 hover:text-amber-300 cursor-pointer flex items-center gap-0.5">
+              <h2 className="section-label">❤️ Favourites</h2>
+              <button onClick={() => onNavigateTo('adhkaar')} className="text-[10px] font-black cursor-pointer flex items-center gap-0.5" style={{ color: 'var(--color-text-brand)' }}>
                 All <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -328,17 +321,21 @@ export default function HomeScreen({
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    whileTap={{ scale: 0.96 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => onStartDhikr(dhikr.id)}
-                    className={`text-left p-3 rounded-2xl border cursor-pointer transition-all ${
-                      done ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-900/60 border-slate-800 hover:border-amber-500/30'
-                    }`}
+                    className="text-left p-3 rounded-2xl cursor-pointer transition-all"
+                    style={{
+                      background: done ? 'rgba(16,185,129,0.06)' : 'var(--color-bg-surface)',
+                      border: `1px solid ${done ? 'rgba(16,185,129,0.25)' : 'var(--color-border)'}`,
+                    }}
                   >
-                    <p className="text-xs font-black text-slate-100 truncate">{dhikr.nameEn}</p>
-                    <p className="text-[9px] text-amber-400/70 italic mt-0.5 truncate">{dhikr.transliteration ?? dhikr.meaning}</p>
+                    <p className="text-xs font-black truncate" style={{ color: 'var(--color-text-primary)' }}>{dhikr.nameEn}</p>
+                    <p className="text-[9px] italic mt-0.5 truncate" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>
+                      {dhikr.transliteration ?? dhikr.meaning}
+                    </p>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-[9px] text-slate-500">{dhikr.targetCount}×</span>
-                      {done && <Check className="w-3 h-3 text-emerald-400" />}
+                      <span className="text-[9px] font-bold" style={{ color: 'var(--color-text-muted)' }}>{dhikr.targetCount}×</span>
+                      {done && <Check className="w-3 h-3" style={{ color: '#10B981' }} />}
                     </div>
                   </motion.button>
                 );
@@ -347,27 +344,27 @@ export default function HomeScreen({
           </section>
         )}
 
-        {/* ── Quick Nav Grid ──────────────────────────────────────────────── */}
+        {/* ── Explore grid ────────────────────────────────────────────────── */}
         <section>
-          <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">Explore</h2>
+          <h2 className="section-label mb-2.5">Explore</h2>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { icon: '📿', label: 'Counter',  tab: 'counter'  as const, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-              { icon: '📖', label: 'Adhkaar',  tab: 'adhkaar'  as const, color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
-              { icon: '🌅', label: 'Routines', tab: 'routine'  as const, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
-              { icon: '🕌', label: 'Salah',    tab: 'salah'    as const, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-              { icon: '📗', label: 'Quran',    tab: 'quran'    as const, color: 'text-green-400 bg-green-500/10 border-green-500/20' },
-              { icon: '🧭', label: 'Qibla',    tab: 'qibla'    as const, color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
-              { icon: '🏆', label: 'Stats',    tab: 'stats'    as const, color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
-            ].map(({ icon, label, tab, color }) => (
+              { icon: '📿', label: 'Counter',  tab: 'counter'  as const, bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.18)', text: '#F59E0B' },
+              { icon: '📖', label: 'Adhkaar',  tab: 'adhkaar'  as const, bg: 'rgba(20,184,166,0.10)', border: 'rgba(20,184,166,0.18)', text: '#2DD4BF' },
+              { icon: '🌅', label: 'Routines', tab: 'routine'  as const, bg: 'rgba(99,102,241,0.10)', border: 'rgba(99,102,241,0.18)', text: '#818CF8' },
+              { icon: '🕌', label: 'Salah',    tab: 'salah'    as const, bg: 'rgba(16,185,129,0.10)', border: 'rgba(16,185,129,0.18)', text: '#34D399' },
+              { icon: '📗', label: 'Quran',    tab: 'quran'    as const, bg: 'rgba(34,197,94,0.10)',  border: 'rgba(34,197,94,0.18)',  text: '#4ADE80' },
+              { icon: '🧭', label: 'Qibla',    tab: 'qibla'    as const, bg: 'rgba(6,182,212,0.10)',  border: 'rgba(6,182,212,0.18)',  text: '#22D3EE' },
+            ].map(({ icon, label, tab, bg, border, text }) => (
               <motion.button
                 key={tab}
-                whileTap={{ scale: 0.94 }}
+                whileTap={{ scale: 0.93 }}
                 onClick={() => onNavigateTo(tab)}
-                className={`flex flex-col items-center gap-2 p-3 rounded-2xl border cursor-pointer transition-all hover:scale-105 ${color}`}
+                className="flex flex-col items-center gap-2 p-3 rounded-2xl cursor-pointer"
+                style={{ background: bg, border: `1px solid ${border}` }}
               >
                 <span className="text-2xl">{icon}</span>
-                <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
+                <span className="section-label" style={{ color: text }}>{label}</span>
               </motion.button>
             ))}
           </div>
@@ -377,16 +374,18 @@ export default function HomeScreen({
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={() => onNavigateTo('qibla')}
-          className="w-full bg-gradient-to-r from-cyan-500/10 to-teal-500/5 border border-cyan-500/20 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:border-cyan-500/40 transition-all"
+          className="w-full rounded-2xl p-4 flex items-center gap-4 cursor-pointer"
+          style={{ background: 'rgba(6,182,212,0.07)', border: '1px solid rgba(6,182,212,0.15)' }}
         >
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center shrink-0">
-            <Compass className="w-5 h-5 text-cyan-400" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'rgba(6,182,212,0.14)', border: '1px solid rgba(6,182,212,0.2)' }}>
+            <Compass className="w-5 h-5" style={{ color: '#22D3EE' }} />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-sm font-black text-slate-100">Qibla & Namaz</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">Prayer times, compass & Azan</p>
+            <p className="text-sm font-black" style={{ color: 'var(--color-text-primary)' }}>Qibla & Namaz</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Prayer times, compass & Azan</p>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-500" />
+          <ChevronRight className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
         </motion.button>
 
         <div className="h-4" />

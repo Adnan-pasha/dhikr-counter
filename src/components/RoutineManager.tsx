@@ -100,17 +100,17 @@ export default function RoutineManager({
   });
 
   return (
-    <div className="flex flex-col h-full bg-[#0f172a] text-slate-100 overflow-hidden">
+    <div className="screen">
 
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="px-4 pt-5 pb-3 bg-slate-900/60 backdrop-blur-md border-b border-slate-800/60">
+      <div className="screen-header">
         <div className="flex items-center justify-between mb-1">
           <div>
-            <h1 className="text-xl font-black tracking-tight text-slate-50 flex items-center gap-2 leading-none">
-              <RefreshCw className="w-5 h-5 text-amber-500" />
+            <h1 className="font-display font-black text-xl flex items-center gap-2 leading-none" style={{ color: 'var(--color-text-primary)' }}>
+              <RefreshCw className="w-5 h-5" style={{ color: 'var(--color-text-brand)' }} />
               My Routines
             </h1>
-            <p className="text-[10px] text-slate-400 mt-1 font-medium">
+            <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-text-muted)' }}>
               {routines.length} routine{routines.length !== 1 ? 's' : ''} · Build your daily practice
             </p>
           </div>
@@ -241,7 +241,7 @@ export default function RoutineManager({
       </AnimatePresence>
 
       {/* ── Routine Detail ─────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="scroll-area">
         {routines.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
             <span className="text-5xl mb-4">🌅</span>

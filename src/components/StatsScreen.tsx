@@ -358,7 +358,7 @@ export default function StatsScreen({
       
       {/* HEADER SECTION */}
       <div className="px-6 pt-5 pb-3 border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md shrink-0">
-        <h1 className="text-xl font-black tracking-tight text-slate-50 flex items-center gap-1.5 leading-none">
+        <h1 className="font-display font-black text-xl text-slate-50 flex items-center gap-1.5 leading-none">
           <Trophy className="w-5 h-5 text-amber-400" />
           Spiritual Journey
         </h1>

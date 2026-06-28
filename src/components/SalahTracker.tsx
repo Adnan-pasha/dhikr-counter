@@ -89,7 +89,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
       <div className="px-5 pt-5 pb-4 bg-slate-900/60 backdrop-blur-md border-b border-slate-800/60">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-black tracking-tight text-slate-50 flex items-center gap-2 leading-none">
+            <h1 className="font-display font-black text-xl text-slate-50 flex items-center gap-2 leading-none">
               <Moon className="w-5 h-5 text-amber-500" />
               Salah Tracker
             </h1>

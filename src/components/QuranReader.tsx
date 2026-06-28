@@ -138,13 +138,13 @@ export default function QuranReader({
   // Render surah list
   if (view === 'list') {
     return (
-      <div className="flex flex-col h-full bg-[#0f172a] text-slate-100 overflow-hidden">
+      <div className="screen">
 
         {/* Header */}
-        <div className="px-4 pt-5 pb-3 bg-slate-900/60 backdrop-blur-md border-b border-slate-800/60">
+        <div className="screen-header">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h1 className="text-xl font-black tracking-tight text-slate-50 flex items-center gap-2 leading-none">
+              <h1 className="font-display font-black text-xl text-slate-50 flex items-center gap-2 leading-none">
                 <BookOpen className="w-5 h-5 text-amber-500" />
                 Al-Quran
               </h1>
@@ -251,7 +251,7 @@ export default function QuranReader({
   // ─── Reader view ───────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full bg-[#0f172a] text-slate-100 overflow-hidden">
+    <div className="screen">
 
       {/* Reader header */}
       <div className="px-4 pt-4 pb-3 bg-slate-900/80 backdrop-blur-md border-b border-slate-800/60">

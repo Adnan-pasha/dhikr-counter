@@ -118,17 +118,17 @@ export default function AdhkaarLibrary({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0f172a] text-slate-100 overflow-hidden">
+    <div className="screen">
 
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="px-4 pt-5 pb-3 bg-slate-900/60 backdrop-blur-md border-b border-slate-800/60">
+      <div className="screen-header">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-xl font-black tracking-tight text-slate-50 flex items-center gap-2 leading-none">
-              <BookOpen className="w-5 h-5 text-amber-500" />
+            <h1 className="font-display font-black text-xl flex items-center gap-2 leading-none" style={{ color: 'var(--color-text-primary)' }}>
+              <BookOpen className="w-5 h-5" style={{ color: 'var(--color-text-brand)' }} />
               Adhkaar Library
             </h1>
-            <p className="text-[10px] text-slate-400 mt-1 font-medium">
+            <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-text-muted)' }}>
               {filteredDhikrs.length} duas &amp; adhkaar · {customDhikrs.length} custom
             </p>
           </div>
@@ -235,7 +235,7 @@ export default function AdhkaarLibrary({
       </AnimatePresence>
 
       {/* ── Cards List ─────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      <div className="scroll-area space-y-3">
         <AnimatePresence mode="popLayout">
           {filteredDhikrs.length === 0 ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-16 text-slate-500">
