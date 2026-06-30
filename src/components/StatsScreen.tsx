@@ -28,6 +28,7 @@ interface StatsScreenProps {
   allTimeCount: number;
   onClearHistory: () => void;
   dhikrs: Dhikr[];
+  onGoBack: () => void;
 }
 
 // Spiritual Gamification Levels Configuration
@@ -112,6 +113,7 @@ export default function StatsScreen({
   allTimeCount,
   onClearHistory,
   dhikrs,
+  onGoBack,
 }: StatsScreenProps) {
   
   // Navigation Sub Tabs in Stats viewport
@@ -354,15 +356,19 @@ export default function StatsScreen({
   };
 
   return (
-    <div id="stats_screen_container" className="flex flex-col h-full bg-[#0f172a] text-slate-100 select-none">
-      
+    <div id="stats_screen_container" className="screen select-none">
+
       {/* HEADER SECTION */}
-      <div className="px-6 pt-5 pb-3 border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md shrink-0">
-        <h1 className="font-display font-black text-xl text-slate-50 flex items-center gap-1.5 leading-none">
-          <Trophy className="w-5 h-5 text-amber-400" />
-          Spiritual Journey
-        </h1>
-        <p className="text-xs text-slate-400 mt-1 font-medium">Daily streaks, interactive maps, level progression & authentic advice</p>
+      <div className="screen-header">
+        <div className="header-row">
+          <button onClick={onGoBack} className="back-btn" aria-label="Go back to Home">
+            <ChevronLeft className="w-5 h-5" />
+            <span>Home</span>
+          </button>
+          <h1 className="screen-title text-center">Stats</h1>
+          <div className="w-[44px]" />
+        </div>
+        <p className="caption">Daily streaks, interactive maps, level progression & authentic advice</p>
 
         {/* Motivational banner */}
         {(() => {
@@ -372,8 +378,8 @@ export default function StatsScreen({
               <p className="text-base font-arabic text-amber-300 text-right leading-relaxed">
                 {msg.arabic}
               </p>
-              <p className="text-[10px] text-slate-400 italic mt-1">{msg.english}</p>
-              <p className="text-[10px] text-amber-400/80 font-semibold mt-1.5 leading-relaxed">
+              <p className="text-xs text-slate-400 italic mt-1">{msg.english}</p>
+              <p className="text-xs text-amber-400/80 font-semibold mt-1.5 leading-relaxed">
                 {msg.note}
               </p>
             </div>
@@ -391,7 +397,7 @@ export default function StatsScreen({
               setActiveSubTab(tab);
               setSelectedDayDetail(null);
             }}
-            className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer relative z-10 ${
+            className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer relative z-10 ${
               activeSubTab === tab 
                 ? 'text-amber-400 font-extrabold' 
                 : 'text-slate-400 hover:text-slate-200'
@@ -436,7 +442,7 @@ export default function StatsScreen({
                   </div>
                   <div className="mt-3.5">
                     <span className="text-3xl font-black text-slate-100 tracking-tight font-mono">{streak}</span>
-                    <span className="text-[10px] font-bold text-slate-450 block mt-0.5">Consecutive Days</span>
+                    <span className="text-xs font-bold text-slate-450 block mt-0.5">Consecutive Days</span>
                   </div>
                 </div>
 
@@ -450,7 +456,7 @@ export default function StatsScreen({
                   </div>
                   <div className="mt-3.5">
                     <span className="text-3xl font-black text-slate-100 tracking-tight font-mono">{allTimeCount}</span>
-                    <span className="text-[10px] font-bold text-slate-450 block mt-0.5">Total Beads Chanted</span>
+                    <span className="text-xs font-bold text-slate-450 block mt-0.5">Total Beads Chanted</span>
                   </div>
                 </div>
               </div>
@@ -462,7 +468,7 @@ export default function StatsScreen({
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-500">Spiritual Rank</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-amber-500">Spiritual Rank</span>
                     <h4 className="text-sm font-black text-slate-100 group-hover:text-amber-400 transition-colors leading-none mt-0.5">{currentLevelObj.name}</h4>
                   </div>
                   <div className="p-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg">
@@ -470,11 +476,11 @@ export default function StatsScreen({
                   </div>
                 </div>
 
-                <p className="text-[10px] text-slate-400 leading-relaxed mb-3.5">{currentLevelObj.desc}</p>
+                <p className="text-xs text-slate-400 leading-relaxed mb-3.5">{currentLevelObj.desc}</p>
                 
                 {nextLevelObj && (
                   <div className="space-y-1.5">
-                    <div className="flex justify-between text-[9px] font-bold text-slate-400 font-mono">
+                    <div className="flex justify-between text-xs font-bold text-slate-400 font-mono">
                       <span>{allTimeCount} beads</span>
                       <span>Next Level: {nextLevelObj.minBeads} beads</span>
                     </div>
@@ -496,7 +502,7 @@ export default function StatsScreen({
                     <BarChart2 className="w-4 h-4 text-amber-400" />
                     Weekly Activity
                   </h3>
-                  <span className="text-[10px] font-bold text-slate-450 uppercase">7 Days view</span>
+                  <span className="text-xs font-bold text-slate-450 uppercase">7 Days view</span>
                 </div>
 
                 {/* Custom SVG Bar Chart */}
@@ -507,7 +513,7 @@ export default function StatsScreen({
                       <div key={d.date} className="flex flex-col items-center flex-1 h-full justify-end group">
                         
                         {/* Tooltip on hovering */}
-                        <div className="absolute top-0 font-mono text-[9px] font-black text-amber-400 bg-slate-900 border border-slate-800 px-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <div className="absolute top-0 font-mono text-xs font-black text-amber-400 bg-slate-900 border border-slate-800 px-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           {d.count}
                         </div>
 
@@ -525,7 +531,7 @@ export default function StatsScreen({
                           />
                         </div>
                         
-                        <span className="text-[9px] font-bold text-slate-400 mt-2 block tracking-tight">
+                        <span className="text-xs font-bold text-slate-400 mt-2 block tracking-tight">
                           {d.date}
                         </span>
                       </div>
@@ -545,7 +551,7 @@ export default function StatsScreen({
                     <button
                       id="btn_clear_history_overview"
                       onClick={onClearHistory}
-                      className="text-[9px] font-bold text-slate-400 hover:text-amber-400 hover:underline cursor-pointer transition-all uppercase tracking-wider"
+                      className="text-xs font-bold text-slate-400 hover:text-amber-400 hover:underline cursor-pointer transition-all uppercase tracking-wider"
                     >
                       Reset Logs
                     </button>
@@ -556,7 +562,7 @@ export default function StatsScreen({
                   {history.length === 0 ? (
                     <div className="p-6 text-center rounded-2xl bg-slate-900/20 border border-slate-800/80 flex flex-col items-center justify-center">
                       <AlertCircle className="w-7 h-7 text-slate-650 mb-2 stroke-[1.5]" />
-                      <p className="text-[10px] font-bold text-slate-400">Complete your first prayer to populate logs!</p>
+                      <p className="text-xs font-bold text-slate-400">Complete your first prayer to populate logs!</p>
                     </div>
                   ) : (
                     [...history].reverse().slice(0, 3).map((log) => (
@@ -567,7 +573,7 @@ export default function StatsScreen({
                       >
                         <div>
                           <h5 className="font-bold text-xs text-slate-200">{log.dhikrName}</h5>
-                          <span className="text-[9px] text-slate-450 mt-0.5 block">
+                          <span className="text-xs text-slate-450 mt-0.5 block">
                             {new Date(log.timestamp).toLocaleDateString(undefined, {
                               month: 'short',
                               day: 'numeric',
@@ -578,7 +584,7 @@ export default function StatsScreen({
                         </div>
                         <div className="text-right">
                           <span className="text-xs font-extrabold text-amber-400 font-mono">+{log.count}</span>
-                          <span className="text-[8px] font-bold text-slate-450 block text-right">beads</span>
+                          <span className="text-xs font-bold text-slate-450 block text-right">beads</span>
                         </div>
                       </div>
                     ))
@@ -622,7 +628,7 @@ export default function StatsScreen({
                 </div>
 
                 {/* Calendar grid titles */}
-                <div className="grid grid-cols-7 gap-1 text-center font-bold text-[9px] text-slate-450 uppercase tracking-widest mb-1.5">
+                <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-450 uppercase tracking-widest mb-1.5">
                   <span>Sun</span>
                   <span>Mon</span>
                   <span>Tue</span>
@@ -685,15 +691,15 @@ export default function StatsScreen({
                 {/* Dynamic Summary bar below calendar */}
                 <div className="grid grid-cols-3 gap-1 border-t border-slate-800 mt-4 pt-3 text-center">
                   <div>
-                    <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">Monthly Beads</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Monthly Beads</span>
                     <p className="text-sm font-extrabold text-amber-400 leading-none mt-1 font-mono">{monthSummaryStats.total}</p>
                   </div>
                   <div>
-                    <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">Active Days</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Days</span>
                     <p className="text-sm font-extrabold text-slate-100 leading-none mt-1 font-mono">{monthSummaryStats.activeDays} days</p>
                   </div>
                   <div>
-                    <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">Daily Avg</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Daily Avg</span>
                     <p className="text-sm font-extrabold text-slate-100 leading-none mt-1 font-mono">{monthSummaryStats.average}</p>
                   </div>
                 </div>
@@ -709,16 +715,16 @@ export default function StatsScreen({
                     className="p-4 rounded-2xl bg-slate-900 border border-slate-850 shadow-inner overflow-hidden relative"
                   >
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
                         Date: {selectedDayDetail.dateStr}
                       </span>
-                      <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-black">
+                      <span className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-black">
                         Total {selectedDayDetail.total} Beads
                       </span>
                     </div>
 
                     {selectedDayDetail.logs.length === 0 ? (
-                      <p className="text-2xs text-slate-400 leading-relaxed italic">No prayers completed on this specific calendar day.</p>
+                      <p className="text-xs text-slate-400 leading-relaxed italic">No prayers completed on this specific calendar day.</p>
                     ) : (
                       <div className="space-y-2">
                         {selectedDayDetail.logs.map((log) => (
@@ -728,7 +734,7 @@ export default function StatsScreen({
                           >
                             <div>
                               <h5 className="text-xs font-bold text-slate-100 leading-none">{log.dhikrName}</h5>
-                              <span className="text-[8px] font-semibold text-slate-450 mt-1 block">
+                              <span className="text-xs font-semibold text-slate-450 mt-1 block">
                                 {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
@@ -764,17 +770,17 @@ export default function StatsScreen({
                 <h4 className="text-base font-black text-slate-50 uppercase tracking-wide mt-3">
                   {currentLevelObj.name}
                 </h4>
-                <p className="text-2xs font-extrabold text-amber-400 tracking-widest uppercase mt-0.5">
+                <p className="text-xs font-extrabold text-amber-400 tracking-widest uppercase mt-0.5">
                   App rank level {currentLevelObj.level} of 5
                 </p>
-                <div className="mt-3 text-2xs text-slate-400 max-w-[260px] leading-relaxed">
+                <div className="mt-3 text-xs text-slate-400 max-w-[260px] leading-relaxed">
                   {currentLevelObj.desc}
                 </div>
 
                 {/* Level progress gauge bar */}
                 {nextLevelObj ? (
                   <div className="w-full space-y-1.5 mt-5 border-t border-slate-800 pt-4">
-                    <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+                    <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
                       <span>{allTimeCount} beads chanted</span>
                       <span>Next Level: {nextLevelObj.name}</span>
                     </div>
@@ -786,7 +792,7 @@ export default function StatsScreen({
                     </div>
                   </div>
                 ) : (
-                  <div className="text-2xs font-bold text-emerald-400 mt-4 pt-3 border-t border-slate-850 animate-pulse">
+                  <div className="text-xs font-bold text-emerald-400 mt-4 pt-3 border-t border-slate-850 animate-pulse">
                     🏆 Ultimate Level Achieved! May Allah bless you.
                   </div>
                 )}
@@ -828,13 +834,13 @@ export default function StatsScreen({
                         <h5 className={`font-black text-xs leading-tight ${badge.isUnlocked ? 'text-slate-100' : 'text-slate-500'}`}>
                           {badge.title}
                         </h5>
-                        <p className={`text-[9px] leading-relaxed mt-1 block h-10 overflow-hidden line-clamp-3 ${badge.isUnlocked ? 'text-slate-350' : 'text-slate-500 opacity-60'}`}>
+                        <p className={`text-xs leading-relaxed mt-1 block h-10 overflow-hidden line-clamp-3 ${badge.isUnlocked ? 'text-slate-350' : 'text-slate-500 opacity-60'}`}>
                           {badge.isUnlocked ? badge.desc : `Unlock: ${badge.req}`}
                         </p>
                       </div>
 
                       <div className="mt-2.5 pt-2 border-t border-slate-800/10 flex justify-between items-center">
-                        <span className="text-[8px] font-black tracking-widest uppercase opacity-75">
+                        <span className="text-xs font-black tracking-widest uppercase opacity-75">
                           {badge.isUnlocked ? 'Unlocked 🎉' : 'Locked 🔒'}
                         </span>
                       </div>
@@ -886,7 +892,7 @@ export default function StatsScreen({
                         className="p-5 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-850 shadow-md relative"
                       >
                         <div className="flex justify-between items-start mb-2">
-                          <span className="text-[8px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/15">
+                          <span className="text-xs font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/15">
                             {h.category}
                           </span>
                           
@@ -906,7 +912,7 @@ export default function StatsScreen({
 
                         {/* Title of summary */}
                         <h4 className="text-sm font-black text-slate-100 tracking-tight leading-none mb-1.5">{h.title}</h4>
-                        <span className="text-[9px] font-bold text-slate-450 block italic mb-3.5">{h.narrator}</span>
+                        <span className="text-xs font-bold text-slate-450 block italic mb-3.5">{h.narrator}</span>
 
                         {/* Arabic Calligraphy Scripture font */}
                         <div className="text-lg font-arabic font-bold text-slate-100 text-right select-none bg-slate-900/30 p-3 rounded-xl border border-slate-850/50 leading-relaxed mb-3.5">
@@ -920,12 +926,12 @@ export default function StatsScreen({
 
                         {/* Benefits highlight advice */}
                         <div className="p-3 border-l-2 border-amber-500/40 bg-slate-950/40 rounded-r-xl">
-                          <span className="text-[9px] font-extrabold uppercase tracking-wide text-amber-500 block">Advocacy & Benefit</span>
-                          <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mt-1">{h.benefit}</p>
+                          <span className="text-xs font-extrabold uppercase tracking-wide text-amber-500 block">Advocacy & Benefit</span>
+                          <p className="text-xs text-slate-400 font-semibold leading-relaxed mt-1">{h.benefit}</p>
                         </div>
 
                         {/* Hard authentic citation */}
-                        <div className="border-t border-slate-850/50 mt-4.5 pt-2.5 flex justify-between items-center text-[9px] font-bold text-slate-450 tracking-wider">
+                        <div className="border-t border-slate-850/50 mt-4.5 pt-2.5 flex justify-between items-center text-xs font-bold text-slate-450 tracking-wider">
                           <span>REFERENCE CITATION</span>
                           <span className="text-slate-350">{h.source}</span>
                         </div>

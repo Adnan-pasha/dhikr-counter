@@ -30,6 +30,7 @@ interface QuranReaderProps {
   lastReadSurah: number;
   onBookmarkToggle: (key: string) => void;
   onUpdateLastRead: (surahNum: number) => void;
+  onGoBack: () => void;
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -62,6 +63,7 @@ export default function QuranReader({
   lastReadSurah,
   onBookmarkToggle,
   onUpdateLastRead,
+  onGoBack,
 }: QuranReaderProps) {
   const [view, setView] = useState<'list' | 'reader'>('list');
   const [surahs, setSurahs] = useState<Surah[]>([]);
@@ -142,27 +144,25 @@ export default function QuranReader({
 
         {/* Header */}
         <div className="screen-header">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="font-display font-black text-xl text-slate-50 flex items-center gap-2 leading-none">
-                <BookOpen className="w-5 h-5 text-amber-500" />
-                Al-Quran
-              </h1>
-              <p className="text-[10px] text-slate-400 mt-1">114 Surahs · Read with translation</p>
-            </div>
-            {lastReadSurah > 0 && surahs.length > 0 && (
+          <div className="header-row">
+            <button onClick={onGoBack} className="back-btn" aria-label="Go back to Home">
+              <ChevronLeft className="w-5 h-5" />
+              <span>Home</span>
+            </button>
+            <h1 className="screen-title text-center">Quran</h1>
+            {lastReadSurah > 0 && surahs.length > 0 ? (
               <button
                 onClick={() => {
                   const s = surahs.find(s => s.number === lastReadSurah);
                   if (s) loadSurah(s);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-400 border border-amber-500/30 cursor-pointer hover:bg-amber-500/25 transition-all"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 cursor-pointer hover:bg-amber-500/25 transition-all"
               >
-                <BookMarked className="w-3 h-3" />
-                Continue
+                <BookMarked className="w-4 h-4" />
               </button>
-            )}
+            ) : <div className="w-10" />}
           </div>
+          <p className="caption">114 Surahs · Read with translation</p>
 
           {/* Search */}
           <div className="relative">
@@ -227,13 +227,13 @@ export default function QuranReader({
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-black text-slate-100">{surah.englishName}</p>
                         {isLastRead && (
-                          <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                          <span className="text-xs font-black px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">
                             Last Read
                           </span>
                         )}
                         {hasBookmark && <Bookmark className="w-3 h-3 text-amber-400 fill-amber-400" />}
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{surah.englishNameTranslation} · {surah.numberOfAyahs} ayahs · {surah.revelationType}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{surah.englishNameTranslation} · {surah.numberOfAyahs} ayahs · {surah.revelationType}</p>
                     </div>
 
                     {/* Arabic name */}
@@ -254,21 +254,22 @@ export default function QuranReader({
     <div className="screen">
 
       {/* Reader header */}
-      <div className="px-4 pt-4 pb-3 bg-slate-900/80 backdrop-blur-md border-b border-slate-800/60">
-        <div className="flex items-center gap-3">
+      <div className="px-4 pt-3 pb-3" style={{ background: 'rgba(17,24,39,0.92)', borderBottom: '1px solid var(--color-border-muted)' }}>
+        <div className="flex items-center gap-2">
           {/* Back */}
           <button
             onClick={() => setView('list')}
-            aria-label="Back to surah list"
-            className="p-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 cursor-pointer transition-all shrink-0"
+            className="back-btn"
+            aria-label="Back to Surah list"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-5 h-5" />
+            <span>Surahs</span>
           </button>
 
           {/* Surah title */}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-black text-slate-100 truncate">{activeSurah?.englishName}</p>
-            <p className="text-[10px] text-slate-400">{activeSurah?.englishNameTranslation} · {activeSurah?.numberOfAyahs} ayahs</p>
+          <div className="flex-1 min-w-0 text-center">
+            <p className="text-base font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>{activeSurah?.englishName}</p>
+            <p className="text-xs text-slate-400">{activeSurah?.englishNameTranslation} · {activeSurah?.numberOfAyahs} ayahs</p>
           </div>
 
           {/* Controls */}
@@ -276,7 +277,7 @@ export default function QuranReader({
             {/* Font size */}
             <button
               onClick={() => setFontSize(f => (f + 1) % FONT_SIZES.length)}
-              className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-black flex items-center justify-center cursor-pointer hover:text-amber-400 transition-all"
+              className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-xs font-black flex items-center justify-center cursor-pointer hover:text-amber-400 transition-all"
             >
               {FONT_LABELS[fontSize]}
             </button>
@@ -324,8 +325,8 @@ export default function QuranReader({
                     }}
                     className="shrink-0 flex flex-col items-center px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 cursor-pointer hover:border-amber-500/40 hover:text-amber-400 transition-all"
                   >
-                    <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">Juz {j.juz}</span>
-                    <span className="text-[9px] text-slate-400 mt-0.5">{j.label}</span>
+                    <span className="text-xs font-black uppercase tracking-widest text-amber-500">Juz {j.juz}</span>
+                    <span className="text-xs text-slate-400 mt-0.5">{j.label}</span>
                   </button>
                 ))}
               </div>
@@ -379,10 +380,10 @@ export default function QuranReader({
                   {/* Ayah number + bookmark */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 text-[10px] font-black flex items-center justify-center">
+                      <span className="w-7 h-7 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 text-xs font-black flex items-center justify-center">
                         {ayah.numberInSurah}
                       </span>
-                      <span className="text-[9px] text-slate-500">Juz {ayah.juz} · Page {ayah.page}</span>
+                      <span className="text-xs text-slate-500">Juz {ayah.juz} · Page {ayah.page}</span>
                     </div>
                     <button
                       onClick={() => onBookmarkToggle(bookmarkKey)}
@@ -407,7 +408,7 @@ export default function QuranReader({
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="text-[11px] text-slate-400 leading-relaxed italic overflow-hidden"
+                        className="text-sm text-slate-400 leading-relaxed italic overflow-hidden"
                       >
                         {engAyah.text}
                       </motion.p>

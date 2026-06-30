@@ -155,10 +155,10 @@ export default function HomeScreen({
               <h1 className="font-display font-black text-2xl mt-0.5 leading-tight" style={{ color: 'var(--color-text-primary)' }}>
                 Dhikr Counter
               </h1>
-              <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-xs mt-1 font-medium" style={{ color: 'var(--color-text-muted)' }}>
                 {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </p>
-              <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>{hijriDate}</p>
+              <p className="text-xs font-semibold mt-0.5" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>{hijriDate}</p>
             </div>
             {/* Live clock */}
             <div className="text-right">
@@ -182,7 +182,7 @@ export default function HomeScreen({
                   <span className="section-label" style={{ color: 'var(--color-text-muted)' }}>{label}</span>
                 </div>
                 <p className="font-display font-black text-xl leading-none" style={{ color }}>{value}</p>
-                <p className="text-[9px] mt-1" style={{ color: 'var(--color-text-muted)' }}>{unit}</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{unit}</p>
               </div>
             ))}
           </div>
@@ -195,7 +195,7 @@ export default function HomeScreen({
         <section>
           <div className="flex items-center justify-between mb-2.5">
             <h2 className="section-label">Quick Tasbih</h2>
-            <button onClick={() => onNavigateTo('counter')} className="text-[10px] font-black cursor-pointer flex items-center gap-0.5 transition-colors" style={{ color: 'var(--color-text-brand)' }}>
+            <button onClick={() => onNavigateTo('counter')} className="text-xs font-black cursor-pointer flex items-center gap-0.5 transition-colors" style={{ color: 'var(--color-text-brand)' }}>
               Open <ChevronRight className="w-3 h-3" />
             </button>
           </div>
@@ -210,15 +210,15 @@ export default function HomeScreen({
             <div className="flex-1 text-left min-w-0">
               <p className="font-display font-black text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>{currentDhikr.nameEn}</p>
               {currentDhikr.transliteration && (
-                <p className="text-[10px] italic mt-0.5 truncate" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>{currentDhikr.transliteration}</p>
+                <p className="text-xs italic mt-0.5 truncate" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>{currentDhikr.transliteration}</p>
               )}
-              <p className="text-[10px] mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{currentDhikr.meaning}</p>
+              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{currentDhikr.meaning}</p>
             </div>
             <div className="shrink-0 flex flex-col items-center gap-1">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #F59E0B, #F97316)', boxShadow: '0 4px 16px rgba(245,158,11,0.3)' }}>
                 <Play className="w-4 h-4 fill-slate-950 text-slate-950" />
               </div>
-              <span className="text-[9px] font-bold" style={{ color: 'var(--color-text-muted)' }}>{currentDhikr.targetCount}×</span>
+              <span className="text-xs font-bold" style={{ color: 'var(--color-text-muted)' }}>{currentDhikr.targetCount}×</span>
             </div>
           </motion.button>
         </section>
@@ -231,8 +231,8 @@ export default function HomeScreen({
               <span className="section-label" style={{ color: '#818CF8' }}>Ayah of the Day</span>
             </div>
             <p className="font-arabic text-lg leading-loose text-right mb-2" style={{ color: 'var(--color-text-primary)' }}>{ayah.ar}</p>
-            <p className="text-[11px] leading-relaxed italic" style={{ color: 'var(--color-text-secondary)' }}>"{ayah.en}"</p>
-            <p className="text-[9px] font-bold mt-2" style={{ color: '#818CF8', opacity: 0.7 }}>{ayah.ref}</p>
+            <p className="text-sm leading-relaxed italic" style={{ color: 'var(--color-text-secondary)' }}>"{ayah.en}"</p>
+            <p className="text-xs font-bold mt-2" style={{ color: '#818CF8', opacity: 0.7 }}>{ayah.ref}</p>
           </div>
         </section>
 
@@ -241,7 +241,7 @@ export default function HomeScreen({
           <section>
             <div className="flex items-center justify-between mb-2.5">
               <h2 className="section-label">Today's Routines</h2>
-              <button onClick={() => onNavigateTo('routine')} className="text-[10px] font-black cursor-pointer flex items-center gap-0.5" style={{ color: 'var(--color-text-brand)' }}>
+              <button onClick={() => onNavigateTo('routine')} className="text-xs font-black cursor-pointer flex items-center gap-0.5" style={{ color: 'var(--color-text-brand)' }}>
                 All <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -268,7 +268,7 @@ export default function HomeScreen({
                           <p className="text-xs font-black leading-tight" style={{ color: allDone ? '#10B981' : 'var(--color-text-primary)' }}>
                             {routine.name}
                           </p>
-                          <p className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>
+                          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                             {routine.completed}/{routine.total} adhkaar
                           </p>
                         </div>
@@ -279,7 +279,7 @@ export default function HomeScreen({
                         <motion.button
                           whileTap={{ scale: 0.93 }}
                           onClick={() => routine.firstPending && onStartRoutine(routine.id, routine.firstPending.id)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[9px] font-black cursor-pointer"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-black cursor-pointer"
                           style={{ background: 'linear-gradient(135deg, #F59E0B, #F97316)', color: '#0B1120', boxShadow: '0 2px 10px rgba(245,158,11,0.25)' }}
                         >
                           <Play className="w-2.5 h-2.5 fill-current" />
@@ -308,7 +308,7 @@ export default function HomeScreen({
           <section>
             <div className="flex items-center justify-between mb-2.5">
               <h2 className="section-label">❤️ Favourites</h2>
-              <button onClick={() => onNavigateTo('adhkaar')} className="text-[10px] font-black cursor-pointer flex items-center gap-0.5" style={{ color: 'var(--color-text-brand)' }}>
+              <button onClick={() => onNavigateTo('adhkaar')} className="text-xs font-black cursor-pointer flex items-center gap-0.5" style={{ color: 'var(--color-text-brand)' }}>
                 All <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -330,11 +330,11 @@ export default function HomeScreen({
                     }}
                   >
                     <p className="text-xs font-black truncate" style={{ color: 'var(--color-text-primary)' }}>{dhikr.nameEn}</p>
-                    <p className="text-[9px] italic mt-0.5 truncate" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>
+                    <p className="text-xs italic mt-0.5 truncate" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>
                       {dhikr.transliteration ?? dhikr.meaning}
                     </p>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-[9px] font-bold" style={{ color: 'var(--color-text-muted)' }}>{dhikr.targetCount}×</span>
+                      <span className="text-xs font-bold" style={{ color: 'var(--color-text-muted)' }}>{dhikr.targetCount}×</span>
                       {done && <Check className="w-3 h-3" style={{ color: '#10B981' }} />}
                     </div>
                   </motion.button>
@@ -383,7 +383,7 @@ export default function HomeScreen({
           </div>
           <div className="flex-1 text-left">
             <p className="text-sm font-black" style={{ color: 'var(--color-text-primary)' }}>Qibla & Namaz</p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Prayer times, compass & Azan</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Prayer times, compass & Azan</p>
           </div>
           <ChevronRight className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
         </motion.button>

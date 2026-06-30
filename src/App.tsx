@@ -277,7 +277,7 @@ export default function App() {
                 animate={{ opacity: 1, y: 0, x: '-50%' }}
                 exit={{ opacity: 0, y: -20, x: '-50%' }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="absolute top-3 left-1/2 -translate-x-1/2 z-45 bg-slate-900/95 border border-amber-500/30 text-amber-400 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl shadow-amber-950/30 backdrop-blur-md select-none pointer-events-none"
+                className="absolute top-3 left-1/2 -translate-x-1/2 z-45 bg-slate-900/95 border border-amber-500/30 text-amber-400 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl shadow-amber-950/30 backdrop-blur-md select-none pointer-events-none"
               >
                 <WifiOff className="w-3 h-3 text-amber-400 animate-pulse" />
                 <span>Offline Mode Active</span>
@@ -343,9 +343,10 @@ export default function App() {
                 onDeleteCustomDhikr={handleDeleteDhikr}
                 onToggleCompleteToday={handleToggleCompleteToday}
                 onNavigateToRoutine={() => setActiveTab('routine')}
+                onGoBack={() => setActiveTab('home')}
               />
             )}
-            
+
             {activeTab === 'routine' && (
               <RoutineManager
                 routines={routines}
@@ -384,6 +385,7 @@ export default function App() {
                   setRoutines(prev => prev.filter(r => r.id !== id));
                 }}
                 onNavigateToAdhkaar={() => setActiveTab('adhkaar')}
+                onGoBack={() => setActiveTab('home')}
               />
             )}
 
@@ -403,6 +405,7 @@ export default function App() {
                     return [...prev, { date, prayers: { [prayer]: true } }];
                   });
                 }}
+                onGoBack={() => setActiveTab('home')}
               />
             )}
 
@@ -416,6 +419,7 @@ export default function App() {
                   )
                 }
                 onUpdateLastRead={setLastReadSurah}
+                onGoBack={() => setActiveTab('home')}
               />
             )}
 
@@ -426,6 +430,7 @@ export default function App() {
                 allTimeCount={history.reduce((sum, current) => sum + current.count, 0) + currentCount}
                 onClearHistory={handleClearHistory}
                 dhikrs={dhikrs}
+                onGoBack={() => setActiveTab('home')}
               />
             )}
 
@@ -437,6 +442,7 @@ export default function App() {
                 reminders={reminders}
                 onUpdateReminders={setReminders}
                 dhikrs={dhikrs}
+                onGoBack={() => setActiveTab('home')}
               />
             )}
 

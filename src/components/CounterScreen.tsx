@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { RotateCcw, Volume2, VolumeX, Maximize2, Minimize2, Check, ChevronRight, Sparkles } from 'lucide-react';
+import { RotateCcw, Volume2, VolumeX, Maximize2, Minimize2, Check, ChevronLeft, Sparkles } from 'lucide-react';
 import { Dhikr, DhikrHistory, UserPreferences } from '../types';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -155,49 +155,51 @@ export default function CounterScreen({
       <motion.div
         animate={{ opacity: isFocusMode ? 0 : 1, y: isFocusMode ? -16 : 0 }}
         transition={{ duration: 0.25 }}
-        className="px-5 pt-5 pb-3 flex items-center justify-between z-10 shrink-0"
+        className="screen-header z-10"
         style={{ pointerEvents: isFocusMode ? 'none' : 'auto' }}
       >
-        {/* Dhikr selector */}
-        <button
-          id="btn_dhikr_selector"
-          aria-label="Change active dhikr"
-          onClick={onNavigateToLibrary}
-          className="flex flex-col items-start group max-w-[68%] cursor-pointer"
-        >
-          <span className="section-label mb-0.5">Active Dhikr</span>
-          <div className="flex items-center gap-1.5">
-            <span className="font-display font-black text-base text-slate-100 truncate group-hover:text-amber-400 transition-colors">
-              {currentDhikr.nameEn}
-            </span>
+        <div className="header-row">
+          {/* Back / Dhikr selector */}
+          <button
+            id="btn_dhikr_selector"
+            aria-label="Browse and change active dhikr"
+            onClick={onNavigateToLibrary}
+            className="back-btn group"
+          >
+            <ChevronLeft className="w-5 h-5 shrink-0" />
+            <div className="flex flex-col items-start min-w-0">
+              <span className="caption">Active Dhikr</span>
+              <span className="text-sm font-bold truncate max-w-[140px] group-hover:opacity-80 transition-opacity" style={{ color: 'var(--color-text-primary)' }}>
+                {currentDhikr.nameEn}
+              </span>
+            </div>
+          </button>
+
+          {/* Status + controls */}
+          <div className="flex items-center gap-2">
             {isCompletedToday
               ? <span className="badge badge-emerald"><Check className="w-2.5 h-2.5 stroke-[3]" /> Done</span>
               : <span className="badge badge-slate">Pending</span>
             }
-            <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+            <button
+              onClick={onToggleSound}
+              aria-label={preferences.soundOn ? 'Mute sound' : 'Unmute sound'}
+              className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all"
+              style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)' }}
+            >
+              {preferences.soundOn
+                ? <Volume2 className="w-4.5 h-4.5" style={{ color: theme.text }} />
+                : <VolumeX className="w-4.5 h-4.5 text-slate-500" />}
+            </button>
+            <button
+              onClick={() => setIsFocusMode(true)}
+              aria-label="Enter focus mode"
+              className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all"
+              style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}
+            >
+              <Maximize2 className="w-4.5 h-4.5" />
+            </button>
           </div>
-        </button>
-
-        {/* Controls */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onToggleSound}
-            aria-label={preferences.soundOn ? 'Mute' : 'Unmute'}
-            className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer transition-all"
-            style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)' }}
-          >
-            {preferences.soundOn
-              ? <Volume2 className="w-4 h-4" style={{ color: theme.text }} />
-              : <VolumeX className="w-4 h-4 text-slate-500" />}
-          </button>
-          <button
-            onClick={() => setIsFocusMode(true)}
-            aria-label="Enter focus mode"
-            className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer text-slate-400 hover:text-slate-200 transition-all"
-            style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)' }}
-          >
-            <Maximize2 className="w-4 h-4" />
-          </button>
         </div>
       </motion.div>
 
@@ -216,18 +218,19 @@ export default function CounterScreen({
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3 }}
           >
+            {/* Arabic — 36px minimum for comfortable reading */}
             <p
-              className="font-arabic text-4xl leading-loose text-center select-none"
-              style={{ color: 'var(--color-text-primary)' }}
+              className="font-arabic text-center select-none"
+              style={{ fontSize: '2.25rem', lineHeight: '2.2', color: 'var(--color-text-primary)' }}
             >
               {currentDhikr.nameAr}
             </p>
             {currentDhikr.transliteration && (
-              <p className="text-[11px] italic mt-0.5 select-none" style={{ color: theme.text, opacity: 0.7 }}>
+              <p className="text-sm italic mt-1 select-none" style={{ color: theme.text, opacity: 0.75 }}>
                 {currentDhikr.transliteration}
               </p>
             )}
-            <p className="text-[11px] mt-1 select-none" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-sm mt-1 select-none" style={{ color: 'var(--color-text-muted)' }}>
               "{currentDhikr.meaning}"
             </p>
           </motion.div>
@@ -311,7 +314,7 @@ export default function CounterScreen({
                   <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: theme.ring }} />
                 ))}
                 {roundsComplete > 5 && (
-                  <span className="text-[9px] font-black" style={{ color: theme.text }}>×{roundsComplete}</span>
+                  <span className="text-xs font-bold" style={{ color: theme.text }}>×{roundsComplete}</span>
                 )}
               </div>
             )}
@@ -334,8 +337,8 @@ export default function CounterScreen({
             >
               <Sparkles className="w-4 h-4 text-emerald-400" />
               <div>
-                <p className="text-xs font-black text-emerald-400">Masha'Allah! 🎉</p>
-                <p className="text-[10px] text-slate-400">Target complete — keep going or reset</p>
+                <p className="text-sm font-black text-emerald-400">Masha'Allah! 🎉</p>
+                <p className="text-sm text-slate-400">Target complete — keep going or reset</p>
               </div>
             </motion.div>
           )}
@@ -354,7 +357,7 @@ export default function CounterScreen({
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl"
           style={{ background: theme.bg, border: `1px solid ${theme.ring}30` }}
         >
-          <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: theme.text, opacity: 0.7 }}>Target</span>
+          <span className="caption uppercase tracking-widest" style={{ color: theme.text, opacity: 0.8 }}>Target</span>
           <span className="text-sm font-black" style={{ color: theme.text }}>
             {currentDhikr.targetCount > 0 ? `${currentDhikr.targetCount}×` : '∞'}
           </span>
@@ -373,7 +376,7 @@ export default function CounterScreen({
           }}
         >
           <RotateCcw className="w-3.5 h-3.5" />
-          <span className="text-xs font-bold">Reset</span>
+          <span className="text-sm font-semibold">Reset</span>
         </motion.button>
       </motion.div>
 
@@ -404,7 +407,7 @@ export default function CounterScreen({
               >
                 {currentDhikr.nameAr}
               </motion.p>
-              <p className="text-xs font-bold mt-1 select-none" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-sm font-medium mt-1 select-none" style={{ color: 'var(--color-text-muted)' }}>
                 {currentDhikr.nameEn}
               </p>
             </div>
@@ -447,7 +450,7 @@ export default function CounterScreen({
                 </p>
               )}
 
-              <p className="text-[10px] font-black uppercase tracking-widest mt-6 select-none z-10" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-xs font-bold uppercase tracking-widest mt-6 select-none z-10" style={{ color: 'var(--color-text-muted)' }}>
                 tap anywhere to count
               </p>
             </button>
@@ -467,7 +470,7 @@ export default function CounterScreen({
                 }}
               >
                 <Minimize2 className="w-4 h-4" />
-                <span className="text-xs font-bold">Exit Focus</span>
+                <span className="text-sm font-semibold">Exit Focus</span>
               </motion.button>
             </div>
           </motion.div>

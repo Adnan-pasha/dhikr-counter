@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, Volume2, Sparkles, Sliders, Smartphone, HelpCircle, User, Clock, Plus, Trash2, Bell, BookOpenText, Check } from 'lucide-react';
+import { Settings, Volume2, Sparkles, Sliders, Smartphone, HelpCircle, User, Clock, Plus, Trash2, Bell, BookOpenText, Check, ChevronLeft } from 'lucide-react';
 import { UserPreferences, SoundTone, AppTheme, DhikrReminder, Dhikr, Madhab } from '../types';
 import { playBeadSound, playCompletionSound } from '../audio';
 
@@ -11,6 +11,7 @@ interface SettingsScreenProps {
   reminders: DhikrReminder[];
   onUpdateReminders: React.Dispatch<React.SetStateAction<DhikrReminder[]>>;
   dhikrs: Dhikr[];
+  onGoBack: () => void;
 }
 
 export default function SettingsScreen({
@@ -20,6 +21,7 @@ export default function SettingsScreen({
   reminders = [],
   onUpdateReminders,
   dhikrs = [],
+  onGoBack,
 }: SettingsScreenProps) {
   
   // Scheduler Editor Form States
@@ -160,27 +162,29 @@ export default function SettingsScreen({
   ];
 
   return (
-    <div id="settings_screen_container" className="flex flex-col h-full bg-[#0f172a] text-slate-100">
-      
+    <div id="settings_screen_container" className="screen">
+
       {/* Header */}
-      <div className="px-6 pt-5 pb-3 border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md flex justify-between items-center">
-        <div>
-          <h1 className="text-xl font-black tracking-tight text-slate-50 flex items-center gap-1.5 leading-none select-none">
-            <Settings className="w-5 h-5 text-amber-400" />
-            Preferences
-          </h1>
-          <p className="text-xs text-slate-400 mt-1 font-medium select-none">Haptics, sounds, and appearance settings</p>
+      <div className="screen-header">
+        <div className="header-row">
+          <button onClick={onGoBack} className="back-btn" aria-label="Go back to Home">
+            <ChevronLeft className="w-5 h-5" />
+            <span>Home</span>
+          </button>
+          <h1 className="screen-title text-center select-none">Settings</h1>
+          <div className="w-[44px]" />
         </div>
+        <p className="caption select-none">Haptics, sounds, and appearance settings</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+      <div className="scroll-area space-y-6">
         
         <div className="space-y-3">
           <div>
             <h3 className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-slate-400">
               <BookOpenText className="h-3.5 w-3.5" /> Prayer calculation
             </h3>
-            <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">
               Your madhab preference determines the Asr calculation used by prayer-time features.
             </p>
           </div>
@@ -205,7 +209,7 @@ export default function SettingsScreen({
                     </span>
                   )}
                   <p className={`text-xs font-black ${selected ? 'text-emerald-300' : 'text-slate-200'}`}>{madhab.label}</p>
-                  <p className="mt-1 pr-3 text-[8px] leading-relaxed text-slate-500">{madhab.note}</p>
+                  <p className="mt-1 pr-3 text-xs leading-relaxed text-slate-500">{madhab.note}</p>
                 </button>
               );
             })}
@@ -248,7 +252,7 @@ export default function SettingsScreen({
           <div className="flex justify-between items-center bg-transparent">
             <div>
               <p className="text-xs font-bold text-slate-200">Sound Feedback</p>
-              <p className="text-[10px] text-slate-400 font-medium">Hear a feedback click when chanting</p>
+              <p className="text-xs text-slate-400 font-medium">Hear a feedback click when chanting</p>
             </div>
             <Switch
               id="switch_sound_feedback"
@@ -259,7 +263,7 @@ export default function SettingsScreen({
 
           {preferences.soundOn && (
             <div className="pt-2 animate-fade-in space-y-3">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tone Style</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Tone Style</label>
               <div className="grid grid-cols-4 gap-2">
                 {(['wooden', 'chime', 'digital', 'bowl'] as SoundTone[]).map((t) => (
                   <button
@@ -270,7 +274,7 @@ export default function SettingsScreen({
                       onChangePreferences({ soundTone: t });
                       testSound(t);
                     }}
-                    className={`py-2 rounded-xl text-2xs font-bold border capitalize transition-all cursor-pointer ${
+                    className={`py-2 rounded-xl text-xs font-bold border capitalize transition-all cursor-pointer ${
                       preferences.soundTone === t
                         ? 'bg-amber-500 text-slate-950 border-amber-500 font-black'
                         : 'bg-slate-800 border-slate-700 text-slate-350 hover:bg-slate-750'
@@ -283,7 +287,7 @@ export default function SettingsScreen({
 
               {/* Volume Slider */}
               <div className="pt-2 bg-transparent">
-                <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase">
+                <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5 uppercase">
                   <span>Volume Level</span>
                   <span>{Math.round(preferences.volume * 100)}%</span>
                 </div>
@@ -303,7 +307,7 @@ export default function SettingsScreen({
               <button
                 id="btn_test_celebration"
                 onClick={testCompletion}
-                className="w-full py-1.5 text-2xs font-bold bg-slate-950 border border-slate-800 text-amber-450 rounded-xl hover:bg-slate-900 transition-colors cursor-pointer"
+                className="w-full py-1.5 text-xs font-bold bg-slate-950 border border-slate-800 text-amber-450 rounded-xl hover:bg-slate-900 transition-colors cursor-pointer"
               >
                 🔊 Play Goal Complete Chime Trial
               </button>
@@ -321,7 +325,7 @@ export default function SettingsScreen({
           <div className="flex justify-between items-center bg-transparent">
             <div>
               <p className="text-xs font-bold text-slate-200">Physical Haptic Vibration</p>
-              <p className="text-[10px] text-slate-400 font-medium">Pulse device haptics on tap feedback</p>
+              <p className="text-xs text-slate-400 font-medium">Pulse device haptics on tap feedback</p>
             </div>
             <Switch
               id="switch_haptics"
@@ -339,7 +343,7 @@ export default function SettingsScreen({
           <div className="flex justify-between items-center pt-2 bg-transparent">
             <div>
               <p className="text-xs font-bold text-slate-200">Auto-Advance Sequence</p>
-              <p className="text-[10px] text-slate-400 font-medium">Switch to next prayer in sequence on goal complete</p>
+              <p className="text-xs text-slate-400 font-medium">Switch to next prayer in sequence on goal complete</p>
             </div>
             <Switch
               id="switch_auto_advance"
@@ -359,7 +363,7 @@ export default function SettingsScreen({
               <button
                 id="btn_open_reminder_creator"
                 onClick={() => setIsAddingReminder(true)}
-                className="py-1 px-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-450 border border-amber-500/15 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                className="py-1 px-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-450 border border-amber-500/15 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <Plus className="w-3 h-3" /> Add New
               </button>
@@ -380,7 +384,7 @@ export default function SettingsScreen({
                   <span className="text-sm">✔</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-2xs font-extrabold text-emerald-400 uppercase tracking-widest leading-none">Settings Notification</p>
+                  <p className="text-xs font-extrabold text-emerald-400 uppercase tracking-widest leading-none">Settings Notification</p>
                   <p className="text-xs font-semibold text-slate-200 mt-1 leading-normal">{feedbackMessage}</p>
                 </div>
               </motion.div>
@@ -402,7 +406,7 @@ export default function SettingsScreen({
                 <div className="flex justify-between items-center border-b border-slate-900 pb-2.5">
                   <div className="flex items-center gap-1.5 bg-transparent">
                     <span className="text-xs shrink-0">🔔</span>
-                    <span className="text-[10px] font-black uppercase text-amber-500 tracking-wider">New Auto-Tasbih Duty</span>
+                    <span className="text-xs font-black uppercase text-amber-500 tracking-wider">New Auto-Tasbih Duty</span>
                   </div>
                   <button
                     type="button"
@@ -414,7 +418,7 @@ export default function SettingsScreen({
   setTimePeriod('AM');
   setNewReminderDays(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
 }}
-                    className="text-[10px] text-slate-500 hover:text-red-400 font-bold transition-colors cursor-pointer"
+                    className="text-xs text-slate-500 hover:text-red-400 font-bold transition-colors cursor-pointer"
                   >
                     Close Form
                   </button>
@@ -422,7 +426,7 @@ export default function SettingsScreen({
  
                 {/* Input: Label string */}
                 <div className="space-y-1 bg-transparent">
-                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Duty Label / Title</label>
+                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">Duty Label / Title</label>
                   <input
                     id="input_reminder_label"
                     type="text"
@@ -437,7 +441,7 @@ export default function SettingsScreen({
  
                 {/* Choose Dhikr items */}
                 <div className="space-y-1 bg-transparent">
-                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Preset Target Praise</label>
+                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">Preset Target Praise</label>
                   <select
                     id="select_reminder_dhikr"
                     value={newReminderDhikrId}
@@ -454,7 +458,7 @@ export default function SettingsScreen({
  
                 {/* Interactive Time Dial (Chevrons + Spin Select) */}
                 <div className="space-y-1 bg-transparent">
-                  <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Set Reminder Time</label>
+                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">Set Reminder Time</label>
                   
                   <div className="flex items-center gap-4 bg-slate-900/60 border border-slate-850 rounded-2xl p-3.5 justify-center relative">
                     {/* Hour control column */}
@@ -545,7 +549,7 @@ export default function SettingsScreen({
                             key={p}
                             type="button"
                             onClick={() => setTimePeriod(p)}
-                            className={`px-3 py-1.5 text-3xs font-black tracking-wider rounded-lg transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 text-xs font-black tracking-wider rounded-lg transition-all cursor-pointer ${
                               timePeriod === p 
                                 ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
                                 : 'text-slate-400 hover:text-slate-200'
@@ -558,7 +562,7 @@ export default function SettingsScreen({
                     </div>
                   </div>
  
-                  <p className="text-[8px] text-slate-500 font-semibold text-center select-none">
+                  <p className="text-xs text-slate-500 font-semibold text-center select-none">
                     * Tap arrows for quick increments or click fields directly to access the standard dial spinner.
                   </p>
                 </div>
@@ -566,7 +570,7 @@ export default function SettingsScreen({
                 {/* Weekdays pickers (High art circles!) */}
                 <div className="space-y-2 bg-transparent">
                   <div className="flex justify-between items-center bg-transparent">
-                    <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Recurrent Intervals</label>
+                    <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">Recurrent Intervals</label>
                     <div className="flex gap-1 bg-transparent">
                       <button
                         type="button"
@@ -609,7 +613,7 @@ export default function SettingsScreen({
                           key={day.key}
                           type="button"
                           onClick={() => handleToggleDaySelection(day.key)}
-                          className={`relative w-8.5 h-8.5 rounded-full text-2xs font-bold transition-all flex flex-col items-center justify-center cursor-pointer border ${
+                          className={`relative w-8.5 h-8.5 rounded-full text-xs font-bold transition-all flex flex-col items-center justify-center cursor-pointer border ${
                             active
                               ? 'bg-slate-900 text-amber-400 border-amber-500/50 shadow-md shadow-amber-950/20 font-black scale-105'
                               : 'bg-slate-950 text-slate-500 border-slate-900 hover:border-slate-800'
@@ -631,7 +635,7 @@ export default function SettingsScreen({
                 <button
                   id="btn_submit_reminder_schedule"
                   type="submit"
-                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-2xs uppercase tracking-wider rounded-xl hover:brightness-110 active:scale-98 transition-all shadow-lg shadow-amber-950/20 cursor-pointer font-sans"
+                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl hover:brightness-110 active:scale-98 transition-all shadow-lg shadow-amber-950/20 cursor-pointer font-sans"
                 >
                   Save Active Dhikr Schedule 🔔
                 </button>
@@ -644,8 +648,8 @@ export default function SettingsScreen({
             {reminders.length === 0 ? (
               <div className="text-center py-5 rounded-xl bg-slate-950/20 border border-dashed border-slate-800">
                 <Clock className="w-5 h-5 text-slate-650 mx-auto opacity-40 mb-1.5" />
-                <p className="text-[10px] text-slate-500 font-bold select-none font-sans">No auto reminder schedules active</p>
-                <p className="text-[9px] text-slate-600 mt-0.5 px-6 font-sans">Add specific fajr, asr or bedtime prayer reminders above to chant automatically</p>
+                <p className="text-xs text-slate-500 font-bold select-none font-sans">No auto reminder schedules active</p>
+                <p className="text-xs text-slate-600 mt-0.5 px-6 font-sans">Add specific fajr, asr or bedtime prayer reminders above to chant automatically</p>
               </div>
             ) : (
               reminders.map((rem) => {
@@ -676,13 +680,13 @@ export default function SettingsScreen({
                     <div className="flex-1 min-w-0 pr-2">
                       <div className="flex items-center gap-1.5 mb-1 bg-transparent">
                         <span className="text-xs font-black font-mono text-amber-450">{format12Hour(rem.timeString)}</span>
-                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 truncate font-sans">{rem.label}</span>
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-400 truncate font-sans">{rem.label}</span>
                       </div>
                       <div className="flex flex-col gap-0.5">
-                        <p className="text-[9px] text-slate-400 font-bold truncate font-sans">
+                        <p className="text-xs text-slate-400 font-bold truncate font-sans">
                           Praise: <span className="text-slate-200 font-black">{rem.dhikrName}</span>
                         </p>
-                        <p className="text-[8px] text-slate-500 lowercase font-medium tracking-tight font-sans">
+                        <p className="text-xs text-slate-500 lowercase font-medium tracking-tight font-sans">
                           repeat: {rem.days.length === 7 ? 'Every day' : rem.days.join(', ')}
                         </p>
                       </div>
@@ -714,7 +718,7 @@ export default function SettingsScreen({
         <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md space-y-3.5">
           <div>
             <p className="text-xs font-bold text-red-500 uppercase tracking-wider select-none">Danger Settings</p>
-            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Clear records and options permanently</p>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">Clear records and options permanently</p>
           </div>
           <button
             id="btn_erase_everything"
@@ -727,10 +731,10 @@ export default function SettingsScreen({
 
         {/* Brand Information Footer */}
         <div className="text-center py-4 space-y-1 opacity-70">
-          <p className="text-[10px] text-slate-400 uppercase tracking-wider select-none flex items-center justify-center gap-1 font-semibold">
+          <p className="text-xs text-slate-400 uppercase tracking-wider select-none flex items-center justify-center gap-1 font-semibold">
             <Smartphone className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> Tasbih Companion Hub
           </p>
-          <p className="text-[10px] text-slate-500 select-none">Designed and engineered in high-fidelity sandbox context</p>
+          <p className="text-xs text-slate-500 select-none">Designed and engineered in high-fidelity sandbox context</p>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  RefreshCw, Plus, Play, Check, ChevronRight, Clock,
+  RefreshCw, Plus, Play, Check, ChevronRight, ChevronLeft, Clock,
   BookMarked, Trash2, Edit3, X, GripVertical, ChevronDown,
   ChevronUp, Sparkles
 } from 'lucide-react';
@@ -20,6 +20,7 @@ interface RoutineManagerProps {
   onEditRoutine: (id: string, name: string, emoji: string, dhikrIds: string[]) => void;
   onDeleteRoutine: (id: string) => void;
   onNavigateToAdhkaar: () => void;
+  onGoBack: () => void;
 }
 
 // ─── Emoji picker options ────────────────────────────────────────────────────
@@ -43,6 +44,7 @@ export default function RoutineManager({
   onEditRoutine,
   onDeleteRoutine,
   onNavigateToAdhkaar,
+  onGoBack,
 }: RoutineManagerProps) {
   const [activeRoutineId, setActiveRoutineId] = useState<string | null>(
     routines.length > 0 ? routines[0].id : null
@@ -104,27 +106,26 @@ export default function RoutineManager({
 
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="screen-header">
-        <div className="flex items-center justify-between mb-1">
-          <div>
-            <h1 className="font-display font-black text-xl flex items-center gap-2 leading-none" style={{ color: 'var(--color-text-primary)' }}>
-              <RefreshCw className="w-5 h-5" style={{ color: 'var(--color-text-brand)' }} />
-              My Routines
-            </h1>
-            <p className="text-[10px] mt-1 font-medium" style={{ color: 'var(--color-text-muted)' }}>
-              {routines.length} routine{routines.length !== 1 ? 's' : ''} · Build your daily practice
-            </p>
-          </div>
+        <div className="header-row">
+          <button onClick={onGoBack} className="back-btn" aria-label="Go back to Home">
+            <ChevronLeft className="w-5 h-5" />
+            <span>Home</span>
+          </button>
+          <h1 className="screen-title text-center">Routines</h1>
           <button
             aria-label="Create new routine"
             onClick={() => { setShowCreateForm(v => !v); setEditingRoutineId(null); }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all cursor-pointer ${
-              showCreateForm ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-slate-800 text-amber-400 border-slate-700 hover:bg-slate-700'
-            }`}
+            className="w-10 h-10 rounded-xl flex items-center justify-center border cursor-pointer transition-all"
+            style={{
+              background: showCreateForm ? 'var(--color-brand)' : 'var(--color-bg-raised)',
+              borderColor: showCreateForm ? 'var(--color-brand)' : 'var(--color-border)',
+              color: showCreateForm ? '#0B1120' : 'var(--color-text-brand)',
+            }}
           >
-            <Plus className="w-3.5 h-3.5" />
-            New
+            <Plus className="w-5 h-5" />
           </button>
         </div>
+        <p className="caption">{routines.length} routine{routines.length !== 1 ? 's' : ''} · Build your daily practice</p>
 
         {/* Routine tabs */}
         {routines.length > 0 && (
@@ -133,7 +134,7 @@ export default function RoutineManager({
               <button
                 key={r.id}
                 onClick={() => { setActiveRoutineId(r.id); setEditingRoutineId(null); }}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border transition-all cursor-pointer ${
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border transition-all cursor-pointer ${
                   activeRoutineId === r.id
                     ? 'bg-amber-500 text-slate-950 border-amber-500'
                     : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
@@ -157,7 +158,7 @@ export default function RoutineManager({
             className="overflow-hidden border-b border-amber-500/20 bg-slate-900/80"
           >
             <div className="px-4 py-4 space-y-3">
-              <p className="text-[9px] font-black uppercase tracking-widest text-amber-500">➕ Create New Routine</p>
+              <p className="text-xs font-black uppercase tracking-widest text-amber-500">➕ Create New Routine</p>
 
               {/* Emoji + Name */}
               <div className="flex gap-2">
@@ -177,15 +178,15 @@ export default function RoutineManager({
               {/* Selected dhikrs */}
               {newDhikrIds.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Selected ({newDhikrIds.length})</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-400">Selected ({newDhikrIds.length})</p>
                   {newDhikrIds.map((id, i) => {
                     const d = getDhikr(id, customDhikrs);
                     if (!d) return null;
                     return (
                       <div key={id} className="flex items-center gap-2 bg-slate-800 rounded-xl px-3 py-2">
-                        <span className="text-[9px] font-black text-slate-500 w-4">{i + 1}</span>
+                        <span className="text-xs font-black text-slate-500 w-4">{i + 1}</span>
                         <span className="flex-1 text-xs font-bold text-slate-200 truncate">{d.nameEn}</span>
-                        <span className="text-[9px] text-slate-500">{d.targetCount}×</span>
+                        <span className="text-xs text-slate-500">{d.targetCount}×</span>
                         <button onClick={() => setNewDhikrIds(prev => prev.filter(x => x !== id))} className="text-slate-500 hover:text-red-400 cursor-pointer ml-1"><X className="w-3 h-3" /></button>
                       </div>
                     );
@@ -218,9 +219,9 @@ export default function RoutineManager({
                             >
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-black truncate">{d.nameEn}</p>
-                                <p className="text-[9px] text-slate-500 truncate">{d.meaning}</p>
+                                <p className="text-xs text-slate-500 truncate">{d.meaning}</p>
                               </div>
-                              <span className="text-[9px] text-slate-500 shrink-0">{d.targetCount}×</span>
+                              <span className="text-xs text-slate-500 shrink-0">{d.targetCount}×</span>
                               {added && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
                             </button>
                           );
@@ -247,7 +248,7 @@ export default function RoutineManager({
             <span className="text-5xl mb-4">🌅</span>
             <h3 className="text-sm font-black text-slate-300">No routines yet</h3>
             <p className="text-xs text-slate-500 mt-2 leading-relaxed">Create your first routine by tapping <strong className="text-amber-400">+ New</strong> above. Add adhkaar from the library and build your daily practice.</p>
-            <button onClick={onNavigateToAdhkaar} className="mt-4 text-[10px] font-black text-amber-400 hover:text-amber-300 cursor-pointer">
+            <button onClick={onNavigateToAdhkaar} className="mt-4 text-xs font-black text-amber-400 hover:text-amber-300 cursor-pointer">
               📖 Browse Adhkaar Library →
             </button>
           </div>
@@ -335,7 +336,7 @@ function RoutineDetail({
               <span className="text-xl">{routine.emoji}</span>
               {routine.name}
             </h2>
-            <p className="text-[10px] text-slate-400 mt-0.5">{dhikrs.length} adhkaar in sequence</p>
+            <p className="text-xs text-slate-400 mt-0.5">{dhikrs.length} adhkaar in sequence</p>
           </div>
           <div className="flex items-center gap-1.5">
             {!routine.isSystem && (
@@ -399,7 +400,7 @@ function RoutineDetail({
             className="overflow-hidden"
           >
             <div className="rounded-2xl border border-amber-500/30 bg-slate-900 p-4 space-y-3">
-              <p className="text-[9px] font-black uppercase tracking-widest text-amber-500">✏️ Editing Routine</p>
+              <p className="text-xs font-black uppercase tracking-widest text-amber-500">✏️ Editing Routine</p>
 
               {/* Emoji picker */}
               <div className="flex gap-1 flex-wrap">
@@ -418,15 +419,15 @@ function RoutineDetail({
               {/* Selected dhikrs in edit */}
               {editDhikrIds.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Sequence ({editDhikrIds.length})</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-400">Sequence ({editDhikrIds.length})</p>
                   {editDhikrIds.map((id, i) => {
                     const d = getDhikr(id, customDhikrs);
                     if (!d) return null;
                     return (
                       <div key={id} className="flex items-center gap-2 bg-slate-800 rounded-xl px-3 py-2">
-                        <span className="text-[9px] text-slate-500 w-4">{i + 1}</span>
+                        <span className="text-xs text-slate-500 w-4">{i + 1}</span>
                         <span className="flex-1 text-xs font-bold truncate">{d.nameEn}</span>
-                        <span className="text-[9px] text-slate-500">{d.targetCount}×</span>
+                        <span className="text-xs text-slate-500">{d.targetCount}×</span>
                         <button onClick={() => onEditDhikrIdsChange(editDhikrIds.filter(x => x !== id))} className="text-slate-500 hover:text-red-400 cursor-pointer"><X className="w-3 h-3" /></button>
                       </div>
                     );
@@ -454,9 +455,9 @@ function RoutineDetail({
                             >
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-black truncate">{d.nameEn}</p>
-                                <p className="text-[9px] text-slate-500 truncate">{d.meaning}</p>
+                                <p className="text-xs text-slate-500 truncate">{d.meaning}</p>
                               </div>
-                              <span className="text-[9px] text-slate-500 shrink-0">{d.targetCount}×</span>
+                              <span className="text-xs text-slate-500 shrink-0">{d.targetCount}×</span>
                               {added && <Check className="w-3 h-3 text-amber-400 shrink-0" />}
                             </button>
                           );
@@ -478,7 +479,7 @@ function RoutineDetail({
 
       {/* Dhikr sequence */}
       <div>
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2.5 px-1">
+        <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2.5 px-1">
           Sequence — {dhikrs.length} adhkaar
         </h3>
         <div className="space-y-2">
@@ -498,7 +499,7 @@ function RoutineDetail({
                 }`}
               >
                 {/* Step indicator */}
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-black border ${
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-black border ${
                   isCompleted ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
                   : isPending ? 'bg-gradient-to-br from-amber-500 to-orange-400 border-transparent text-slate-950'
                   : 'bg-slate-800 border-slate-700 text-slate-500'
@@ -512,12 +513,12 @@ function RoutineDetail({
                     {dhikr.nameEn}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="flex items-center gap-0.5 text-[9px] text-slate-500">
+                    <span className="flex items-center gap-0.5 text-xs text-slate-500">
                       <Clock className="w-2.5 h-2.5" />
                       {dhikr.targetCount > 0 ? `${dhikr.targetCount}×` : '∞'}
                     </span>
                     {dhikr.sourceBook && (
-                      <span className="text-[9px] text-slate-500 truncate flex items-center gap-0.5">
+                      <span className="text-xs text-slate-500 truncate flex items-center gap-0.5">
                         <BookMarked className="w-2.5 h-2.5 shrink-0" />
                         {dhikr.sourceBook}
                       </span>

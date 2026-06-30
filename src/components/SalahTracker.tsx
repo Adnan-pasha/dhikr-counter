@@ -8,6 +8,7 @@ import { SalahLog, SalahName, SALAH_META, HIJRI_MONTHS } from '../types';
 interface SalahTrackerProps {
   salahLogs: SalahLog[];
   onTogglePrayer: (date: string, prayer: SalahName) => void;
+  onGoBack: () => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -70,7 +71,7 @@ const getStreakCount = (salahLogs: SalahLog[]): number => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTrackerProps) {
+export default function SalahTracker({ salahLogs, onTogglePrayer, onGoBack }: SalahTrackerProps) {
   const today = new Date();
   const todayStr = getLocalDateString(today);
   const last7Days = useMemo(() => getLast7Days(), []);
@@ -83,24 +84,26 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#0f172a] text-slate-100 overflow-y-auto">
+    <div className="screen">
 
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="px-5 pt-5 pb-4 bg-slate-900/60 backdrop-blur-md border-b border-slate-800/60">
-        <div className="flex items-start justify-between">
+      <div className="screen-header">
+        <div className="header-row">
+          <button onClick={onGoBack} className="back-btn" aria-label="Go back to Home">
+            <ChevronLeft className="w-5 h-5" />
+            <span>Home</span>
+          </button>
+          <h1 className="screen-title text-center">Salah</h1>
+          <div className="text-right min-w-[44px]">
+            <p className="text-xl font-black" style={{ color: 'var(--color-text-brand)' }}>{todayCount}<span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>/6</span></p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-display font-black text-xl text-slate-50 flex items-center gap-2 leading-none">
-              <Moon className="w-5 h-5 text-amber-500" />
-              Salah Tracker
-            </h1>
-            <p className="text-[10px] text-slate-400 mt-1">
+            <p className="caption">
               {today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
-            <p className="text-[10px] text-amber-500/70 font-medium">{getHijriDate(today)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-black text-amber-400">{todayCount}<span className="text-slate-500 text-sm">/6</span></p>
-            <p className="text-[9px] text-slate-500 uppercase tracking-widest">Today</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--color-text-brand)', opacity: 0.8 }}>{getHijriDate(today)}</p>
           </div>
         </div>
 
@@ -109,23 +112,23 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
           <div className="flex-1 bg-slate-800/60 rounded-2xl p-3 border border-slate-700/60 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
               <Flame className="w-3.5 h-3.5 text-orange-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Streak</span>
+              <span className="text-xs font-black uppercase tracking-widest text-slate-400">Streak</span>
             </div>
             <p className="text-xl font-black text-orange-400">{streak}</p>
-            <p className="text-[9px] text-slate-500">days (5+ prayers)</p>
+            <p className="text-xs text-slate-500">days (5+ prayers)</p>
           </div>
           <div className="flex-1 bg-slate-800/60 rounded-2xl p-3 border border-slate-700/60 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
               <Calendar className="w-3.5 h-3.5 text-teal-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total</span>
+              <span className="text-xs font-black uppercase tracking-widest text-slate-400">Total</span>
             </div>
             <p className="text-xl font-black text-teal-400">{allTimeTotal}</p>
-            <p className="text-[9px] text-slate-500">prayers logged</p>
+            <p className="text-xs text-slate-500">prayers logged</p>
           </div>
           <div className="flex-1 bg-slate-800/60 rounded-2xl p-3 border border-slate-700/60 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
               <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Week</span>
+              <span className="text-xs font-black uppercase tracking-widest text-slate-400">Week</span>
             </div>
             <p className="text-xl font-black text-emerald-400">
               {last7Days.reduce((sum, d) => {
@@ -133,7 +136,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
                 return sum + getPrayerCount(log);
               }, 0)}
             </p>
-            <p className="text-[9px] text-slate-500">this week</p>
+            <p className="text-xs text-slate-500">this week</p>
           </div>
         </div>
       </div>
@@ -142,7 +145,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
 
         {/* ── Today's Prayers ────────────────────────────────────────── */}
         <section>
-          <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+          <h2 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
             Today's Prayers
           </h2>
           <div className="space-y-2">
@@ -174,7 +177,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
                       </p>
                       <p className="text-sm font-arabic text-slate-400">{meta.arabicName}</p>
                     </div>
-                    <p className="text-[10px] text-slate-500 mt-0.5">{meta.time}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{meta.time}</p>
                   </div>
 
                   {/* Check circle */}
@@ -212,7 +215,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
             >
               <p className="text-2xl mb-2">🎉</p>
               <p className="text-sm font-black text-emerald-400">All 6 Prayers Complete!</p>
-              <p className="text-[10px] text-slate-400 mt-1">
+              <p className="text-xs text-slate-400 mt-1">
                 Alhamdulillah! May Allah accept your prayers. 🤲
               </p>
             </motion.div>
@@ -221,7 +224,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
 
         {/* ── 7-Day Heatmap ──────────────────────────────────────────── */}
         <section>
-          <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+          <h2 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
             Last 7 Days
           </h2>
           <div className="grid grid-cols-7 gap-1.5">
@@ -243,11 +246,11 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
               return (
                 <div key={dateStr} className="flex flex-col items-center gap-1">
                   <div className={`w-full aspect-square rounded-xl border flex items-center justify-center relative ${getBg()} ${isToday ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-slate-950' : ''}`}>
-                    <span className={`text-[10px] font-black ${count === 6 ? 'text-white' : count > 0 ? 'text-slate-200' : 'text-slate-600'}`}>
+                    <span className={`text-xs font-black ${count === 6 ? 'text-white' : count > 0 ? 'text-slate-200' : 'text-slate-600'}`}>
                       {count}
                     </span>
                   </div>
-                  <span className={`text-[8px] font-bold ${isToday ? 'text-amber-400' : 'text-slate-500'}`}>
+                  <span className={`text-xs font-bold ${isToday ? 'text-amber-400' : 'text-slate-500'}`}>
                     {day.toLocaleDateString('en-US', { weekday: 'narrow' })}
                   </span>
                 </div>
@@ -265,7 +268,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
             ].map(({ color, label }) => (
               <div key={label} className="flex items-center gap-1">
                 <div className={`w-3 h-3 rounded ${color}`} />
-                <span className="text-[8px] text-slate-500">{label}</span>
+                <span className="text-xs text-slate-500">{label}</span>
               </div>
             ))}
           </div>
@@ -273,7 +276,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer }: SalahTracker
 
         {/* ── Monthly Overview ───────────────────────────────────────── */}
         <section>
-          <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+          <h2 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
             This Month
           </h2>
           <MonthlyGrid salahLogs={salahLogs} />
@@ -318,7 +321,7 @@ function MonthlyGrid({ salahLogs }: { salahLogs: SalahLog[] }) {
       {/* Day headers */}
       <div className="grid grid-cols-7 gap-1 mb-1">
         {['S','M','T','W','T','F','S'].map((d, i) => (
-          <div key={i} className="text-center text-[8px] font-black text-slate-500">{d}</div>
+          <div key={i} className="text-center text-xs font-black text-slate-500">{d}</div>
         ))}
       </div>
       {/* Blank cells for first week */}
@@ -329,13 +332,13 @@ function MonthlyGrid({ salahLogs }: { salahLogs: SalahLog[] }) {
         {days.map(({ day, count, isToday, isFuture }) => (
           <div
             key={day}
-            className={`aspect-square rounded-lg border flex items-center justify-center text-[9px] font-black relative ${getBg(count, isFuture)} ${isToday ? 'ring-1 ring-amber-500 ring-offset-1 ring-offset-slate-950' : ''}`}
+            className={`aspect-square rounded-lg border flex items-center justify-center text-xs font-black relative ${getBg(count, isFuture)} ${isToday ? 'ring-1 ring-amber-500 ring-offset-1 ring-offset-slate-950' : ''}`}
           >
             {day}
           </div>
         ))}
       </div>
-      <p className="text-[9px] text-slate-500 text-center mt-2">
+      <p className="text-xs text-slate-500 text-center mt-2">
         {today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
       </p>
     </div>
