@@ -216,6 +216,38 @@ export default function SettingsScreen({
           </div>
         </div>
 
+        {/* Card: Dark / Light Mode */}
+        <div className="space-y-3">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 select-none">
+            <Sparkles className="w-3.5 h-3.5" /> Appearance
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {([
+              { id: 'dark' as const, label: 'Dark Mode', icon: '🌙' },
+              { id: 'light' as const, label: 'Light Mode', icon: '☀️' },
+            ]).map((mode) => {
+              const matches = preferences.colorMode === mode.id;
+              return (
+                <button
+                  id={`color_mode_option_${mode.id}`}
+                  key={mode.id}
+                  onClick={() => onChangePreferences({ colorMode: mode.id })}
+                  className="p-4 rounded-2xl border flex items-center gap-2.5 cursor-pointer text-left transition-all"
+                  style={{
+                    background: matches ? 'var(--color-brand-dim)' : 'var(--color-bg-raised)',
+                    borderColor: matches ? 'var(--color-brand-border)' : 'var(--color-border)',
+                  }}
+                >
+                  <span className="text-xl shrink-0">{mode.icon}</span>
+                  <span className="text-sm font-bold" style={{ color: matches ? 'var(--color-text-brand)' : 'var(--color-text-primary)' }}>
+                    {mode.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Card: Themes Selection */}
         <div className="space-y-3">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 select-none">

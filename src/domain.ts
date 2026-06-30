@@ -71,12 +71,14 @@ export const sanitizePreferences = (value: unknown, fallback: UserPreferences): 
   const theme = THEMES.includes(value.theme as AppTheme) ? value.theme as AppTheme : fallback.theme;
   const volume = isNumber(value.volume) ? Math.min(1, Math.max(0, value.volume)) : fallback.volume;
   const madhab = MADHABS.includes(value.madhab as Madhab) ? value.madhab as Madhab : fallback.madhab;
+  const colorMode = (value.colorMode === 'dark' || value.colorMode === 'light') ? value.colorMode : fallback.colorMode;
   return {
     soundOn: isBool(value.soundOn) ? value.soundOn : fallback.soundOn,
     soundTone,
     vibrateOn: isBool(value.vibrateOn) ? value.vibrateOn : fallback.vibrateOn,
     autoAdvance: isBool(value.autoAdvance) ? value.autoAdvance : fallback.autoAdvance,
     theme,
+    colorMode,
     volume,
     madhab,
   };

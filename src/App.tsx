@@ -29,6 +29,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   vibrateOn: true,
   autoAdvance: true,
   theme: 'emerald',
+  colorMode: 'dark',
   volume: 0.5,
   madhab: 'shafi',
 };
@@ -222,6 +223,7 @@ export default function App() {
   return (
     <div
       id="app_root_viewport"
+      data-theme={preferences.colorMode}
       className="min-h-screen w-screen flex items-center justify-center overflow-y-auto py-0 md:py-8 md:px-4"
       style={{ background: 'var(--color-bg-deep)' }}
     >

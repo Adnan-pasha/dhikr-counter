@@ -1,6 +1,7 @@
 export type SoundTone = 'wooden' | 'chime' | 'digital' | 'bowl';
 
 export type AppTheme = 'slate' | 'emerald' | 'amber' | 'indigo' | 'midnight';
+export type ColorMode = 'dark' | 'light';
 
 export type Madhab = 'hanafi' | 'shafi' | 'maliki' | 'hanbali';
 
@@ -54,6 +55,7 @@ export interface UserPreferences {
   vibrateOn: boolean;
   autoAdvance: boolean;
   theme: AppTheme;
+  colorMode: ColorMode;
   volume: number; // 0 to 1
   madhab: Madhab;
 }
