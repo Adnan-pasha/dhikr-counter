@@ -320,10 +320,28 @@ function RoutineDetail({
   onToggleEditPicker, onStartDhikr, onStartEdit, onCancelEdit, onSaveEdit, onDelete, onNavigateToAdhkaar,
 }: RoutineDetailProps) {
   const dhikrs = routine.dhikrIds.map(id => getDhikr(id, customDhikrs)).filter(Boolean) as Dhikr[];
-  const completedCount = dhikrs.filter(d => completedTodayIds.includes(d.id)).length;
+
+  // Use Set for O(1) lookup, count unique completed dhikr IDs within this routine
+  const completedSet = new Set(completedTodayIds);
+  // Count how many unique dhikr IDs in this routine are completed today
+  // Use index-aware tracking so duplicate dhikrIds in a routine are counted correctly
+  let completedCount = 0;
+  const pendingDhikrs: Dhikr[] = [];
+  const seenCompleted = new Map<string, number>(); // id → times seen
+  for (const dhikr of dhikrs) {
+    const seenCount = seenCompleted.get(dhikr.id) ?? 0;
+    const completedCount_for_id = completedTodayIds.filter(id => id === dhikr.id).length;
+    if (seenCount < completedCount_for_id) {
+      completedCount++;
+      seenCompleted.set(dhikr.id, seenCount + 1);
+    } else {
+      pendingDhikrs.push(dhikr);
+    }
+  }
+
   const progressPct = dhikrs.length > 0 ? Math.round((completedCount / dhikrs.length) * 100) : 0;
-  const firstPending = dhikrs.find(d => !completedTodayIds.includes(d.id));
-  const allComplete = completedCount === dhikrs.length && dhikrs.length > 0;
+  const firstPending = pendingDhikrs[0] ?? null;
+  const allComplete = pendingDhikrs.length === 0 && dhikrs.length > 0;
 
   return (
     <div className="px-4 py-4 space-y-4">
@@ -484,11 +502,14 @@ function RoutineDetail({
         </h3>
         <div className="space-y-2">
           {dhikrs.map((dhikr, idx) => {
-            const isCompleted = completedTodayIds.includes(dhikr.id);
-            const isPending = !isCompleted && dhikr.id === firstPending?.id;
+            // Position-aware: count how many times this dhikr appears before idx
+            const sameIdsBefore = dhikrs.slice(0, idx).filter(d => d.id === dhikr.id).length;
+            const completedTimesForId = completedTodayIds.filter(id => id === dhikr.id).length;
+            const isCompleted = sameIdsBefore < completedTimesForId;
+            const isPending = !isCompleted && dhikr.id === firstPending?.id && idx === dhikrs.indexOf(firstPending);
             return (
               <motion.div
-                key={dhikr.id}
+                key={`${dhikr.id}-${idx}`}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.03 }}

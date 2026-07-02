@@ -124,11 +124,23 @@ export default function HomeScreen({
     return () => clearInterval(timer);
   }, []);
 
-  // Today's routine progress
+  // Today's routine progress — position-aware to handle duplicate dhikrIds correctly
   const todayRoutines = routines.slice(0, 3).map(r => {
     const dhikrs = r.dhikrIds.map(id => allDhikrs.find(d => d.id === id)).filter(Boolean) as Dhikr[];
-    const completed = dhikrs.filter(d => completedTodayIds.includes(d.id)).length;
-    return { ...r, total: dhikrs.length, completed, firstPending: dhikrs.find(d => !completedTodayIds.includes(d.id)) };
+    let completed = 0;
+    let firstPending: Dhikr | undefined;
+    const seenCompleted = new Map<string, number>();
+    for (const dhikr of dhikrs) {
+      const seen = seenCompleted.get(dhikr.id) ?? 0;
+      const doneCount = completedTodayIds.filter(id => id === dhikr.id).length;
+      if (seen < doneCount) {
+        completed++;
+        seenCompleted.set(dhikr.id, seen + 1);
+      } else if (!firstPending) {
+        firstPending = dhikr;
+      }
+    }
+    return { ...r, total: dhikrs.length, completed, firstPending };
   });
 
   // Favourite dhikrs quick access

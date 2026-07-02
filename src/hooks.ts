@@ -242,6 +242,7 @@ interface CounterFlowDeps {
   dhikrs: Dhikr[];
   currentDhikrId: string;
   activeRoutine: Dhikr[] | null;
+  history: DhikrHistory[];
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
   setCurrentDhikrId: React.Dispatch<React.SetStateAction<string>>;
   setHistory: React.Dispatch<React.SetStateAction<DhikrHistory[]>>;
@@ -280,14 +281,42 @@ export const useCounterFlow = (deps: CounterFlowDeps) => {
       deps.setHistory((prev) => [...prev, newLog]);
 
       if (deps.preferences.autoAdvance) {
-        // If in a routine, advance through routine sequence; else cycle library
         const sequence = deps.activeRoutine ?? deps.dhikrs;
         const currentIndex = sequence.findIndex((d) => d.id === deps.currentDhikrId);
+
         if (currentIndex !== -1) {
-          const nextIndex = currentIndex + 1;
-          // Don't wrap in routine — stop at end; wrap freely in library
-          if (deps.activeRoutine ? nextIndex < sequence.length : true) {
-            const nextDhikr = sequence[deps.activeRoutine ? nextIndex : nextIndex % sequence.length];
+          // Build today's completed set BEFORE this completion (newLog not yet in state)
+          const today = new Date();
+          const completedTodayIds = new Set(
+            deps.history
+              .filter(h => {
+                const d = new Date(h.timestamp);
+                return d.getFullYear() === today.getFullYear()
+                  && d.getMonth() === today.getMonth()
+                  && d.getDate() === today.getDate();
+              })
+              .map(h => h.dhikrId)
+          );
+          // Current dhikr just completed — add it to the set
+          completedTodayIds.add(deps.currentDhikrId);
+
+          if (deps.activeRoutine) {
+            // Find the next PENDING dhikr after the current position
+            const nextPending = sequence
+              .slice(currentIndex + 1)
+              .find(d => !completedTodayIds.has(d.id));
+
+            if (nextPending) {
+              setTimeout(() => {
+                deps.setCurrentDhikrId(nextPending.id);
+                deps.setCurrentCount(0);
+              }, 1200);
+            }
+            // All done in routine — stay on last, don't loop
+          } else {
+            // Free counter mode — just advance to next in library
+            const nextIndex = (currentIndex + 1) % sequence.length;
+            const nextDhikr = sequence[nextIndex];
             setTimeout(() => {
               deps.setCurrentDhikrId(nextDhikr.id);
               deps.setCurrentCount(0);

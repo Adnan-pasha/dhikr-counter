@@ -140,6 +140,7 @@ export default function App() {
     dhikrs,
     currentDhikrId,
     activeRoutine,
+    history,
     setCurrentCount,
     setCurrentDhikrId,
     setHistory,
