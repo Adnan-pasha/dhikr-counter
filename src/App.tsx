@@ -17,6 +17,7 @@ import BottomNav from './components/BottomNav';
 import OnboardingFlow from './components/OnboardingFlow';
 import { ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
+import { isTimestampOnLocalDay } from './domain';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
 // Use the full rich ADHKAAR_LIBRARY as system dhikrs
@@ -356,15 +357,7 @@ export default function App() {
                 customDhikrs={dhikrs.filter(d => !d.isSystem)}
                 currentDhikrId={currentDhikrId}
                 completedTodayIds={history
-                  .filter((h) => {
-                    const today = new Date();
-                    const d = new Date(h.timestamp);
-                    return (
-                      d.getFullYear() === today.getFullYear() &&
-                      d.getMonth() === today.getMonth() &&
-                      d.getDate() === today.getDate()
-                    );
-                  })
+                  .filter((h) => isTimestampOnLocalDay(h.timestamp))
                   .map((h) => h.dhikrId)}
                 onStartDhikr={(id) => {
                   setCurrentDhikrId(id);
@@ -455,7 +448,11 @@ export default function App() {
                   <span className="text-amber-400 text-xs font-bold animate-pulse">Loading Qibla...</span>
                 </div>
               }>
-                <QiblaScreen theme={preferences.theme} />
+                <QiblaScreen
+                  theme={preferences.theme}
+                  madhab={preferences.madhab}
+                  onMadhabChange={(madhab) => setPreferences(prev => ({ ...prev, madhab }))}
+                />
               </Suspense>
             )}
           </div>

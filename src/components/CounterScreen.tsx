@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RotateCcw, Volume2, VolumeX, Maximize2, Minimize2, Check, ChevronLeft, Sparkles } from 'lucide-react';
 import { Dhikr, DhikrHistory, UserPreferences } from '../types';
+import { isTimestampOnLocalDay } from '../domain';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -73,11 +74,7 @@ export default function CounterScreen({
   const rippleId = useRef(0);
   const theme = THEME_CONFIG[preferences.theme] ?? THEME_CONFIG.amber;
 
-  const isCompletedToday = history.some(log => {
-    if (log.dhikrId !== currentDhikr.id) return false;
-    const d = new Date(log.timestamp), t = new Date();
-    return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate();
-  });
+  const isCompletedToday = history.some(log => log.dhikrId === currentDhikr.id && isTimestampOnLocalDay(log.timestamp));
 
   const progress = currentDhikr.targetCount > 0
     ? Math.min(currentCount / currentDhikr.targetCount, 1)

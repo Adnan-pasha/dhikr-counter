@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Dhikr, DhikrHistory, Routine, UserPreferences } from '../types';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
+import { isTimestampOnLocalDay } from '../domain';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,15 +80,7 @@ function getDailyAyah() {
 
 // Get today's completed dhikr ids from history
 function getCompletedTodayIds(history: DhikrHistory[]): string[] {
-  const today = new Date();
-  return history
-    .filter(h => {
-      const d = new Date(h.timestamp);
-      return d.getFullYear() === today.getFullYear()
-        && d.getMonth() === today.getMonth()
-        && d.getDate() === today.getDate();
-    })
-    .map(h => h.dhikrId);
+  return history.filter(h => isTimestampOnLocalDay(h.timestamp)).map(h => h.dhikrId);
 }
 
 // Get all-time bead count

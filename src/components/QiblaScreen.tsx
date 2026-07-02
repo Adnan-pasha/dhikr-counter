@@ -5,12 +5,14 @@ import {
   Search, Globe, ChevronDown, Check, X, Bell, BellOff, 
   Play, Pause, Volume2, VolumeX, Clock, Sliders, Calendar, AlertCircle
 } from 'lucide-react';
-import { Coordinates, CalculationMethod, PrayerTimes, Madhab } from 'adhan';
-import { AppTheme } from '../types';
-import { safeParseJSON, sanitizeAzanSettings } from '../domain';
+import { Coordinates, CalculationMethod, PrayerTimes, Madhab as AdhanMadhab } from 'adhan';
+import { AppTheme, Madhab as UserMadhab, PrayerSettings, PrayerCalculationMethod, PrayerAzanId } from '../types';
+import { readPrayerSettings, writePrayerSettings } from '../domain';
 
 interface QiblaScreenProps {
   theme: AppTheme;
+  madhab: UserMadhab;
+  onMadhabChange: (madhab: UserMadhab) => void;
 }
 
 interface CityPreset {
@@ -82,7 +84,7 @@ const CITY_PRESETS: CityPreset[] = RAW_CITY_PRESETS.map(city => ({
   direction: calculateQiblaStatic(city.lat, city.lng)
 }));
 
-export default function QiblaScreen({ theme }: QiblaScreenProps) {
+export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScreenProps) {
   // Navigation sub-tab inside Qibla Finder: Compass vs. PrayTimes
   const [subTab, setSubTab] = useState<'qibla' | 'namaz'>('qibla');
 
@@ -95,9 +97,30 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [isUnsecureContext, setIsUnsecureContext] = useState<boolean>(false);
   
-  // Fiqh & Calculation Methods
-  const [fiqh, setFiqh] = useState<'Hanafi' | 'Shafi'>('Hanafi'); // Defaults to Hanafi!
-  const [calcMethod, setCalcMethod] = useState<'Karachi' | 'MWL' | 'UmmAlQura' | 'ISNA' | 'Egypt'>('Karachi');
+  // Unified prayer calculation settings
+  const [prayerSettings, setPrayerSettings] = useState<PrayerSettings>(() => readPrayerSettings(madhab));
+
+  const updatePrayerSettings = (diff: Partial<PrayerSettings>) => {
+    setPrayerSettings((prev) => {
+      const next = writePrayerSettings({ ...prev, ...diff, azanEnabled: diff.azanEnabled ?? prev.azanEnabled });
+      if (diff.madhab && diff.madhab !== madhab) {
+        onMadhabChange(diff.madhab);
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    setPrayerSettings((prev) => {
+      if (prev.madhab === madhab) return prev;
+      return writePrayerSettings({ ...prev, madhab });
+    });
+  }, [madhab]);
+
+  const fiqh = prayerSettings.madhab === 'hanafi' ? 'Hanafi' : 'Standard';
+  const calcMethod = prayerSettings.calculationMethod;
+  const selectedAzanSound = prayerSettings.azanSound;
+  const azanSettings = prayerSettings.azanEnabled;
 
   // Search state & dropdown autocompletion states
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
@@ -130,7 +153,6 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
     'https://archive.org/download/AdhanMedina/Adhan-Medina.mp3'
   ];
   
-  const [selectedAzanSound, setSelectedAzanSound] = useState<'mecca' | 'medina'>('mecca');
   const [activeAudio, setActiveAudio] = useState<HTMLAudioElement | null>(null);
   const [syntheticCtx, setSyntheticCtx] = useState<any>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
@@ -139,14 +161,13 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
   const [audioError, setAudioError] = useState<string | null>(null);
   const [currentUrlTrying, setCurrentUrlTrying] = useState<string | null>(null);
   
-  const [azanSettings, setAzanSettings] = useState<Record<string, boolean>>(() => {
-    return sanitizeAzanSettings(safeParseJSON(localStorage.getItem('tasbih_azan_settings'), null));
-  });
 
-  const handleToggleAzanSetting = (id: string) => {
-    const updated = { ...azanSettings, [id]: !azanSettings[id] };
-    setAzanSettings(updated);
-    localStorage.setItem('tasbih_azan_settings', JSON.stringify(updated));
+  const isPrayerAzanId = (id: string): id is PrayerAzanId => id === 'fajr' || id === 'dhuhr' || id === 'asr' || id === 'maghrib' || id === 'isha';
+
+  const handleToggleAzanSetting = (id: PrayerAzanId) => {
+    updatePrayerSettings({
+      azanEnabled: { ...azanSettings, [id]: !azanSettings[id] },
+    });
   };
 
   // Peaceful synthesized chimes fallback for offline / blocked environments
@@ -681,7 +702,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
   };
 
   const params = getParams();
-  params.madhab = fiqh === 'Hanafi' ? Madhab.Hanafi : Madhab.Shafi;
+  params.madhab = prayerSettings.madhab === 'hanafi' ? AdhanMadhab.Hanafi : AdhanMadhab.Shafi;
 
   // Primary calculation
   const prayerTimes = new PrayerTimes(coordinates, calculationDate, params);
@@ -802,7 +823,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
 
       prayersList.forEach(p => {
         if (!p.isAzan) return;
-        if (!azanSettings[p.id]) return;
+        if (!isPrayerAzanId(p.id) || !azanSettings[p.id]) return;
 
         const pt = p.time;
         const diffMs = nowClock.getTime() - pt.getTime();
@@ -1457,7 +1478,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
             <div className="space-y-1">
               {prayersList.map((p, index) => {
                 const isActive = activePrayer.id === p.id;
-                const isSelectedForSound = azanSettings[p.id];
+                const isSelectedForSound = isPrayerAzanId(p.id) && azanSettings[p.id];
 
                 return (
                   <div
@@ -1502,7 +1523,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
                         <button
                           id={`btn_toggle_azan_alarm_${p.id}`}
                           type="button"
-                          onClick={() => handleToggleAzanSetting(p.id)}
+                          onClick={() => isPrayerAzanId(p.id) && handleToggleAzanSetting(p.id)}
                           className={`w-6.5 h-6.5 rounded-full flex items-center justify-center transition-colors border select-none cursor-pointer ${
                             isSelectedForSound
                               ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 hover:bg-amber-500/25'
@@ -1545,26 +1566,26 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
                   <button
                     id="btn_select_fiqh_hanafi"
                     type="button"
-                    onClick={() => setFiqh('Hanafi')}
+                    onClick={() => updatePrayerSettings({ madhab: 'hanafi' })}
                     className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wide rounded-lg transition-all cursor-pointer ${
                       fiqh === 'Hanafi'
                         ? 'bg-amber-500 text-slate-950'
                         : 'text-slate-400 hover:text-zinc-200'
                     }`}
                   >
-                    Hanafi (Default)
+                    Hanafi
                   </button>
                   <button
                     id="btn_select_fiqh_shafi"
                     type="button"
-                    onClick={() => setFiqh('Shafi')}
+                    onClick={() => updatePrayerSettings({ madhab: 'shafi' })}
                     className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wide rounded-lg transition-all cursor-pointer ${
-                      fiqh === 'Shafi'
+                      fiqh !== 'Hanafi'
                         ? 'bg-amber-500 text-slate-950'
                         : 'text-slate-400 hover:text-zinc-200'
                     }`}
                   >
-                    Shafi / Standard
+                    Standard
                   </button>
                 </div>
                 <span className="text-[9px] leading-relaxed font-semibold text-slate-400 select-text">
@@ -1581,7 +1602,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
                   id="select_calculation_agency"
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-200 p-2 focus:outline-none focus:border-amber-500 cursor-pointer"
                   value={calcMethod}
-                  onChange={(e) => setCalcMethod(e.target.value as any)}
+                  onChange={(e) => updatePrayerSettings({ calculationMethod: e.target.value as PrayerCalculationMethod })}
                 >
                   <option value="Karachi">Karachi Univ. (Hanafi Default)</option>
                   <option value="MWL">Muslim World League (MWL Global)</option>
@@ -1610,7 +1631,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
                   <button
                     id="btn_select_sound_mecca"
                     type="button"
-                    onClick={() => setSelectedAzanSound('mecca')}
+                    onClick={() => updatePrayerSettings({ azanSound: 'mecca' })}
                     className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
                       selectedAzanSound === 'mecca'
                         ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20 font-black'
@@ -1622,7 +1643,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
                   <button
                     id="btn_select_sound_medina"
                     type="button"
-                    onClick={() => setSelectedAzanSound('medina')}
+                    onClick={() => updatePrayerSettings({ azanSound: 'medina' })}
                     className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
                       selectedAzanSound === 'medina'
                         ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20 font-black'

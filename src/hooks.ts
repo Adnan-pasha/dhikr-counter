@@ -82,7 +82,7 @@ export const useReminderScheduler = (
 
 
 import { Dhikr, DhikrHistory } from './types';
-import { migrateAndHydrateStorage, computeStreak } from './domain';
+import { migrateAndHydrateStorage, computeStreak, isTimestampOnLocalDay } from './domain';
 
 interface PersistenceDefaults {
   defaultDhikrs: Dhikr[];
@@ -191,14 +191,8 @@ export const useDhikrActions = (deps: DhikrActionDeps) => {
   };
 
   const handleToggleCompleteToday = (dhikrId: string) => {
-    const today = new Date();
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-    const todayEnd = todayStart + 24 * 60 * 60 * 1000;
-
     const todayLogIndex = deps.history.findIndex((log) => {
-      if (log.dhikrId !== dhikrId) return false;
-      const logTime = new Date(log.timestamp).getTime();
-      return logTime >= todayStart && logTime < todayEnd;
+      return log.dhikrId === dhikrId && isTimestampOnLocalDay(log.timestamp);
     });
 
     if (todayLogIndex !== -1) {
@@ -286,15 +280,9 @@ export const useCounterFlow = (deps: CounterFlowDeps) => {
 
         if (currentIndex !== -1) {
           // Build today's completed set BEFORE this completion (newLog not yet in state)
-          const today = new Date();
           const completedTodayIds = new Set(
             deps.history
-              .filter(h => {
-                const d = new Date(h.timestamp);
-                return d.getFullYear() === today.getFullYear()
-                  && d.getMonth() === today.getMonth()
-                  && d.getDate() === today.getDate();
-              })
+              .filter(h => isTimestampOnLocalDay(h.timestamp))
               .map(h => h.dhikrId)
           );
           // Current dhikr just completed — add it to the set

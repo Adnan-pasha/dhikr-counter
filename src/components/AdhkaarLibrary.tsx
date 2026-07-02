@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Dhikr, AdhkaarCategory, CATEGORY_META } from '../types';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
+import { isTimestampOnLocalDay } from '../domain';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -39,14 +40,7 @@ const ALL_CATEGORIES: AdhkaarCategory[] = [
 ];
 
 const isCompletedToday = (dhikrId: string, history: { dhikrId: string; timestamp: string }[]) => {
-  const today = new Date();
-  return history.some((h) => {
-    if (h.dhikrId !== dhikrId) return false;
-    const d = new Date(h.timestamp);
-    return d.getFullYear() === today.getFullYear()
-      && d.getMonth() === today.getMonth()
-      && d.getDate() === today.getDate();
-  });
+  return history.some((h) => h.dhikrId === dhikrId && isTimestampOnLocalDay(h.timestamp));
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────

@@ -5,6 +5,20 @@ export type ColorMode = 'dark' | 'light';
 
 export type Madhab = 'hanafi' | 'shafi' | 'maliki' | 'hanbali';
 
+export type PrayerCalculationMethod = 'Karachi' | 'MWL' | 'UmmAlQura' | 'ISNA' | 'Egypt';
+
+export type AzanSound = 'mecca' | 'medina';
+
+export type PrayerAzanId = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
+
+export interface PrayerSettings {
+  madhab: Madhab;
+  calculationMethod: PrayerCalculationMethod;
+  azanSound: AzanSound;
+  azanEnabled: Record<PrayerAzanId, boolean>;
+}
+
+
 export type AdhkaarCategory =
   | 'morning'
   | 'evening'

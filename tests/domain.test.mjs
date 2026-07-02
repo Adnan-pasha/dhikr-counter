@@ -7,6 +7,9 @@ import {
   sanitizePreferences,
   sanitizeReminders,
   sanitizeAzanSettings,
+  sanitizePrayerSettings,
+  readPrayerSettings,
+  writePrayerSettings,
   computeStreak,
   migrateAndHydrateStorage,
   STORAGE_SCHEMA_VERSION,
@@ -142,7 +145,7 @@ test('migrateAndHydrateStorage sanitizes persisted data and sets schema version'
 
 
 test('findDueReminders returns all enabled reminders matching current minute/day', () => {
-  const now = new Date('2026-05-22T16:30:00.000Z');
+  const now = new Date(2026, 4, 22, 16, 30, 0);
   const list = findDueReminders([
     { id: 'a', dhikrId: 'd', dhikrName: 'n', timeString: '16:30', days: ['fri'], label: 'x', isEnabled: true },
     { id: 'b', dhikrId: 'd', dhikrName: 'n', timeString: '16:30', days: ['fri'], label: 'y', isEnabled: true },
@@ -162,7 +165,7 @@ test('shouldTriggerReminderOccurrence dedupes occurrence key', () => {
     clear: () => { store.clear(); },
   };
 
-  const now = new Date('2026-05-22T16:30:00.000Z');
+  const now = new Date(2026, 4, 22, 16, 30, 0);
   assert.equal(shouldTriggerReminderOccurrence('rem_a', '16:30', now), true);
   assert.equal(shouldTriggerReminderOccurrence('rem_a', '16:30', now), false);
   const key = buildReminderOccurrenceKey('rem_a', '16:30', now);
@@ -185,7 +188,7 @@ test('shouldTriggerReminderOccurrence prunes previous-day keys', () => {
   };
 
   localStorage.setItem('tasbih_reminder_trigger_log', JSON.stringify(['old|12:00|thu|2026-05-21']));
-  const now = new Date('2026-05-22T16:30:00.000Z');
+  const now = new Date(2026, 4, 22, 16, 30, 0);
   assert.equal(shouldTriggerReminderOccurrence('rem_b', '16:30', now), true);
   const raw = localStorage.getItem('tasbih_reminder_trigger_log') || '[]';
   assert.doesNotMatch(raw, /2026-05-21/);
@@ -201,15 +204,15 @@ test('shouldTriggerReminderOccurrence dedupes across polling minutes for same sc
     clear: () => { store.clear(); },
   };
 
-  const firstPoll = new Date('2026-05-22T16:35:00.000Z');
-  const secondPoll = new Date('2026-05-22T16:36:00.000Z');
+  const firstPoll = new Date(2026, 4, 22, 16, 35, 0);
+  const secondPoll = new Date(2026, 4, 22, 16, 36, 0);
   assert.equal(shouldTriggerReminderOccurrence('rem_c', '16:30', firstPoll), true);
   assert.equal(shouldTriggerReminderOccurrence('rem_c', '16:30', secondPoll), false);
 });
 
 
 test('shouldTriggerCatchUpReminder allows recent missed reminders within policy window', () => {
-  const now = new Date('2026-05-22T16:35:00.000Z');
+  const now = new Date(2026, 4, 22, 16, 35, 0);
   assert.equal(shouldTriggerCatchUpReminder('16:30', now), true);
   assert.equal(shouldTriggerCatchUpReminder('16:20', now), false);
   assert.equal(shouldTriggerCatchUpReminder('16:40', now), false);
@@ -217,18 +220,18 @@ test('shouldTriggerCatchUpReminder allows recent missed reminders within policy 
 
 
 test('getDayKey follows local calendar day', () => {
-  const d = new Date('2026-05-24T12:00:00.000Z');
+  const d = new Date(2026, 4, 24, 12, 0, 0);
   assert.equal(getDayKey(d), 'sun');
 });
 
 test('shouldTriggerCatchUpReminder supports custom policy windows', () => {
-  const now = new Date('2026-05-22T16:35:00.000Z');
+  const now = new Date(2026, 4, 22, 16, 35, 0);
   assert.equal(shouldTriggerCatchUpReminder('16:20', now, { catchUpWindowMinutes: 20 }), true);
   assert.equal(shouldTriggerCatchUpReminder('16:20', now, { catchUpWindowMinutes: 10 }), false);
 });
 
 test('findCatchUpReminderCandidates filters by enabled/day/policy', () => {
-  const now = new Date('2026-05-22T16:35:00.000Z'); // Friday
+  const now = new Date(2026, 4, 22, 16, 35, 0); // Friday
   const reminders = [
     { id: 'a', dhikrId: 'd', dhikrName: 'n', timeString: '16:30', days: ['fri'], label: 'ok', isEnabled: true },
     { id: 'b', dhikrId: 'd', dhikrName: 'n', timeString: '16:10', days: ['fri'], label: 'late', isEnabled: true },
@@ -242,15 +245,15 @@ test('findCatchUpReminderCandidates filters by enabled/day/policy', () => {
 
 
 test('minutesSinceReminderTime returns positive/past, negative/future, null/invalid', () => {
-  const now = new Date('2026-05-22T16:35:00.000Z');
+  const now = new Date(2026, 4, 22, 16, 35, 0);
   assert.equal(minutesSinceReminderTime('16:30', now), 5);
   assert.equal(minutesSinceReminderTime('16:40', now), -5);
   assert.equal(minutesSinceReminderTime('bad', now), null);
 });
 
 test('findMissedReminderCandidates only catches same-day reminders within sleep + policy window', () => {
-  const now = new Date('2026-05-22T16:35:00.000Z');
-  const lastActiveAt = new Date('2026-05-22T16:29:00.000Z');
+  const now = new Date(2026, 4, 22, 16, 35, 0);
+  const lastActiveAt = new Date(2026, 4, 22, 16, 29, 0);
   const reminders = [
     { id: 'a', dhikrId: 'd', dhikrName: 'n', timeString: '16:30', days: ['fri'], label: 'ok', isEnabled: true },
     { id: 'b', dhikrId: 'd', dhikrName: 'n', timeString: '16:20', days: ['fri'], label: 'too-old', isEnabled: true },
@@ -264,8 +267,53 @@ test('findMissedReminderCandidates only catches same-day reminders within sleep 
   const noneCrossDay = findMissedReminderCandidates(
     reminders,
     now,
-    new Date('2026-05-21T23:50:00.000Z'),
+    new Date(2026, 4, 21, 23, 50, 0),
     { catchUpWindowMinutes: 10 },
   );
   assert.equal(noneCrossDay.length, 0);
+});
+
+
+test('sanitizePrayerSettings validates calculation method, madhab, azan sound, and azan toggles', () => {
+  const result = sanitizePrayerSettings({
+    madhab: 'bad',
+    calculationMethod: 'Nope',
+    azanSound: 'loud',
+    azanEnabled: { fajr: false, dhuhr: 'yes', asr: true, maghrib: false, isha: true },
+  }, {
+    madhab: 'hanafi',
+    calculationMethod: 'MWL',
+    azanSound: 'medina',
+    azanEnabled: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
+  });
+
+  assert.equal(result.madhab, 'hanafi');
+  assert.equal(result.calculationMethod, 'MWL');
+  assert.equal(result.azanSound, 'medina');
+  assert.equal(result.azanEnabled.fajr, false);
+  assert.equal(result.azanEnabled.dhuhr, true);
+  assert.equal(result.azanEnabled.maghrib, false);
+});
+
+test('readPrayerSettings migrates legacy azan settings and writePrayerSettings persists compat keys', () => {
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => { store.set(k, String(v)); },
+    removeItem: (k) => { store.delete(k); },
+    clear: () => { store.clear(); },
+  };
+
+  localStorage.setItem('tasbih_azan_settings', JSON.stringify({ fajr: false, dhuhr: true, asr: false, maghrib: true, isha: false }));
+  const migrated = readPrayerSettings('hanafi');
+  assert.equal(migrated.madhab, 'hanafi');
+  assert.equal(migrated.azanEnabled.fajr, false);
+  assert.equal(migrated.azanEnabled.asr, false);
+  assert.match(localStorage.getItem('tasbih_prayer_settings') || '', /azanEnabled/);
+
+  const written = writePrayerSettings({ ...migrated, calculationMethod: 'Egypt', azanSound: 'medina' });
+  assert.equal(written.calculationMethod, 'Egypt');
+  assert.equal(written.azanSound, 'medina');
+  assert.match(localStorage.getItem('tasbih_prayer_settings') || '', /Egypt/);
+  assert.match(localStorage.getItem('tasbih_azan_settings') || '', /fajr/);
 });

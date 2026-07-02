@@ -20,7 +20,7 @@ import {
   Compass
 } from 'lucide-react';
 import { DhikrHistory, DailyLog, Dhikr } from '../types';
-import { getMotivationalMessage, computeAchievements } from '../domain';
+import { getMotivationalMessage, computeAchievements, getLocalDateString, isTimestampOnLocalDay } from '../domain';
 
 interface StatsScreenProps {
   history: DhikrHistory[];
@@ -141,12 +141,9 @@ export default function StatsScreen({
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(d);
       
-      const daysHistory = history.filter(item => {
-        const itemDate = new Date(item.timestamp).toISOString().split('T')[0];
-        return itemDate === dateStr;
-      });
+      const daysHistory = history.filter(item => isTimestampOnLocalDay(item.timestamp, d));
       
       const dayTotal = daysHistory.reduce((acc, curr) => acc + curr.count, 0);
       
@@ -302,10 +299,7 @@ export default function StatsScreen({
     
     for (let day = 1; day <= daysInSelMonth; day++) {
       const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const dayLogs = history.filter(item => {
-        const itemDate = new Date(item.timestamp).toISOString().split('T')[0];
-        return itemDate === formattedDate;
-      });
+      const dayLogs = history.filter(item => getLocalDateString(new Date(item.timestamp)) === formattedDate);
       if (dayLogs.length > 0) {
         activeDaysSet.add(day);
         monthTotalCount += dayLogs.reduce((acc, curr) => acc + curr.count, 0);
@@ -323,10 +317,7 @@ export default function StatsScreen({
 
   const handleSelectDay = (day: number) => {
     const formattedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const dayLogs = history.filter(item => {
-      const itemDate = new Date(item.timestamp).toISOString().split('T')[0];
-      return itemDate === formattedDate;
-    });
+    const dayLogs = history.filter(item => getLocalDateString(new Date(item.timestamp)) === formattedDate);
     
     const totalBeads = dayLogs.reduce((acc, curr) => acc + curr.count, 0);
     
@@ -648,11 +639,9 @@ export default function StatsScreen({
                     const dFormatted = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     
                     // Aggregate beads for this day
-                    const dayLogs = history.filter(item => {
-                      return new Date(item.timestamp).toISOString().split('T')[0] === dFormatted;
-                    });
+                    const dayLogs = history.filter(item => getLocalDateString(new Date(item.timestamp)) === dFormatted);
                     const beadsCount = dayLogs.reduce((acc, curr) => acc + curr.count, 0);
-                    const isToday = new Date().toISOString().split('T')[0] === dFormatted;
+                    const isToday = getLocalDateString(new Date()) === dFormatted;
 
                     // Dynamically render style based on prayer counts
                     let colorStyles = "bg-slate-900/40 border-slate-800 text-slate-350";

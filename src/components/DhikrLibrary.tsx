@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, Check, X, Shield, BookOpen, Clock, CalendarCheck, CalendarDays, HelpCircle } from 'lucide-react';
 import { Dhikr, DhikrHistory } from '../types';
+import { isTimestampOnLocalDay } from '../domain';
 
 interface DhikrLibraryProps {
   dhikrs: Dhikr[];
@@ -40,16 +41,7 @@ export default function DhikrLibrary({
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
   const checkIsCompletedToday = (dhikrId: string) => {
-    const today = new Date();
-    return history.some((log) => {
-      if (log.dhikrId !== dhikrId) return false;
-      const logDate = new Date(log.timestamp);
-      return (
-        logDate.getFullYear() === today.getFullYear() &&
-        logDate.getMonth() === today.getMonth() &&
-        logDate.getDate() === today.getDate()
-      );
-    });
+    return history.some((log) => log.dhikrId === dhikrId && isTimestampOnLocalDay(log.timestamp));
   };
 
   const pendingCount = dhikrs.filter((d) => !checkIsCompletedToday(d.id)).length;

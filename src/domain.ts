@@ -1,9 +1,12 @@
-import { Dhikr, DhikrHistory, DhikrReminder, UserPreferences, SoundTone, AppTheme, Madhab } from './types';
+import { Dhikr, DhikrHistory, DhikrReminder, UserPreferences, SoundTone, AppTheme, Madhab, PrayerSettings, PrayerCalculationMethod, AzanSound, PrayerAzanId } from './types';
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const SOUND_TONES: SoundTone[] = ['wooden', 'chime', 'digital', 'bowl'];
 const THEMES: AppTheme[] = ['slate', 'emerald', 'amber', 'indigo', 'midnight'];
 const MADHABS: Madhab[] = ['hanafi', 'shafi', 'maliki', 'hanbali'];
+const PRAYER_CALCULATION_METHODS: PrayerCalculationMethod[] = ['Karachi', 'MWL', 'UmmAlQura', 'ISNA', 'Egypt'];
+const AZAN_SOUNDS: AzanSound[] = ['mecca', 'medina'];
+const PRAYER_AZAN_IDS: PrayerAzanId[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 const isString = (v: unknown): v is string => typeof v === 'string';
@@ -99,7 +102,7 @@ export const sanitizeReminders = (value: unknown, fallback: DhikrReminder[]): Dh
   return cleaned.length > 0 ? cleaned : fallback;
 };
 
-export const sanitizeAzanSettings = (value: unknown): Record<string, boolean> => {
+export const sanitizeAzanSettings = (value: unknown): Record<PrayerAzanId, boolean> => {
   const fallback = { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true };
   if (!isObject(value)) return fallback;
   return {
@@ -111,16 +114,56 @@ export const sanitizeAzanSettings = (value: unknown): Record<string, boolean> =>
   };
 };
 
+export const DEFAULT_PRAYER_SETTINGS: PrayerSettings = {
+  madhab: 'shafi',
+  calculationMethod: 'Karachi',
+  azanSound: 'mecca',
+  azanEnabled: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
+};
+
+export const sanitizePrayerSettings = (value: unknown, fallback: PrayerSettings = DEFAULT_PRAYER_SETTINGS): PrayerSettings => {
+  if (!isObject(value)) {
+    return { ...fallback, azanEnabled: sanitizeAzanSettings(fallback.azanEnabled) };
+  }
+
+  return {
+    madhab: MADHABS.includes(value.madhab as Madhab) ? value.madhab as Madhab : fallback.madhab,
+    calculationMethod: PRAYER_CALCULATION_METHODS.includes(value.calculationMethod as PrayerCalculationMethod)
+      ? value.calculationMethod as PrayerCalculationMethod
+      : fallback.calculationMethod,
+    azanSound: AZAN_SOUNDS.includes(value.azanSound as AzanSound) ? value.azanSound as AzanSound : fallback.azanSound,
+    azanEnabled: sanitizeAzanSettings(value.azanEnabled ?? fallback.azanEnabled),
+  };
+};
+
+export const readPrayerSettings = (fallbackMadhab: Madhab = DEFAULT_PRAYER_SETTINGS.madhab): PrayerSettings => {
+  const fallback = { ...DEFAULT_PRAYER_SETTINGS, madhab: fallbackMadhab };
+  const saved = sanitizePrayerSettings(safeParseJSON(localStorage.getItem('tasbih_prayer_settings'), fallback), fallback);
+  const legacyAzan = localStorage.getItem('tasbih_azan_settings');
+  const hydrated = legacyAzan && !localStorage.getItem('tasbih_prayer_settings')
+    ? { ...saved, azanEnabled: sanitizeAzanSettings(safeParseJSON(legacyAzan, saved.azanEnabled)) }
+    : saved;
+  localStorage.setItem('tasbih_prayer_settings', JSON.stringify(hydrated));
+  return hydrated;
+};
+
+export const writePrayerSettings = (settings: PrayerSettings): PrayerSettings => {
+  const sanitized = sanitizePrayerSettings(settings);
+  localStorage.setItem('tasbih_prayer_settings', JSON.stringify(sanitized));
+  localStorage.setItem('tasbih_azan_settings', JSON.stringify(sanitized.azanEnabled));
+  return sanitized;
+};
+
 export const computeStreak = (histLogs: DhikrHistory[]): number => {
   if (histLogs.length === 0) return 0;
-  const uniqueDates = Array.from(new Set(histLogs.map((log) => log.timestamp.split('T')[0])))
+  const uniqueDates = Array.from(new Set(histLogs.map((log) => getLocalDateString(new Date(log.timestamp)))))
     .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
   if (uniqueDates.length === 0) return 0;
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString(new Date());
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const yesterdayStr = getLocalDateString(yesterday);
 
   const latestDate = uniqueDates[0];
   if (latestDate !== todayStr && latestDate !== yesterdayStr) return 0;
@@ -130,7 +173,7 @@ export const computeStreak = (histLogs: DhikrHistory[]): number => {
 
   for (let i = 1; i < uniqueDates.length; i++) {
     expectedDate.setDate(expectedDate.getDate() - 1);
-    const expectedStr = expectedDate.toISOString().split('T')[0];
+    const expectedStr = getLocalDateString(expectedDate);
     if (uniqueDates[i] === expectedStr) activeStreak++;
     else break;
   }
@@ -208,6 +251,13 @@ export const getLocalDateString = (now: Date): string => {
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+};
+
+export const isSameLocalDay = (a: Date, b: Date): boolean => getLocalDateString(a) === getLocalDateString(b);
+
+export const isTimestampOnLocalDay = (timestamp: string, date: Date = new Date()): boolean => {
+  const parsed = new Date(timestamp);
+  return Number.isFinite(parsed.getTime()) && isSameLocalDay(parsed, date);
 };
 
 export const getDayKey = (now: Date): string => DAY_KEYS[now.getDay()];
