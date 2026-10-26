@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect } from 'react';
 import { DhikrReminder, UserPreferences, Routine, SalahLog } from './types';
 import { DEFAULT_ROUTINES } from './adhkaar-data';
-import { findDueReminders, shouldTriggerReminderOccurrence, findCatchUpReminderCandidates, findMissedReminderCandidates } from './domain';
+import { findDueReminders, shouldTriggerReminderOccurrence, findCatchUpReminderCandidates, findMissedReminderCandidates, parseStoredArray } from './domain';
 import { playBeadSound, playCompletionSound } from './audio';
 import { trackEvent } from './telemetry';
 
@@ -131,12 +131,19 @@ export const usePersistentAppState = (
     setters.setHistory(hydrated.history);
     setters.setPreferences(hydrated.preferences);
     setters.setReminders(hydrated.reminders);
-    const savedFavs = localStorage.getItem('tasbih_favourites');
-    setters.setFavouriteIds(savedFavs ? JSON.parse(savedFavs) : []);
-    const savedRoutines = localStorage.getItem('tasbih_routines');
-    setters.setRoutines(savedRoutines ? JSON.parse(savedRoutines) : DEFAULT_ROUTINES);
-    const savedSalahLogs = localStorage.getItem('tasbih_salah_logs');
-    setters.setSalahLogs(savedSalahLogs ? JSON.parse(savedSalahLogs) : []);
+    const isId = (v: unknown): v is string => typeof v === 'string';
+    const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+    setters.setFavouriteIds(parseStoredArray(localStorage.getItem('tasbih_favourites'), [], isId));
+    const rawRoutines = localStorage.getItem('tasbih_routines');
+    const savedRoutines = parseStoredArray<Routine>(
+      rawRoutines,
+      DEFAULT_ROUTINES,
+      (v): v is Routine => isRecord(v) && typeof v.id === 'string' && typeof v.name === 'string' && Array.isArray(v.dhikrIds),
+    );
+    setters.setRoutines(savedRoutines);
+    setters.setSalahLogs(
+      parseStoredArray<SalahLog>(localStorage.getItem('tasbih_salah_logs'), [], (v): v is SalahLog => isRecord(v)),
+    );
   }, []);
 
   useEffect(() => {
@@ -338,6 +345,9 @@ interface HistoryFlowDeps {
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
   setPreferences: React.Dispatch<React.SetStateAction<UserPreferences>>;
   setReminders: React.Dispatch<React.SetStateAction<DhikrReminder[]>>;
+  setFavouriteIds: React.Dispatch<React.SetStateAction<string[]>>;
+  setRoutines: React.Dispatch<React.SetStateAction<Routine[]>>;
+  setSalahLogs: React.Dispatch<React.SetStateAction<SalahLog[]>>;
   setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla'>>;
   setConfirmModal: React.Dispatch<React.SetStateAction<{ title: string; message: string; onConfirm: () => void; } | null>>;
   systemDhikrs: Dhikr[];
@@ -371,6 +381,9 @@ export const useHistoryActions = (deps: HistoryFlowDeps) => {
         deps.setPreferences(deps.defaultPreferences);
         deps.setReminders(deps.defaultReminders);
         deps.setStreak(0);
+        deps.setFavouriteIds([]);
+        deps.setRoutines(DEFAULT_ROUTINES);
+        deps.setSalahLogs([]);
         deps.setActiveTab('counter');
         localStorage.clear();
         deps.onResetOnboarding?.();

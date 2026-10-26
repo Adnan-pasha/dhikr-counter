@@ -22,6 +22,54 @@ export const safeParseJSON = <T>(raw: string | null, fallback: T): T => {
   }
 };
 
+export interface CounterKeyInfo {
+  code: string;
+  repeat: boolean;
+  defaultPrevented: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  altKey: boolean;
+  isEditable: boolean;
+  /** Focus is on/inside a button, link, tab, switch, dialog etc. that owns Space/Enter. */
+  insideInteractive: boolean;
+  modalOpen: boolean;
+}
+
+/** Whether a keydown should count a bead. Focused controls keep their native behaviour. */
+export const shouldCountOnKey = (info: CounterKeyInfo): boolean => {
+  if (info.code !== 'Space' && info.code !== 'Enter') return false;
+  if (info.repeat || info.defaultPrevented || info.modalOpen) return false;
+  if (info.ctrlKey || info.metaKey || info.altKey) return false;
+  return !info.isEditable && !info.insideInteractive;
+};
+
+export interface CounterLiveInput {
+  count: number;
+  previousCount: number;
+  target: number;
+  name: string;
+}
+
+/**
+ * Screen-reader announcement for the counter. Milestones only (every 10th count and each
+ * completed round), and only when counting up, so undo/reset never announces a milestone.
+ */
+export const getCounterLiveMessage = ({ count, previousCount, target, name }: CounterLiveInput): string => {
+  if (count <= previousCount || count === 0) return '';
+  if (target > 0 && count % target === 0) return `${name} complete, ${count} counted`;
+  return count % 10 === 0 ? `${count} counted` : '';
+};
+
+export const parseStoredArray = <T>(
+  raw: string | null,
+  fallback: T[],
+  isItem?: (value: unknown) => value is T,
+): T[] => {
+  const parsed = safeParseJSON<unknown>(raw, null);
+  if (!Array.isArray(parsed)) return fallback;
+  return isItem ? parsed.filter(isItem) : (parsed as T[]);
+};
+
 export const sanitizeDhikrs = (value: unknown, fallback: Dhikr[]): Dhikr[] => {
   if (!Array.isArray(value)) return fallback;
   const VALID_CATEGORIES = ['morning','evening','daily','istighfar','salawat','protection','sleep','quranic','motivation'];

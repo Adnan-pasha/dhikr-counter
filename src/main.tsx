@@ -1,5 +1,12 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
+import { MotionConfig } from 'motion/react';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
+import '@fontsource/noto-naskh-arabic/arabic-400.css';
+import '@fontsource/noto-naskh-arabic/arabic-500.css';
+import '@fontsource/noto-naskh-arabic/arabic-600.css';
+import '@fontsource/noto-naskh-arabic/arabic-700.css';
 import App from './App.tsx';
 import AppErrorBoundary from './components/AppErrorBoundary.tsx';
 import './index.css';
@@ -8,13 +15,19 @@ import { trackEvent } from './telemetry';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppErrorBoundary>
-      <App />
+      <MotionConfig reducedMotion="user">
+        <App />
+      </MotionConfig>
     </AppErrorBoundary>
   </StrictMode>,
 );
 
 // Register PWA Service Worker for offline capabilities
-if ('serviceWorker' in navigator) {
+// Production only: in dev the worker would cache Vite modules and serve stale code.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  // A first install also fires `controllerchange` (clients.claim); only reload on a real update.
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
   window.addEventListener('load', () => {
     const baseUrl = (import.meta as any).env?.BASE_URL || '/';
     const swUrl = `${baseUrl}sw.js`;
@@ -69,6 +82,8 @@ if ('serviceWorker' in navigator) {
         });
 
         navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!hadController || reloading) return;
+          reloading = true;
           trackEvent('sw_controller_changed_reload');
           window.location.reload();
         });

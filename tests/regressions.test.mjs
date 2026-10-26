@@ -9,7 +9,7 @@ test("bottom nav uses corrected Settings label", () => {
 });
 
 test("library card applies overflow guards for long Arabic text", () => {
-  const file = readFileSync("src/components/DhikrLibrary.tsx", "utf8");
+  const file = readFileSync("src/components/AdhkaarLibrary.tsx", "utf8");
   assert.match(file, /overflow-hidden/);
   assert.match(file, /min-w-0/);
   assert.match(file, /truncate/);
@@ -27,8 +27,9 @@ test("main mounts App inside AppErrorBoundary", () => {
 });
 
 test("counter keyboard shortcut ignores typing contexts", () => {
+  // Decision logic is unit-tested in counter-a11y.test.mjs; here we guard the DOM inputs feeding it.
   const file = readFileSync("src/components/CounterScreen.tsx", "utf8");
-  assert.match(file, /isTypingContext/);
+  assert.match(file, /isEditable:/);
   assert.match(file, /target\.tagName === 'INPUT'/);
   assert.match(file, /target\.tagName === 'TEXTAREA'/);
   assert.match(file, /target\.isContentEditable/);

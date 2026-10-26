@@ -17,7 +17,7 @@ import BottomNav from './components/BottomNav';
 import OnboardingFlow from './components/OnboardingFlow';
 import { ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
-import { isTimestampOnLocalDay } from './domain';
+import { isTimestampOnLocalDay, parseStoredArray } from './domain';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
 // Use the full rich ADHKAAR_LIBRARY as system dhikrs
@@ -101,10 +101,14 @@ export default function App() {
 
   // Quran bookmarks & last read persistence
   React.useEffect(() => {
-    const saved = localStorage.getItem('tasbih_quran_bookmarks');
-    if (saved) setQuranBookmarks(JSON.parse(saved));
-    const lastRead = localStorage.getItem('tasbih_quran_last_read');
-    if (lastRead) setLastReadSurah(parseInt(lastRead));
+    const isSurahNumber = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v > 0 && v <= 114;
+    setQuranBookmarks(parseStoredArray(
+      localStorage.getItem('tasbih_quran_bookmarks'),
+      [],
+      (v): v is string => typeof v === 'string',
+    ));
+    const lastRead = parseInt(localStorage.getItem('tasbih_quran_last_read') ?? '', 10);
+    if (isSurahNumber(lastRead)) setLastReadSurah(lastRead);
   }, []);
   React.useEffect(() => {
     localStorage.setItem('tasbih_quran_bookmarks', JSON.stringify(quranBookmarks));
@@ -181,6 +185,9 @@ export default function App() {
     setCurrentCount,
     setPreferences,
     setReminders,
+    setFavouriteIds,
+    setRoutines,
+    setSalahLogs,
     setActiveTab,
     setConfirmModal,
     systemDhikrs: SYSTEM_DHIKRS,
@@ -323,6 +330,7 @@ export default function App() {
                 onReset={handleReset}
                 onToggleSound={() => setPreferences(prev => ({ ...prev, soundOn: !prev.soundOn }))}
                 onNavigateToLibrary={() => setActiveTab('adhkaar')}
+                modalOpen={confirmModal !== null}
               />
             )}
 

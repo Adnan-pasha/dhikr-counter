@@ -2,7 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RotateCcw, Volume2, VolumeX, Maximize2, Minimize2, Check, ChevronLeft, Sparkles } from 'lucide-react';
 import { Dhikr, DhikrHistory, UserPreferences } from '../types';
-import { isTimestampOnLocalDay } from '../domain';
+import { isTimestampOnLocalDay, shouldCountOnKey, getCounterLiveMessage } from '../domain';
+
+// Elements that own Space/Enter themselves; the global counting shortcut must not hijack them.
+const INTERACTIVE_SELECTOR = [
+  'button', 'a[href]', 'summary', '[tabindex]:not([tabindex="-1"])',
+  '[role="button"]', '[role="link"]', '[role="tab"]', '[role="switch"]', '[role="checkbox"]',
+  '[role="menuitem"]', '[role="option"]', '[role="menu"]', '[role="dialog"]',
+].join(', ');
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -15,6 +22,8 @@ interface CounterScreenProps {
   onReset: () => void;
   onToggleSound: () => void;
   onNavigateToLibrary: () => void;
+  /** True while a confirm dialog is open; the keyboard counting shortcut is paused. */
+  modalOpen?: boolean;
 }
 
 // ─── Theme config ─────────────────────────────────────────────────────────────
@@ -65,6 +74,7 @@ export default function CounterScreen({
   onReset,
   onToggleSound,
   onNavigateToLibrary,
+  modalOpen = false,
 }: CounterScreenProps) {
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
@@ -105,17 +115,43 @@ export default function CounterScreen({
     onIncrement();
   }, [addRipple, onIncrement]);
 
-  // Keyboard shortcut
+  // Keyboard shortcut. Focused controls (buttons, links, dialogs) keep their native
+  // Space/Enter behaviour, otherwise the tap button would count twice per press.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      const isTypingContext = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
-      if (isTypingContext) return;
-      if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); onIncrement(); }
+      const shouldCount = shouldCountOnKey({
+        code: e.code,
+        repeat: e.repeat,
+        defaultPrevented: e.defaultPrevented,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        altKey: e.altKey,
+        isEditable: target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable,
+        insideInteractive: !!target.closest?.(INTERACTIVE_SELECTOR),
+        modalOpen,
+      });
+      if (!shouldCount) return;
+      e.preventDefault();
+      onIncrement();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onIncrement]);
+  }, [onIncrement, modalOpen]);
+
+  // Announce milestones only: reading every tap aloud would drown a screen-reader user.
+  const previousCountRef = useRef(currentCount);
+  const liveMessage = getCounterLiveMessage({
+    count: currentCount,
+    previousCount: previousCountRef.current,
+    target: currentDhikr.targetCount,
+    name: currentDhikr.nameEn,
+  });
+  useEffect(() => { previousCountRef.current = currentCount; }, [currentCount]);
+
+  const countLabel = currentDhikr.targetCount > 0
+    ? `${currentDhikr.nameEn}, ${currentCount} of ${currentDhikr.targetCount}`
+    : `${currentDhikr.nameEn}, ${currentCount}`;
 
   const roundsComplete = currentDhikr.targetCount > 0
     ? Math.floor(currentCount / currentDhikr.targetCount)
@@ -126,6 +162,8 @@ export default function CounterScreen({
       className="relative flex flex-col h-full overflow-hidden"
       style={{ background: 'var(--color-bg-base)' }}
     >
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{liveMessage}</div>
+
       {/* Ambient background glow */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -252,7 +290,7 @@ export default function CounterScreen({
           {/* Tap button */}
           <button
             id="tap_bead_clicker"
-            aria-label="Tap to count dhikr"
+            aria-label={`Tap to count ${countLabel}`}
             ref={tapAreaRef}
             onClick={handleTap}
             className="relative w-52 h-52 rounded-full flex flex-col items-center justify-center select-none cursor-pointer focus:outline-none overflow-hidden ripple-container"
@@ -411,7 +449,8 @@ export default function CounterScreen({
 
             {/* Fullscreen tap target */}
             <button
-              className="flex-1 flex flex-col items-center justify-center cursor-pointer select-none focus:outline-none"
+              aria-label={`Tap anywhere to count ${countLabel}`}
+              className="flex-1 flex flex-col items-center justify-center cursor-pointer select-none"
               onClick={onIncrement}
             >
               {/* Pulse rings */}
