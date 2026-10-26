@@ -35,6 +35,11 @@
   --color-success-dim:  rgba(52,211,153,0.12);
   --color-danger:       #F87171;
   --color-info:         #818CF8;
+
+  /* Bottom navigation */
+  --nav-bg:         #0A101D;
+  --nav-inactive:   #94A3B8;
+  --nav-active-bg:  rgba(251,191,36,0.14);
 }
 
 /* ─── Global Reset ────────────────────────────────────────────────────────── */
@@ -69,6 +74,16 @@ body {
 
 /* ─── Layout utilities ────────────────────────────────────────────────────── */
 @layer utilities {
+
+  /* Minimum 44x44 touch target (WCAG 2.5.8 / platform guidelines). */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
 
   /* ── Screen shell ──────────────────────────────────────────────── */
   .screen {
@@ -376,6 +391,10 @@ body {
   --color-danger:       #DC2626;
   --color-info:         #4F46E5;
 
+  --nav-bg:         #FFFFFF;
+  --nav-inactive:   #475569;
+  --nav-active-bg:  rgba(217,119,6,0.12);
+
   color-scheme: light;
 }
 
@@ -392,38 +411,54 @@ body {
   background: rgba(255,255,255,0.92);
 }
 
-/* ─── Light Mode: Slate Utility Class Remapping ───────────────────────────
-   Components built before the design-token pass use Tailwind slate-*
-   classes directly. Rather than touching every call site, we remap them
-   here so visual hierarchy (bg < raised < overlay, text dark→light)
-   inverts correctly and predictably in light mode. Opacity modifiers
-   (e.g. bg-slate-900/60) are preserved by Tailwind and apply on top of
-   the remapped colour. ────────────────────────────────────────────────── */
-
+/* ─── Light Mode: Palette Remap ───────────────────────────────────────────────
+   Tailwind v4 utilities read their colours from CSS variables (bg-slate-800 ->
+   var(--color-slate-800)), including opacity variants such as bg-slate-900/60.
+   Remapping the variables here inverts the dark-first slate scale and darkens the
+   accent text shades for light mode, with no !important and no per-class rules.
+   Roles by usage: 50-500 are text, 700-900 are surfaces/borders. Every text shade
+   is AA (>= 4.5:1) on white and on #F1F5F9; tests/theme.test.mjs enforces this.
+   slate-950 is intentionally left dark: it is used for scrims and for text on
+   amber/emerald call-to-action fills. ────────────────────────────────────────── */
 [data-theme="light"] {
-  /* Backgrounds: dark slate → light surfaces, preserving elevation order */
-  .bg-slate-950, .bg-slate-900, .bg-\[\#0f172a\] { background-color: #FFFFFF !important; }
-  .bg-slate-800  { background-color: #F0F2F6 !important; }
-  .bg-slate-750, .bg-slate-705, .bg-slate-700 { background-color: #E5E8EE !important; }
-  .bg-slate-600  { background-color: #D8DCE3 !important; }
-  .bg-slate-300, .bg-slate-100 { background-color: #F4F6F9 !important; }
+  --color-slate-50:  #0F172A;
+  --color-slate-100: #0F172A;
+  --color-slate-200: #1E293B;
+  --color-slate-300: #334155;
+  --color-slate-400: #475569;
+  --color-slate-500: #566377;
+  --color-slate-600: #94A3B8;
+  --color-slate-700: #E2E8F0;
+  --color-slate-800: #F1F5F9;
+  --color-slate-900: #FFFFFF;
 
-  /* Text: light slate (readable on dark) → dark slate (readable on light) */
-  .text-slate-50,  .text-slate-100, .text-slate-150 { color: #0F172A !important; }
-  .text-slate-200, .text-slate-300, .text-slate-350 { color: #1E293B !important; }
-  .text-slate-400 { color: #475569 !important; } /* still 4.6:1+ on white */
-  .text-slate-450, .text-slate-500, .text-slate-600, .text-slate-650 { color: #64748B !important; }
-  .text-slate-700 { color: #64748B !important; }
-  .text-slate-950 { color: #FFFFFF !important; } /* inverted: was dark-on-light, now light-on-dark accents */
-
-  /* Borders: dark slate borders → light borders, same elevation logic */
-  .border-slate-900, .border-slate-850, .border-slate-805, .border-slate-800 { border-color: #E2E5EB !important; }
-  .border-slate-700, .border-slate-600 { border-color: #D8DCE3 !important; }
-  .border-slate-500, .border-slate-400\/40 { border-color: #CBD5E1 !important; }
-
-  /* Divide utilities (used for list separators) */
-  .divide-slate-800 > :not([hidden]) ~ :not([hidden]) { border-color: #E2E5EB !important; }
+  --color-amber-300:   #B45309;
+  --color-amber-400:   #92400E;
+  --color-emerald-300: #047857;
+  --color-emerald-400: #047857;
+  --color-indigo-300:  #4338CA;
+  --color-indigo-400:  #4338CA;
+  --color-rose-300:    #BE123C;
+  --color-rose-400:    #BE123C;
+  --color-teal-300:    #0F766E;
+  --color-teal-400:    #0F766E;
+  --color-cyan-300:    #0E7490;
+  --color-cyan-400:    #0E7490;
+  --color-violet-300:  #6D28D9;
+  --color-violet-400:  #6D28D9;
+  --color-yellow-300:  #854D0E;
+  --color-yellow-400:  #854D0E;
+  --color-orange-300:  #C2410C;
+  --color-orange-400:  #C2410C;
+  --color-red-300:     #B91C1C;
+  --color-red-400:     #B91C1C;
+  --color-sky-300:     #0369A1;
+  --color-sky-400:     #0369A1;
 }
+
+/* Solid slate-950 panels (inset fields, dials) are white in light mode; opacity
+   variants stay dark so modal scrims keep working. */
+[data-theme="light"] .bg-slate-950 { background-color: #FFFFFF; }
 
 /* Amber/orange gradient buttons stay vivid in both modes — no override needed.
    Status colours (emerald/rose/indigo) keep sufficient contrast via their
