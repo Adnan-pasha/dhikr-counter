@@ -31,7 +31,7 @@ interface AdhkaarLibraryProps {
 
 const DIFFICULTY_META = {
   easy:   { label: 'Short',  color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  medium: { label: 'Medium', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+  medium: { label: 'Medium', color: 'text-brand-400 bg-brand-500/10 border-brand-500/20' },
   long:   { label: 'Long',   color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
 };
 
@@ -151,7 +151,7 @@ export default function AdhkaarLibrary({
               onClick={() => { setShowFeaturedOnly(v => !v); setShowFavouritesOnly(false); }}
               className="w-10 h-10 rounded-xl flex items-center justify-center border cursor-pointer transition-all"
               style={{
-                background: showFeaturedOnly ? 'rgba(251,191,36,0.15)' : 'var(--color-bg-raised)',
+                background: showFeaturedOnly ? 'var(--color-brand-dim)' : 'var(--color-bg-raised)',
                 borderColor: showFeaturedOnly ? 'var(--color-brand-border)' : 'var(--color-border)',
                 color: showFeaturedOnly ? 'var(--color-text-brand)' : 'var(--color-text-muted)',
               }}
@@ -185,7 +185,7 @@ export default function AdhkaarLibrary({
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setActiveCategory('all'); setShowFeaturedOnly(false); setShowFavouritesOnly(false); }}
             placeholder="Search by name, meaning, tag..."
-            className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50 transition-colors"
+            className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors"
           />
           {searchQuery && (
             <button aria-label="Clear search" onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 cursor-pointer">
@@ -204,7 +204,7 @@ export default function AdhkaarLibrary({
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`shrink-0 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black border transition-all cursor-pointer ${
-                  isActive ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
+                  isActive ? 'bg-brand-500 text-on-brand border-brand-500' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
                 }`}
               >
                 {meta ? <span>{meta.emoji}</span> : cat === 'custom' ? '✏️' : null}
@@ -222,22 +222,22 @@ export default function AdhkaarLibrary({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-b border-amber-500/20 bg-slate-900/80"
+            className="overflow-hidden border-b border-brand-500/20 bg-slate-900/80"
           >
             <div className="px-4 py-4 space-y-2">
-              <p className="text-xs font-black uppercase tracking-widest text-amber-500 mb-2">➕ New Custom Dhikr</p>
-              <input value={newEn} onChange={(e) => setNewEn(e.target.value)} placeholder="English name *" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50" />
-              <input value={newAr} onChange={(e) => setNewAr(e.target.value)} placeholder="Arabic text (optional)" dir="rtl" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-right" />
-              <input value={newMeaning} onChange={(e) => setNewMeaning(e.target.value)} placeholder="Meaning / description" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50" />
+              <p className="text-xs font-black uppercase tracking-widest text-brand-500 mb-2">➕ New Custom Dhikr</p>
+              <input value={newEn} onChange={(e) => setNewEn(e.target.value)} placeholder="English name *" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+              <input value={newAr} onChange={(e) => setNewAr(e.target.value)} placeholder="Arabic text (optional)" dir="rtl" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 text-right" />
+              <input value={newMeaning} onChange={(e) => setNewMeaning(e.target.value)} placeholder="Meaning / description" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <div className="flex gap-2 items-center">
-                <input type="number" value={newCount} onChange={(e) => setNewCount(e.target.value)} placeholder="Count" min="1" className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50" />
+                <input type="number" value={newCount} onChange={(e) => setNewCount(e.target.value)} placeholder="Count" min="1" className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
                 {[33, 99, 100].map(n => (
-                  <button key={n} onClick={() => setNewCount(String(n))} className={`px-2.5 py-2 rounded-xl text-xs font-black border cursor-pointer transition-all ${newCount === String(n) ? 'bg-amber-500 text-slate-950 border-amber-500' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-amber-400'}`}>{n}</button>
+                  <button key={n} onClick={() => setNewCount(String(n))} className={`px-2.5 py-2 rounded-xl text-xs font-black border cursor-pointer transition-all ${newCount === String(n) ? 'bg-brand-500 text-on-brand border-brand-500' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-brand-400'}`}>{n}</button>
                 ))}
               </div>
               <div className="flex gap-2 pt-1">
                 <button onClick={() => setShowAddForm(false)} className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-400 font-black text-xs cursor-pointer hover:bg-slate-800">Cancel</button>
-                <button onClick={handleAddSubmit} className="flex-[2] py-2 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-xs cursor-pointer hover:opacity-90">Save Dhikr ✓</button>
+                <button onClick={handleAddSubmit} className="flex-[2] py-2 rounded-xl bg-gradient-to-tr from-brand-500 to-brand-400 text-on-brand font-black text-xs cursor-pointer hover:opacity-90">Save Dhikr ✓</button>
               </div>
             </div>
           </motion.div>
@@ -351,8 +351,8 @@ function AdhkaarCard({
       exit={{ opacity: 0, y: -8 }}
       transition={{ delay: idx * 0.02, duration: 0.2 }}
       className={`rounded-2xl border overflow-hidden transition-colors ${
-        isActive ? 'border-amber-500/40 bg-amber-500/5'
-        : isEditing ? 'border-amber-500/30 bg-slate-900'
+        isActive ? 'border-brand-500/40 bg-brand-500/5'
+        : isEditing ? 'border-brand-500/30 bg-slate-900'
         : isCompleted ? 'border-emerald-500/20 bg-emerald-500/3'
         : 'border-slate-800 bg-slate-900/60'
       }`}
@@ -369,7 +369,7 @@ function AdhkaarCard({
               <Shield className="w-2.5 h-2.5" /> Authentic
             </span>
           ) : (
-            <span className="text-xs font-black px-2 py-0.5 rounded-full border text-amber-400 bg-amber-500/10 border-amber-500/20">
+            <span className="text-xs font-black px-2 py-0.5 rounded-full border text-brand-400 bg-brand-500/10 border-brand-500/20">
               ✏️ Custom
             </span>
           )}
@@ -383,28 +383,28 @@ function AdhkaarCard({
               {diffMeta.label}
             </span>
           )}
-          {isActive && <span className="text-xs font-black px-2 py-0.5 rounded-full border text-amber-400 bg-amber-500/15 border-amber-500/30">✓ Active</span>}
+          {isActive && <span className="text-xs font-black px-2 py-0.5 rounded-full border text-brand-400 bg-brand-500/15 border-brand-500/30">✓ Active</span>}
           {isCompleted && <span className="text-xs font-black px-2 py-0.5 rounded-full border text-emerald-400 bg-emerald-500/10 border-emerald-500/20">✓ Done Today</span>}
         </div>
 
         {/* Content row */}
         <div className="flex gap-3 items-start">
           <div className="flex-1 min-w-0">
-            <h3 className={`text-sm font-black leading-tight ${isActive ? 'text-amber-400' : 'text-slate-100'}`}>
+            <h3 className={`text-sm font-black leading-tight ${isActive ? 'text-brand-400' : 'text-slate-100'}`}>
               {dhikr.nameEn}
             </h3>
             {dhikr.transliteration && (
-              <p className="text-xs text-amber-400/80 font-medium italic mt-0.5 leading-tight">{dhikr.transliteration}</p>
+              <p className="text-xs text-brand-400/80 font-medium italic mt-0.5 leading-tight">{dhikr.transliteration}</p>
             )}
             <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">{dhikr.meaning}</p>
             <div className="flex items-center gap-3 mt-2">
               <span className="flex items-center gap-1 text-xs text-slate-500 font-semibold">
-                <Clock className="w-2.5 h-2.5 text-amber-500/60" />
+                <Clock className="w-2.5 h-2.5 text-brand-500/60" />
                 {dhikr.targetCount > 0 ? `${dhikr.targetCount}×` : '∞'}
               </span>
               {dhikr.sourceBook && (
                 <span className="flex items-center gap-1 text-xs text-slate-500 font-semibold truncate">
-                  <BookMarked className="w-2.5 h-2.5 text-amber-500/60 shrink-0" />
+                  <BookMarked className="w-2.5 h-2.5 text-brand-500/60 shrink-0" />
                   {dhikr.sourceBook}
                 </span>
               )}
@@ -424,8 +424,8 @@ function AdhkaarCard({
             aria-label={`Start reciting ${dhikr.nameEn}`}
             onClick={onSelect}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex-1 justify-center ${
-              isActive ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-              : 'bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 shadow-md shadow-amber-950/20 hover:opacity-90'
+              isActive ? 'bg-brand-500/20 text-brand-400 border border-brand-500/30'
+              : 'bg-gradient-to-tr from-brand-500 to-brand-400 text-on-brand shadow-md shadow-brand-950/20 hover:opacity-90'
             }`}
           >
             <Play className="w-3 h-3" />
@@ -460,7 +460,7 @@ function AdhkaarCard({
           <button
             aria-label="Add to routine"
             onClick={onAddToRoutine}
-            className="p-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-500 hover:text-amber-400 hover:border-amber-500/30 transition-all cursor-pointer"
+            className="p-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-500 hover:text-brand-400 hover:border-brand-500/30 transition-all cursor-pointer"
           >
             🌅
           </button>
@@ -472,8 +472,8 @@ function AdhkaarCard({
                 aria-label="Edit dhikr"
                 onClick={onStartEdit}
                 className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
-                  isEditing ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                  : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-amber-400'
+                  isEditing ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
+                  : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-brand-400'
                 }`}
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -509,17 +509,17 @@ function AdhkaarCard({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-t border-amber-500/20"
+            className="overflow-hidden border-t border-brand-500/20"
           >
             <div className="px-4 py-3 bg-slate-950/40 space-y-2">
-              <p className="text-xs font-black uppercase tracking-widest text-amber-500">Editing — {dhikr.nameEn}</p>
-              <input value={editName} onChange={e => onEditNameChange(e.target.value)} placeholder="English name" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50" />
-              <input value={editNameAr} onChange={e => onEditNameArChange(e.target.value)} placeholder="Arabic text" dir="rtl" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-right" />
-              <input value={editMeaning} onChange={e => onEditMeaningChange(e.target.value)} placeholder="Meaning" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50" />
-              <input type="number" value={editCount} onChange={e => onEditCountChange(e.target.value)} placeholder="Count" min="1" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50" />
+              <p className="text-xs font-black uppercase tracking-widest text-brand-500">Editing — {dhikr.nameEn}</p>
+              <input value={editName} onChange={e => onEditNameChange(e.target.value)} placeholder="English name" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+              <input value={editNameAr} onChange={e => onEditNameArChange(e.target.value)} placeholder="Arabic text" dir="rtl" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 text-right" />
+              <input value={editMeaning} onChange={e => onEditMeaningChange(e.target.value)} placeholder="Meaning" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+              <input type="number" value={editCount} onChange={e => onEditCountChange(e.target.value)} placeholder="Count" min="1" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <div className="flex gap-2">
                 <button onClick={onCancelEdit} className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-400 font-black text-xs cursor-pointer hover:bg-slate-800">Cancel</button>
-                <button onClick={onSaveEdit} className="flex-[2] py-2 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-400 text-slate-950 font-black text-xs cursor-pointer hover:opacity-90">Save ✓</button>
+                <button onClick={onSaveEdit} className="flex-[2] py-2 rounded-xl bg-gradient-to-tr from-brand-500 to-brand-400 text-on-brand font-black text-xs cursor-pointer hover:opacity-90">Save ✓</button>
               </div>
             </div>
           </motion.div>
@@ -539,8 +539,8 @@ function AdhkaarCard({
               {dhikr.benefits && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <Sparkles className="w-3 h-3 text-amber-500" />
-                    <span className="text-xs font-black uppercase tracking-widest text-amber-500">Fazail &amp; Benefits</span>
+                    <Sparkles className="w-3 h-3 text-brand-500" />
+                    <span className="text-xs font-black uppercase tracking-widest text-brand-500">Fazail &amp; Benefits</span>
                   </div>
                   <p className="text-sm text-slate-300 leading-relaxed font-medium">{dhikr.benefits}</p>
                 </div>

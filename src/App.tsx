@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { WifiOff } from 'lucide-react';
-import { Dhikr, DhikrHistory, UserPreferences, DhikrReminder, Routine, SalahLog, SalahName, Madhab } from './types';
+import { Dhikr, DhikrHistory, UserPreferences, DhikrReminder, Routine, SalahLog, SalahName, Madhab, ConfirmModalState } from './types';
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
 import HomeScreen from './components/HomeScreen';
@@ -85,11 +85,7 @@ export default function App() {
   const [salahLogs, setSalahLogs] = useState<SalahLog[]>([]);
   const [quranBookmarks, setQuranBookmarks] = useState<string[]>([]);
   const [lastReadSurah, setLastReadSurah] = useState<number>(0);
-  const [confirmModal, setConfirmModal] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-  } | null>(null);
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalState | null>(null);
 
   useConnectivityStatus(setIsOnline);
 
@@ -221,7 +217,7 @@ export default function App() {
       return preferences.theme === 'emerald'
         ? 'text-emerald-700 dark:text-emerald-400'
         : preferences.theme === 'amber'
-        ? 'text-amber-700 dark:text-amber-400'
+        ? 'text-brand-700 dark:text-brand-400'
         : preferences.theme === 'indigo'
         ? 'text-indigo-700 dark:text-indigo-400'
         : 'text-slate-900 dark:text-white';
@@ -242,13 +238,13 @@ export default function App() {
         className="w-full max-w-[390px] h-screen md:h-[820px] md:rounded-[48px] overflow-hidden flex flex-col relative"
         style={{
           background: 'var(--color-bg-base)',
-          boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 32px 80px -12px rgba(0,0,0,0.8), 0 0 120px rgba(245,158,11,0.04)',
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 32px 80px -12px rgba(0,0,0,0.8), 0 0 120px rgba(52,211,160,0.05)',
         }}
       >
         {/* Status bar (desktop only) */}
-        <div className="hidden md:flex bg-[#090E1A] h-8 shrink-0 items-center justify-between px-7 select-none z-50">
+        <div className="hidden md:flex bg-[var(--color-bg-deep)] h-8 shrink-0 items-center justify-between px-7 select-none z-50">
           <span className="text-[11px] font-bold font-mono text-slate-400">9:41</span>
-          <div className="absolute left-1/2 -translate-x-1/2 w-28 h-5 bg-[#090E1A] rounded-b-2xl border-x border-b border-slate-800/60 flex items-center justify-center gap-1.5">
+          <div className="absolute left-1/2 -translate-x-1/2 w-28 h-5 bg-[var(--color-bg-deep)] rounded-b-2xl border-x border-b border-slate-800/60 flex items-center justify-center gap-1.5">
             <div className="w-1 h-1 rounded-full bg-slate-700" />
             <div className="w-3 h-3 rounded-full border border-slate-700" />
           </div>
@@ -288,9 +284,9 @@ export default function App() {
                 animate={{ opacity: 1, y: 0, x: '-50%' }}
                 exit={{ opacity: 0, y: -20, x: '-50%' }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="absolute top-3 left-1/2 -translate-x-1/2 z-45 bg-slate-900/95 border border-amber-500/30 text-amber-400 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl shadow-amber-950/30 backdrop-blur-md select-none pointer-events-none"
+                className="absolute top-3 left-1/2 -translate-x-1/2 z-45 bg-slate-900/95 border border-brand-500/30 text-brand-400 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl shadow-brand-950/30 backdrop-blur-md select-none pointer-events-none"
               >
-                <WifiOff className="w-3 h-3 text-amber-400 animate-pulse" />
+                <WifiOff className="w-3 h-3 text-brand-400 animate-pulse" />
                 <span>Offline Mode Active</span>
               </motion.div>
             )}
@@ -452,8 +448,8 @@ export default function App() {
 
             {activeTab === 'qibla' && (
               <Suspense fallback={
-                <div className="flex-1 flex items-center justify-center bg-[#0f172a]">
-                  <span className="text-amber-400 text-xs font-bold animate-pulse">Loading Qibla...</span>
+                <div className="flex-1 flex items-center justify-center bg-[var(--color-bg-base)]">
+                  <span className="text-brand-400 text-xs font-bold animate-pulse">Loading Qibla...</span>
                 </div>
               }>
                 <QiblaScreen

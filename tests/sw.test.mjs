@@ -22,7 +22,7 @@ const abs = (u) => new URL(typeof u === 'string' ? u : u.url, `${ORIGIN}/sw.js`)
 const loadSw = ({ manifest = { id: 't1', assets: ['assets/app-1.js'] }, fetchImpl = async () => makeResponse('ok') } = {}) => {
   const stores = new Map();
   const listeners = {};
-  const state = { skipped: false, claimed: false };
+  const state = { skipped: false, claimed: false, matchCalls: [] };
 
   const open = (name) => {
     if (!stores.has(name)) stores.set(name, new Map());
@@ -38,7 +38,8 @@ const loadSw = ({ manifest = { id: 't1', assets: ['assets/app-1.js'] }, fetchImp
     open: async (name) => open(name),
     keys: async () => [...stores.keys()],
     delete: async (name) => stores.delete(name),
-    match: async (req) => {
+    match: async (req, options) => {
+      state.matchCalls.push(options);
       for (const store of stores.values()) {
         if (store.has(abs(req))) return store.get(abs(req)).clone();
       }
@@ -181,4 +182,20 @@ test('offline navigation falls back to the cached index.html', async () => {
   online = false;
   const res = await sw.request(`${ORIGIN}/some/deep/link`, { mode: 'navigate', destination: 'document' });
   assert.equal(await res.text(), 'precached');
+});
+
+// Hosts commonly send `Vary: Origin`, and browsers add an Origin header to same-origin
+// module-script requests that precached entries lack. Without ignoreVary the lookup misses
+// and the first offline reload is a blank page (reproduced in Chrome).
+test('every cache lookup ignores Vary so precached assets match module-script requests', async () => {
+  const sw = loadSw();
+  await sw.dispatchWait('install');
+  await sw.request(`${ORIGIN}/assets/app-1.js`);
+  await sw.request(`${ORIGIN}/icon.svg`);
+  await sw.request(`${ORIGIN}/some/link`, { mode: 'navigate', destination: 'document' });
+  await sw.request('https://api.alquran.cloud/v1/surah/1');
+  assert.ok(sw.state.matchCalls.length >= 2, `lookups made: ${sw.state.matchCalls.length}`);
+  for (const options of sw.state.matchCalls) {
+    assert.equal(options && options.ignoreVary, true);
+  }
 });

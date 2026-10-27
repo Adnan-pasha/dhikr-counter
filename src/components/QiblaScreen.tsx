@@ -6,6 +6,7 @@ import {
   Play, Pause, Volume2, VolumeX, Clock, Sliders, Calendar, AlertCircle
 } from 'lucide-react';
 import { Coordinates, CalculationMethod, PrayerTimes, Madhab as AdhanMadhab } from 'adhan';
+import { getAzanSource } from '../azan';
 import { AppTheme, Madhab as UserMadhab, PrayerSettings, PrayerCalculationMethod, PrayerAzanId } from '../types';
 import { readPrayerSettings, writePrayerSettings } from '../domain';
 
@@ -127,32 +128,9 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
   const [searchQuery, setSearchQuery] = useState<string>('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Azan Alarm & Audio system state with reliable fallback CDN mirrors
-  // Use globally accelerated, CORS & Range-header compatible jsDelivr CDN mirrors first
-  // to guarantee instant mobile and desktop playback with no browser security errors.
-  const MECCA_AZAN_URLS = [
-    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan2.mp3',
-    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan5.mp3',
-    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan4.mp3',
-    'https://raw.githubusercontent.com/farafarizul/myazan/master/assets/audio/azan2.mp3',
-    'https://www.islamcan.com/audio/adhan/mecca.mp3',
-    'https://archive.org/download/AdhanMakkah/Adhan-Makkah.mp3',
-    // Hot backup pool: if Mecca mirrors are blocked on a region/network, fall back
-    // to the same CDN family used by Medina so users still hear a real adhan stream.
-    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan3.mp3',
-    'https://raw.githubusercontent.com/farafarizul/myazan/master/assets/audio/azan3.mp3',
-    'https://www.islamcan.com/audio/adhan/azan1.mp3',
-    'https://archive.org/download/AdhanMedina/Adhan-Medina.mp3'
-  ];
-  const MEDINA_AZAN_URLS = [
-    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan3.mp3',
-    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/subuh.mp3',
-    'https://cdn.jsdelivr.net/gh/farafarizul/myazan@master/assets/audio/azan1.mp3',
-    'https://raw.githubusercontent.com/farafarizul/myazan/master/assets/audio/azan3.mp3',
-    'https://www.islamcan.com/audio/adhan/azan1.mp3',
-    'https://archive.org/download/AdhanMedina/Adhan-Medina.mp3'
-  ];
-  
+  // Azan audio: a single bundled, precached recording (see src/azan.ts); nothing is streamed from third parties.
+  const azanUrls = [getAzanSource(selectedAzanSound).url];
+
   const [activeAudio, setActiveAudio] = useState<HTMLAudioElement | null>(null);
   const [syntheticCtx, setSyntheticCtx] = useState<any>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
@@ -831,7 +809,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
         if (diffMs >= 0 && diffMs < 120000) {
           lastAlarmTriggerTime.current = currentMinKey;
           setAzanAlert(`🕌 ${p.label} Prayer Time`);
-          playAzan(selectedAzanSound === 'mecca' ? MECCA_AZAN_URLS : MEDINA_AZAN_URLS, `${p.label} Prayer`);
+          playAzan(azanUrls, `${p.label} Prayer`);
         }
       });
     };
@@ -906,7 +884,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
   const palette = getThemePalette(theme);
 
   return (
-    <div id="qibla_finder_container" className="flex flex-col h-full bg-[#0f172a] text-slate-100 overflow-hidden">
+    <div id="qibla_finder_container" className="flex flex-col h-full bg-[var(--color-bg-base)] text-slate-100 overflow-hidden">
       
       {/* Dynamic Azan Broadcast Alert Bar Banner */}
       <AnimatePresence>
@@ -916,7 +894,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             initial={{ opacity: 0, y: -45 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -45 }}
-            className="bg-amber-500 text-slate-950 font-bold px-4 py-2 text-xs flex items-center justify-between gap-2.5 shadow-lg shrink-0 z-50 selection:bg-slate-900 selection:text-white"
+            className="bg-brand-500 text-on-brand font-bold px-4 py-2 text-xs flex items-center justify-between gap-2.5 shadow-lg shrink-0 z-50 selection:bg-slate-900 selection:text-white"
           >
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
@@ -924,14 +902,14 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-950"></span>
               </span>
               <p className="line-clamp-1">
-                🕌 Now Broadcasting: <span className="font-extrabold">{playingAlarmName || 'Adhan'}</span> ({selectedAzanSound === 'mecca' ? 'Mecca Al-Haram' : 'Medina Al-Nabawi'})
+                🕌 Now Broadcasting: <span className="font-extrabold">{playingAlarmName || 'Adhan'}</span> ({getAzanSource(selectedAzanSound).label})
               </p>
             </div>
             <button
               id="btn_dismiss_azan_alarm_banner"
               onClick={stopAzan}
               type="button"
-              className="px-2 py-1 rounded bg-slate-950 hover:bg-slate-900 text-amber-400 text-2xs uppercase tracking-wider font-extrabold cursor-pointer transition-colors shrink-0"
+              className="px-2 py-1 rounded bg-slate-950 hover:bg-slate-900 text-brand-400 text-2xs uppercase tracking-wider font-extrabold cursor-pointer transition-colors shrink-0"
             >
               Stop
             </button>
@@ -943,7 +921,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
       <div className="px-6 pt-5 pb-3 border-b border-slate-800/80 flex justify-between items-center bg-slate-900/50 backdrop-blur-md shrink-0">
         <div>
           <h1 className="text-xl font-black tracking-tight text-slate-50 flex items-center gap-1.5 leading-none select-none">
-            <Compass className="w-5 h-5 text-amber-500 animate-spin-slow" />
+            <Compass className="w-5 h-5 text-brand-500 animate-spin-slow" />
             Qibla & Namaz
           </h1>
           <p className="text-xs text-slate-400 mt-1 font-medium select-none">Locate sacred direction & prayer timings</p>
@@ -953,16 +931,16 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             <button
               id="btn_request_compass_permission"
               onClick={requestCompassPermission}
-              className="px-2.5 py-1.5 rounded-full cursor-pointer bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-2xs font-bold text-amber-400 flex items-center gap-1 transition-all"
+              className="px-2.5 py-1.5 rounded-full cursor-pointer bg-brand-500/15 hover:bg-brand-500/25 border border-brand-500/40 text-2xs font-bold text-brand-400 flex items-center gap-1 transition-all"
             >
-              <Navigation className="w-3 h-3 text-amber-500" />
+              <Navigation className="w-3 h-3 text-brand-500" />
               Calibrate
             </button>
           )}
           <button
             id="btn_gps_location_request"
             onClick={requestGPSLocation}
-            className={`px-3 py-1.5 rounded-full cursor-pointer bg-slate-800 hover:bg-slate-700 border border-slate-700 text-2xs font-bold text-amber-400 flex items-center gap-1 transition-all ${gpsLoading ? 'animate-pulse' : ''}`}
+            className={`px-3 py-1.5 rounded-full cursor-pointer bg-slate-800 hover:bg-slate-700 border border-slate-700 text-2xs font-bold text-brand-400 flex items-center gap-1 transition-all ${gpsLoading ? 'animate-pulse' : ''}`}
             disabled={gpsLoading}
           >
             <MapPin className="w-3.5 h-3.5" />
@@ -980,7 +958,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             onClick={() => setSubTab('qibla')}
             className={`flex-1 py-1.5 text-3xs font-black tracking-wider uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               subTab === 'qibla'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
+                ? 'bg-brand-500 text-on-brand font-black shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -993,7 +971,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             onClick={() => setSubTab('namaz')}
             className={`flex-1 py-1.5 text-3xs font-black tracking-wider uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               subTab === 'namaz'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
+                ? 'bg-brand-500 text-on-brand font-black shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -1012,10 +990,10 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
               id="city_dropdown_trigger_btn"
               type="button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 text-2xs font-bold text-slate-200 rounded-lg focus:outline-none focus:border-amber-500/60 flex items-center justify-between cursor-pointer transition-all hover:border-slate-800"
+              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 text-2xs font-bold text-slate-200 rounded-lg focus:outline-none focus:border-brand-500/60 flex items-center justify-between cursor-pointer transition-all hover:border-slate-800"
             >
               <div className="flex items-center gap-1.5 bg-transparent truncate">
-                <Globe className="w-3 h-3 text-amber-500 shrink-0" />
+                <Globe className="w-3 h-3 text-brand-500 shrink-0" />
                 <span className="truncate">{locationName}</span>
               </div>
               <div className="flex items-center gap-1.5 ml-1 bg-transparent select-none shrink-0">
@@ -1047,7 +1025,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                       placeholder="Search 35+ global directories..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-7 pr-7 py-1.5 bg-slate-900 border border-slate-850 text-2xs text-slate-100 rounded-lg focus:outline-none focus:border-amber-500/80 placeholder-slate-500 font-medium"
+                      className="w-full pl-7 pr-7 py-1.5 bg-slate-900 border border-slate-850 text-2xs text-slate-100 rounded-lg focus:outline-none focus:border-brand-500/80 placeholder-slate-500 font-medium"
                     />
                     {searchQuery && (
                       <button
@@ -1106,13 +1084,13 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                             }}
                             className={`w-full text-left px-2 py-1 rounded-md text-3xs font-bold transition-all flex items-center justify-between cursor-pointer ${
                               isSelected
-                                ? 'bg-amber-500/10 border border-amber-500/20 text-amber-450 font-black shadow-sm'
+                                ? 'bg-brand-500/10 border border-brand-500/20 text-brand-450 font-black shadow-sm'
                                 : 'hover:bg-slate-900 border border-transparent text-slate-350 hover:text-slate-50'
                             }`}
                           >
                             <div className="flex items-center gap-1.5 bg-transparent truncate">
                               {isSelected ? (
-                                <Check className="w-2.5 h-2.5 text-amber-500 shrink-0" />
+                                <Check className="w-2.5 h-2.5 text-brand-500 shrink-0" />
                               ) : (
                                 <MapPin className="w-2.5 h-2.5 text-slate-700 shrink-0" />
                               )}
@@ -1169,7 +1147,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
           <div className="relative flex items-center justify-center my-2 shrink-0 select-none">
             
             <div className="absolute w-64 h-64 bg-slate-900 rounded-full blur-2xl opacity-40 z-0 pointer-events-none" />
-            <div className={`absolute w-60 h-60 bg-amber-500/2 rounded-full blur-3xl opacity-50 z-0 pointer-events-none ${isAligned ? 'bg-emerald-500/5' : ''}`} />
+            <div className={`absolute w-60 h-60 bg-brand-500/2 rounded-full blur-3xl opacity-50 z-0 pointer-events-none ${isAligned ? 'bg-emerald-500/5' : ''}`} />
 
             <div
               id="compass_rotator_dial"
@@ -1205,15 +1183,15 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
                 style={{ transform: `rotate(${qiblaAngle}deg)` }}
               >
-                <div className="absolute top-10 bottom-1/2 w-0.5 bg-gradient-to-t from-transparent to-amber-400" />
+                <div className="absolute top-10 bottom-1/2 w-0.5 bg-gradient-to-t from-transparent to-brand-400" />
                 
                 <div className="absolute top-[42px] flex flex-col items-center">
-                  <div className="relative w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500 text-amber-400 flex items-center justify-center shadow-md shadow-amber-950/40 animate-pulse">
-                    <div className="w-3.5 h-3 bg-amber-400 rounded-xs flex flex-col justify-between border-b border-amber-600">
-                      <div className="w-full h-0.5 bg-amber-950" style={{ transform: 'translateY(1px)' }} />
+                  <div className="relative w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500 text-brand-400 flex items-center justify-center shadow-md shadow-brand-950/40 animate-pulse">
+                    <div className="w-3.5 h-3 bg-brand-400 rounded-xs flex flex-col justify-between border-b border-brand-600">
+                      <div className="w-full h-0.5 bg-brand-950" style={{ transform: 'translateY(1px)' }} />
                     </div>
                   </div>
-                  <span className="text-[8px] font-bold text-amber-500 mt-1 font-mono uppercase tracking-widest">Qibla</span>
+                  <span className="text-[8px] font-bold text-brand-500 mt-1 font-mono uppercase tracking-widest">Qibla</span>
                 </div>
               </div>
 
@@ -1232,20 +1210,20 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
               }}
             >
               <div className="relative w-1.5 h-10 flex flex-col items-center justify-center">
-                <div className={`w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[18px] transition-colors duration-300 ${isAligned ? 'border-b-emerald-400' : 'border-b-amber-500'}`} />
+                <div className={`w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[18px] transition-colors duration-300 ${isAligned ? 'border-b-emerald-400' : 'border-b-brand-500'}`} />
                 <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[18px] border-t-slate-600" />
               </div>
             </div>
 
-            <div className="absolute top-0 bottom-1/2 w-0.5 bg-gradient-to-t from-transparent via-[#f59e0b]/5 to-red-500/80 pointer-events-none z-20" />
-            <div className="absolute -top-3 w-4 h-4 rounded-full bg-red-500 border-2 border-[#0f172a] shadow-md pointer-events-none z-20" />
+            <div className="absolute top-0 bottom-1/2 w-0.5 bg-gradient-to-t from-transparent via-brand-500/5 to-red-500/80 pointer-events-none z-20" />
+            <div className="absolute -top-3 w-4 h-4 rounded-full bg-red-500 border-2 border-[var(--color-bg-base)] shadow-md pointer-events-none z-20" />
 
           </div>
 
           {/* Location metrics readings */}
           <div id="qibla_location_details" className="text-center space-y-1 shrink-0 select-none w-full max-w-xs">
             <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest flex items-center justify-center gap-1 leading-none">
-              <MapPin className="w-2.5 h-2.5 text-amber-500" /> Positioned Location
+              <MapPin className="w-2.5 h-2.5 text-brand-500" /> Positioned Location
             </p>
             <p className="text-sm font-black text-slate-100 leading-none">
               {locationName}
@@ -1260,7 +1238,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
               <motion.div 
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-[9px] font-bold text-amber-400 bg-amber-500/5 border border-amber-500/10 p-2 rounded-lg mt-1 select-none"
+                className="text-[9px] font-bold text-brand-400 bg-brand-500/5 border border-brand-500/10 p-2 rounded-lg mt-1 select-none"
               >
                 {gpsError}
               </motion.div>
@@ -1270,9 +1248,9 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
               <motion.div 
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-3xs leading-relaxed text-amber-300 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-lg mt-2 text-center"
+                className="text-3xs leading-relaxed text-brand-300 bg-brand-500/10 border border-brand-500/20 p-2.5 rounded-lg mt-2 text-center"
               >
-                <HelpCircle className="w-3.5 h-3.5 text-amber-400 mx-auto mb-1 animate-pulse" />
+                <HelpCircle className="w-3.5 h-3.5 text-brand-400 mx-auto mb-1 animate-pulse" />
                 <p className="font-bold">Insecure Connection (HTTP)</p>
                 <p className="mt-0.5 text-slate-300 leading-normal font-medium">
                   Browsers block coordinates over HTTP. Access over <b>HTTPS</b> to activate compass sensors automatically.
@@ -1293,7 +1271,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             <div className="w-full max-w-xs bg-slate-900/30 border border-slate-850/70 rounded-2xl p-3 flex flex-col gap-2.5 shrink-0 select-none">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                  <Sliders className="w-3.5 h-3.5 text-amber-500" /> Align Simulator
+                  <Sliders className="w-3.5 h-3.5 text-brand-500" /> Align Simulator
                 </span>
                 <button
                   type="button"
@@ -1301,7 +1279,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                     // Smoothly auto-spin compass dial to align perfectly to the Kaaba direction
                     targetHeading.current = qiblaAngle;
                   }}
-                  className="px-2.5 py-1 rounded bg-gradient-to-tr from-amber-500 to-amber-600 hover:brightness-110 active:scale-95 transition-all text-slate-950 text-4xs font-black uppercase tracking-wider flex items-center gap-1 shadow-sm shadow-amber-950/20 cursor-pointer"
+                  className="px-2.5 py-1 rounded bg-gradient-to-tr from-brand-500 to-brand-600 hover:brightness-110 active:scale-95 transition-all text-on-brand text-4xs font-black uppercase tracking-wider flex items-center gap-1 shadow-sm shadow-brand-950/20 cursor-pointer"
                 >
                   <Sparkles className="w-2.5 h-2.5" /> Auto-Align
                 </button>
@@ -1324,7 +1302,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                     currentHeading.current = val;
                     setHeading(val);
                   }}
-                  className="w-full accent-amber-500 h-1 bg-slate-950 rounded-lg cursor-pointer"
+                  className="w-full accent-brand-500 h-1 bg-slate-950 rounded-lg cursor-pointer"
                 />
               </div>
 
@@ -1380,7 +1358,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
 
           {/* Informative description tip overlay bottom */}
           <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-850/60 text-[10px] leading-relaxed text-slate-400 max-w-xs flex items-start gap-1.5 select-none shrink-0">
-            <Info className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+            <Info className="w-3.5 h-3.5 text-brand-400 shrink-0 mt-0.5" />
             <p>
               Position your phone flat and frame the compass straight. Match <b>0° Alignment</b> to find Kaaba's exact direction. Live dragging is simulated for desktop.
             </p>
@@ -1407,13 +1385,13 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                 <span className="text-4xs font-black uppercase tracking-widest text-slate-400 leading-none">
                   Selected Region
                 </span>
-                <span className="text-4xs font-black uppercase tracking-widest text-amber-500 leading-none">
+                <span className="text-4xs font-black uppercase tracking-widest text-brand-500 leading-none">
                   Active Interval
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                  <MapPin className="w-3 h-3 text-amber-500 shrink-0" />
+                  <MapPin className="w-3 h-3 text-brand-500 shrink-0" />
                   <h3 className="text-xs font-black text-slate-100 truncate leading-tight">
                     {locationName}
                   </h3>
@@ -1436,10 +1414,10 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
 
               {/* Countdown countdown timer inside container */}
               <div className="mt-5 flex flex-col items-center">
-                <span className="text-3xs font-black tracking-widest text-[#f59e0b] uppercase">
+                <span className="text-3xs font-black tracking-widest text-brand-400 uppercase">
                   Countdown to {nextPrayer.label}
                 </span>
-                <span className="text-2xl font-black font-mono tracking-tight text-amber-400 drop-shadow-[0_2px_8px_rgba(245,158,11,0.25)] mt-1.5">
+                <span className="text-2xl font-black font-mono tracking-tight text-brand-400 drop-shadow-[0_2px_8px_rgba(52,211,160,0.25)] mt-1.5">
                   {timeRemaining || 'Calculating...'}
                 </span>
                 <span className="text-4xs font-bold text-slate-400 mt-1.5 block uppercase tracking-wider">
@@ -1451,11 +1429,11 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
 
           {/* Azan Alert Banner */}
           {azanAlert && (
-            <div className="mx-1 mb-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 flex items-center justify-between gap-3">
+            <div className="mx-1 mb-3 p-4 rounded-2xl bg-brand-500/10 border border-brand-500/40 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🕌</span>
                 <div>
-                  <p className="text-sm font-black text-amber-400">{azanAlert}</p>
+                  <p className="text-sm font-black text-brand-400">{azanAlert}</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">It is time for prayer. Allahu Akbar!</p>
                 </div>
               </div>
@@ -1471,7 +1449,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
 
           {/* Interactive Prayer Times Grid Listing */}
           <div className="flex flex-col gap-1.5">
-            <h4 className="text-4xs font-black uppercase tracking-widest text-[#f59e0b] px-1 pb-1 flex items-center gap-1">
+            <h4 className="text-4xs font-black uppercase tracking-widest text-brand-400 px-1 pb-1 flex items-center gap-1">
               <Calendar className="w-3 h-3" /> Daily Namaz Timeline
             </h4>
             
@@ -1485,24 +1463,24 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                     key={p.id}
                     className={`px-3 py-2.5 rounded-xl border flex items-center justify-between transition-all ${
                       isActive 
-                        ? 'bg-amber-500/10 border-amber-500 ring-2 ring-amber-500/5 shadow-md shadow-amber-950/10'
+                        ? 'bg-brand-500/10 border-brand-500 ring-2 ring-brand-500/5 shadow-md shadow-brand-950/10'
                         : 'bg-slate-950/60 border-slate-850 hover:bg-slate-900/60'
                     }`}
                   >
                     <div className="flex items-center gap-3 bg-transparent">
                       {/* Prayer Number / Icon */}
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black font-mono ${isActive ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black font-mono ${isActive ? 'bg-brand-500 text-on-brand' : 'bg-slate-900 text-slate-400'}`}>
                         {p.id === 'sunrise' ? '☀️' : (index === 0 ? '➊' : index === 1 ? '➋' : index === 2 ? '➌' : index === 3 ? '➍' : index === 4 ? '➎' : '➏')}
                       </div>
                       
                       {/* Labels */}
                       <div className="bg-transparent select-none">
                         <div className="flex items-center gap-1.5 bg-transparent">
-                          <span className={`text-xs font-black leading-none ${isActive ? 'text-amber-400' : 'text-slate-100'}`}>
+                          <span className={`text-xs font-black leading-none ${isActive ? 'text-brand-400' : 'text-slate-100'}`}>
                             {p.label}
                           </span>
                           {isActive && (
-                            <span className="text-[8px] font-black tracking-widest uppercase px-1 py-0.2 rounded bg-emerald-500 text-slate-950 animate-pulse">
+                            <span className="text-[8px] font-black tracking-widest uppercase px-1 py-0.2 rounded bg-emerald-500 text-on-brand animate-pulse">
                               Active Now
                             </span>
                           )}
@@ -1514,7 +1492,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                     {/* Time reading & Alarm switch button */}
                     <div className="flex items-center gap-3 bg-transparent">
                       {/* Formatted absolute time in timezone code */}
-                      <span className={`text-xs font-black font-mono tracking-tight ${isActive ? 'text-amber-400' : 'text-slate-200'}`}>
+                      <span className={`text-xs font-black font-mono tracking-tight ${isActive ? 'text-brand-400' : 'text-slate-200'}`}>
                         {formatPrayerTime(p.time)}
                       </span>
 
@@ -1526,7 +1504,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                           onClick={() => isPrayerAzanId(p.id) && handleToggleAzanSetting(p.id)}
                           className={`w-6.5 h-6.5 rounded-full flex items-center justify-center transition-colors border select-none cursor-pointer ${
                             isSelectedForSound
-                              ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 hover:bg-amber-500/25'
+                              ? 'bg-brand-500/15 text-brand-500 border-brand-500/30 hover:bg-brand-500/25'
                               : 'bg-slate-900 text-slate-600 border-slate-800 hover:text-slate-400'
                           }`}
                           title={isSelectedForSound ? `Azan for ${p.label} broadcast enabled` : `Azan for ${p.label} broadcast muted`}
@@ -1553,7 +1531,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
           {/* FIQH & CONVENTION CONFIGURATION FORM CARDS */}
           <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-850 flex flex-col gap-3.5 select-none">
             <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 border-b border-slate-900 pb-1.5 shrink-0">
-              <Sliders className="w-3 h-3 text-amber-500" /> Calculation Juristic Deck
+              <Sliders className="w-3 h-3 text-brand-500" /> Calculation Juristic Deck
             </h5>
 
             <div className="flex flex-col gap-4 bg-transparent">
@@ -1569,7 +1547,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                     onClick={() => updatePrayerSettings({ madhab: 'hanafi' })}
                     className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wide rounded-lg transition-all cursor-pointer ${
                       fiqh === 'Hanafi'
-                        ? 'bg-amber-500 text-slate-950'
+                        ? 'bg-brand-500 text-on-brand'
                         : 'text-slate-400 hover:text-zinc-200'
                     }`}
                   >
@@ -1581,7 +1559,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                     onClick={() => updatePrayerSettings({ madhab: 'shafi' })}
                     className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wide rounded-lg transition-all cursor-pointer ${
                       fiqh !== 'Hanafi'
-                        ? 'bg-amber-500 text-slate-950'
+                        ? 'bg-brand-500 text-on-brand'
                         : 'text-slate-400 hover:text-zinc-200'
                     }`}
                   >
@@ -1600,7 +1578,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                 </span>
                 <select
                   id="select_calculation_agency"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-200 p-2 focus:outline-none focus:border-amber-500 cursor-pointer"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-200 p-2 focus:outline-none focus:border-brand-500 cursor-pointer"
                   value={calcMethod}
                   onChange={(e) => updatePrayerSettings({ calculationMethod: e.target.value as PrayerCalculationMethod })}
                 >
@@ -1620,39 +1598,17 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
           {/* ADVANCED BROADCAST & TEST SOUND CONSOLE */}
           <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-850 flex flex-col gap-2.5 select-none">
             <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 border-b border-slate-900 pb-1.5 shrink-0">
-              <Volume2 className="w-3.5 h-3.5 text-amber-500" /> Azan Audio Console (Broadcast Test)
+              <Volume2 className="w-3.5 h-3.5 text-brand-500" /> Azan Audio Console (Broadcast Test)
             </h5>
 
             <div className="flex flex-col gap-3.5 pt-1">
-              {/* Select Mecca vs Medina Audio streams */}
+              {/* Bundled adhan recording */}
               <div className="bg-transparent flex flex-col gap-1.5 w-full">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Select Adhan Feed</span>
-                <div className="flex bg-slate-900 p-0.5 rounded-xl border border-slate-800 w-full">
-                  <button
-                    id="btn_select_sound_mecca"
-                    type="button"
-                    onClick={() => updatePrayerSettings({ azanSound: 'mecca' })}
-                    className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
-                      selectedAzanSound === 'mecca'
-                        ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20 font-black'
-                        : 'text-slate-500 hover:text-slate-350'
-                    }`}
-                  >
-                    Mecca Haram
-                  </button>
-                  <button
-                    id="btn_select_sound_medina"
-                    type="button"
-                    onClick={() => updatePrayerSettings({ azanSound: 'medina' })}
-                    className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
-                      selectedAzanSound === 'medina'
-                        ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20 font-black'
-                        : 'text-slate-500 hover:text-slate-350'
-                    }`}
-                  >
-                    Medina Nabawi
-                  </button>
-                </div>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Adhan recording</span>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {getAzanSource(selectedAzanSound).label}, stored on your device so it plays offline.
+                  Recording by Adam-synagda (CC0, Wikimedia Commons).
+                </p>
               </div>
 
               {/* Play / Stop Action button */}
@@ -1669,10 +1625,10 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                 ) : (
                   <button
                     id="btn_broadcast_preview_play"
-                    onClick={() => playAzan(selectedAzanSound === 'mecca' ? MECCA_AZAN_URLS : MEDINA_AZAN_URLS, 'Broadcast Preview Adhan')}
+                    onClick={() => playAzan(azanUrls, 'Broadcast Preview Adhan')}
                     type="button"
                     disabled={loadingAudio}
-                    className="w-full justify-center px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 font-black text-xs text-slate-950 uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm disabled:opacity-50 disabled:cursor-wait"
+                    className="w-full justify-center px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 font-black text-xs text-on-brand uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm disabled:opacity-50 disabled:cursor-wait"
                   >
                     {loadingAudio ? (
                       <>
@@ -1690,8 +1646,8 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
 
               {/* Buffering Status/Route Feedback */}
               {isAudioPlaying && loadingAudio && currentUrlTrying && (
-                <div id="adhan_buffering_box" className="text-amber-400 text-[10px] mt-2 bg-amber-500/5 border border-amber-500/15 rounded-lg p-2.5 flex items-center gap-2 animate-pulse justify-center">
-                  <div className="w-2.5 h-2.5 rounded-full border border-amber-500 border-t-transparent animate-spin"></div>
+                <div id="adhan_buffering_box" className="text-brand-400 text-[10px] mt-2 bg-brand-500/5 border border-brand-500/15 rounded-lg p-2.5 flex items-center gap-2 animate-pulse justify-center">
+                  <div className="w-2.5 h-2.5 rounded-full border border-brand-500 border-t-transparent animate-spin"></div>
                   <span className="font-semibold select-none">Buffering mosque stream route ...</span>
                 </div>
               )}
@@ -1715,7 +1671,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                 {[...Array(14)].map((_, i) => (
                   <div
                     key={i}
-                    className="w-1 bg-amber-500 rounded-full animate-pulse"
+                    className="w-1 bg-brand-500 rounded-full animate-pulse"
                     style={{
                       height: `${Math.floor(Math.random() * 20) + 6}px`,
                       animationDuration: `${0.3 + (i % 5) * 0.15}s`

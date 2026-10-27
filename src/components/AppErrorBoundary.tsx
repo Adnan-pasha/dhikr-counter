@@ -43,7 +43,7 @@ export default class AppErrorBoundary extends React.Component<Props, State> {
               The app hit an unexpected error. You can reload, or reset local app data if this keeps happening.
             </p>
             <div className="flex gap-3 justify-center">
-              <button onClick={this.handleReload} className="px-4 py-2 rounded-lg bg-emerald-500 text-slate-950 font-semibold">
+              <button onClick={this.handleReload} className="px-4 py-2 rounded-lg bg-emerald-500 text-on-brand font-semibold">
                 Reload App
               </button>
               <button onClick={this.handleResetStorage} className="px-4 py-2 rounded-lg border border-slate-700 text-slate-100">

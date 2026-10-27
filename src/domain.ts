@@ -5,7 +5,7 @@ const SOUND_TONES: SoundTone[] = ['wooden', 'chime', 'digital', 'bowl'];
 const THEMES: AppTheme[] = ['slate', 'emerald', 'amber', 'indigo', 'midnight'];
 const MADHABS: Madhab[] = ['hanafi', 'shafi', 'maliki', 'hanbali'];
 const PRAYER_CALCULATION_METHODS: PrayerCalculationMethod[] = ['Karachi', 'MWL', 'UmmAlQura', 'ISNA', 'Egypt'];
-const AZAN_SOUNDS: AzanSound[] = ['mecca', 'medina'];
+const AZAN_SOUNDS: AzanSound[] = ['standard'];
 const PRAYER_AZAN_IDS: PrayerAzanId[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
@@ -165,7 +165,7 @@ export const sanitizeAzanSettings = (value: unknown): Record<PrayerAzanId, boole
 export const DEFAULT_PRAYER_SETTINGS: PrayerSettings = {
   madhab: 'shafi',
   calculationMethod: 'Karachi',
-  azanSound: 'mecca',
+  azanSound: 'standard',
   azanEnabled: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
 };
 

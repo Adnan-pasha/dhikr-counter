@@ -283,13 +283,13 @@ test('sanitizePrayerSettings validates calculation method, madhab, azan sound, a
   }, {
     madhab: 'hanafi',
     calculationMethod: 'MWL',
-    azanSound: 'medina',
+    azanSound: 'standard',
     azanEnabled: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
   });
 
   assert.equal(result.madhab, 'hanafi');
   assert.equal(result.calculationMethod, 'MWL');
-  assert.equal(result.azanSound, 'medina');
+  assert.equal(result.azanSound, 'standard');
   assert.equal(result.azanEnabled.fajr, false);
   assert.equal(result.azanEnabled.dhuhr, true);
   assert.equal(result.azanEnabled.maghrib, false);
@@ -311,9 +311,17 @@ test('readPrayerSettings migrates legacy azan settings and writePrayerSettings p
   assert.equal(migrated.azanEnabled.asr, false);
   assert.match(localStorage.getItem('tasbih_prayer_settings') || '', /azanEnabled/);
 
-  const written = writePrayerSettings({ ...migrated, calculationMethod: 'Egypt', azanSound: 'medina' });
+  const written = writePrayerSettings({ ...migrated, calculationMethod: 'Egypt', azanSound: 'standard' });
   assert.equal(written.calculationMethod, 'Egypt');
-  assert.equal(written.azanSound, 'medina');
+  assert.equal(written.azanSound, 'standard');
   assert.match(localStorage.getItem('tasbih_prayer_settings') || '', /Egypt/);
   assert.match(localStorage.getItem('tasbih_azan_settings') || '', /fajr/);
+});
+
+test('legacy mecca/medina adhan choices migrate to the bundled standard adhan', () => {
+  const fallback = sanitizePrayerSettings(null);
+  assert.equal(fallback.azanSound, 'standard');
+  for (const legacy of ['mecca', 'medina']) {
+    assert.equal(sanitizePrayerSettings({ azanSound: legacy }).azanSound, 'standard', legacy);
+  }
 });

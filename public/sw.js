@@ -19,6 +19,8 @@ const SHELL_ASSETS = [
   'icon-192.png',
   'icon-512.png',
   'icon-maskable-512.png',
+  // Bundled adhan: precached so prayer-time playback works offline.
+  'audio/adhan.m4a',
   ...BUILD_MANIFEST.assets,
 ];
 
@@ -44,6 +46,11 @@ self.addEventListener('activate', (event) => {
       .then(() => self.clients.claim()),
   );
 });
+
+// Cache lookups ignore Vary. Hosts often send `Vary: Origin`, and browsers add an Origin
+// header to same-origin module-script requests that precached entries never had, so a strict
+// match misses and the first offline reload is blank.
+const matchCache = (request) => caches.match(request, { ignoreVary: true });
 
 // Only cache complete, same-purpose responses. HTML served for a non-document request is an
 // SPA fallback for a missing file; caching it would poison that URL permanently.
@@ -76,25 +83,52 @@ const networkFirst = (event, request, cacheName, { fallbackUrl, timeoutMs } = {}
     ? Promise.race([network, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))])
     : network;
   return guarded.catch(() =>
-    caches
-      .match(request)
-      .then((cached) => cached || (fallbackUrl ? caches.match(fallbackUrl) : undefined))
+    matchCache(request)
+      .then((cached) => cached || (fallbackUrl ? matchCache(fallbackUrl) : undefined))
       .then((cached) => cached || network.catch(() => Response.error())),
   );
 };
 
 // Hashed build assets never change for a given URL, so cache-first is safe.
 const cacheFirst = (event, request) =>
-  caches.match(request).then(
+  matchCache(request).then(
     (cached) => cached || fetch(request).then((response) => remember(event, SHELL_CACHE, request, response)),
   );
 
 const staleWhileRevalidate = (event, request) =>
-  caches.match(request).then((cached) => {
+  matchCache(request).then((cached) => {
     const refresh = fetch(request)
       .then((response) => remember(event, SHELL_CACHE, request, response))
       .catch(() => cached || Response.error());
     return cached || refresh;
+  });
+
+// Media elements (notably Safari) request byte ranges and reject a plain 200 for them, so
+// ranges for cached files are answered from the cached body.
+const rangeResponse = (request, cached) =>
+  cached.arrayBuffer().then((buffer) => {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('range') || '');
+    if (!match || (match[1] === '' && match[2] === '')) {
+      return new Response(buffer, { status: 200, headers: cached.headers });
+    }
+    const size = buffer.byteLength;
+    let start;
+    let end;
+    if (match[1] === '') {
+      start = Math.max(size - Number(match[2]), 0);
+      end = size - 1;
+    } else {
+      start = Number(match[1]);
+      end = match[2] === '' ? size - 1 : Math.min(Number(match[2]), size - 1);
+    }
+    if (start >= size || start > end) {
+      return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
+    }
+    const headers = new Headers(cached.headers);
+    headers.set('Content-Range', `bytes ${start}-${end}/${size}`);
+    headers.set('Content-Length', String(end - start + 1));
+    headers.set('Accept-Ranges', 'bytes');
+    return new Response(buffer.slice(start, end + 1), { status: 206, headers });
   });
 
 self.addEventListener('fetch', (event) => {
@@ -102,6 +136,13 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET' || !request.url.startsWith('http')) return;
 
   const url = new URL(request.url);
+
+  if (url.origin === self.location.origin && request.headers && request.headers.get('range')) {
+    event.respondWith(
+      matchCache(request).then((cached) => (cached ? rangeResponse(request, cached) : fetch(request))),
+    );
+    return;
+  }
 
   if (url.host === QURAN_API_HOST) {
     event.respondWith(networkFirst(event, request, QURAN_CACHE, { timeoutMs: QURAN_NETWORK_TIMEOUT_MS }));

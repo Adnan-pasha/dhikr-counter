@@ -8,27 +8,53 @@
   --font-display: "Space Grotesk Variable", sans-serif;
 
   /* App backgrounds */
-  --color-bg-deep:    #090E1A;
-  --color-bg-base:    #0B1120;
-  --color-bg-surface: #111827;
-  --color-bg-raised:  #1A2438;
-  --color-bg-overlay: #1E2D40;
+  --color-bg-deep:    #08100E;
+  --color-bg-base:    #0A1411;
+  --color-bg-surface: #0F1B17;
+  --color-bg-raised:  #16261F;
+  --color-bg-overlay: #1D3128;
 
   /* Borders */
-  --color-border:       #1E2D40;
-  --color-border-muted: #162032;
-  --color-border-glow:  rgba(251,191,36,0.35);
+  --color-border:       #1D3128;
+  --color-border-muted: #14221C;
+  --color-border-glow:  rgba(52,211,160,0.35);
 
   /* Text — all WCAG AA compliant on dark bg */
-  --color-text-primary:   #F1F5F9;   /* contrast ~15:1 */
-  --color-text-secondary: #CBD5E1;   /* contrast ~8:1  */
-  --color-text-muted:     #94A3B8;   /* contrast ~4.6:1 */
-  --color-text-brand:     #FBBF24;   /* amber-400 — bright on dark */
+  --color-text-primary:   #F1F7F4;   /* contrast ~16:1 */
+  --color-text-secondary: #CFE0D8;   /* contrast ~13:1 */
+  --color-text-muted:     #93ADA1;   /* contrast ~7:1  */
+  --color-text-brand:     #34D3A0;   /* brand-400 */
 
-  /* Brand */
-  --color-brand:        #FBBF24;
-  --color-brand-dim:    rgba(251,191,36,0.12);
-  --color-brand-border: rgba(251,191,36,0.30);
+  /* Brand: teal-green. Amber is reserved for streaks and warnings. */
+  --color-brand:        #34D3A0;
+  --color-brand-dim:    rgba(52,211,160,0.12);
+  --color-brand-border: rgba(52,211,160,0.30);
+
+  --color-brand-50:  #ECFDF6;
+  --color-brand-100: #D1FAEA;
+  --color-brand-200: #A7F3D8;
+  --color-brand-300: #5EEAB5;
+  --color-brand-400: #34D3A0;
+  --color-brand-500: #14B88A;
+  --color-brand-600: #0A9A73;
+  --color-brand-700: #087F5F;
+  --color-brand-800: #0A6650;
+  --color-brand-900: #0B4F40;
+  --color-brand-950: #052E27;
+
+  /* Dark neutral scale: green-tinted replacement for Tailwind's blue-grey slate.
+     50-500 are text shades (AA on the dark surfaces above); 600-950 are surfaces/borders. */
+  --color-slate-50:  #F1F7F4;
+  --color-slate-100: #E3EEE9;
+  --color-slate-200: #CFE0D8;
+  --color-slate-300: #B4CBC1;
+  --color-slate-400: #93ADA1;
+  --color-slate-500: #7A9488;
+  --color-slate-600: #3B5248;
+  --color-slate-700: #24382F;
+  --color-slate-800: #162620;
+  --color-slate-900: #0E1A16;
+  --color-slate-950: #070E0C;
 
   /* Status */
   --color-success:      #34D399;
@@ -37,9 +63,9 @@
   --color-info:         #818CF8;
 
   /* Bottom navigation */
-  --nav-bg:         #0A101D;
-  --nav-inactive:   #94A3B8;
-  --nav-active-bg:  rgba(251,191,36,0.14);
+  --nav-bg:         #09120F;
+  --nav-inactive:   #93ADA1;
+  --nav-active-bg:  rgba(52,211,160,0.14);
 }
 
 /* ─── Global Reset ────────────────────────────────────────────────────────── */
@@ -76,6 +102,9 @@ body {
 @layer utilities {
 
   /* Minimum 44x44 touch target (WCAG 2.5.8 / platform guidelines). */
+  /* Dark text for use on brand-coloured fills (AA on brand-500 in both modes). */
+  .text-on-brand { color: #070E0C; }
+
   .tap-target {
     min-height: 44px;
     min-width: 44px;
@@ -102,7 +131,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background: rgba(17,24,39,0.90);
+    background: color-mix(in srgb, var(--color-bg-surface) 90%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--color-border-muted);
@@ -251,8 +280,8 @@ body {
 
   /* ── Buttons ───────────────────────────────────────────────────── */
   .btn-primary {
-    background: linear-gradient(135deg, #FBBF24, #F97316);
-    color: #0B1120;
+    background: linear-gradient(135deg, var(--color-brand-400), var(--color-brand-500));
+    color: #070E0C;
     font-weight: 900;
     font-size: 0.875rem;   /* 14px */
     border-radius: 0.875rem;
@@ -260,7 +289,7 @@ body {
     cursor: pointer;
     border: none;
     transition: all 0.15s;
-    box-shadow: 0 4px 20px rgba(251,191,36,0.22);
+    box-shadow: 0 4px 20px rgba(20,184,138,0.28);
     min-height: 44px;
     display: flex;
     align-items: center;
@@ -302,8 +331,8 @@ body {
     min-height: 48px;
   }
   .input-field:focus {
-    border-color: rgba(251,191,36,0.5);
-    box-shadow: 0 0 0 3px rgba(251,191,36,0.08);
+    border-color: var(--color-brand-border);
+    box-shadow: 0 0 0 3px var(--color-brand-dim);
   }
   .input-field::placeholder { color: var(--color-text-muted); font-size: 0.875rem; }
 
@@ -317,7 +346,7 @@ body {
   .progress-fill {
     height: 100%;
     border-radius: 9999px;
-    background: linear-gradient(90deg, #FBBF24, #F97316);
+    background: linear-gradient(90deg, var(--color-brand-400), var(--color-brand-500));
     transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
   }
 
@@ -375,16 +404,16 @@ body {
 
   --color-border:       #E2E5EB;
   --color-border-muted: #EAECF1;
-  --color-border-glow:  rgba(217,119,6,0.30);
+  --color-border-glow:  rgba(6,115,85,0.30);
 
   --color-text-primary:   #0F172A;
   --color-text-secondary: #334155;
   --color-text-muted:     #64748B;
-  --color-text-brand:     #D97706;
+  --color-text-brand:     #067355;
 
-  --color-brand:        #D97706;
-  --color-brand-dim:    rgba(217,119,6,0.10);
-  --color-brand-border: rgba(217,119,6,0.28);
+  --color-brand:        #067355;
+  --color-brand-dim:    rgba(6,115,85,0.10);
+  --color-brand-border: rgba(6,115,85,0.28);
 
   --color-success:      #059669;
   --color-success-dim:  rgba(5,150,105,0.10);
@@ -393,7 +422,7 @@ body {
 
   --nav-bg:         #FFFFFF;
   --nav-inactive:   #475569;
-  --nav-active-bg:  rgba(217,119,6,0.12);
+  --nav-active-bg:  rgba(6,115,85,0.12);
 
   color-scheme: light;
 }
@@ -407,10 +436,6 @@ body {
   box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
 }
 
-[data-theme="light"] .screen-header {
-  background: rgba(255,255,255,0.92);
-}
-
 /* ─── Light Mode: Palette Remap ───────────────────────────────────────────────
    Tailwind v4 utilities read their colours from CSS variables (bg-slate-800 ->
    var(--color-slate-800)), including opacity variants such as bg-slate-900/60.
@@ -418,8 +443,8 @@ body {
    accent text shades for light mode, with no !important and no per-class rules.
    Roles by usage: 50-500 are text, 700-900 are surfaces/borders. Every text shade
    is AA (>= 4.5:1) on white and on #F1F5F9; tests/theme.test.mjs enforces this.
-   slate-950 is intentionally left dark: it is used for scrims and for text on
-   amber/emerald call-to-action fills. ────────────────────────────────────────── */
+   slate-950 is a surface shade here too (the deepest panel); text on brand fills uses
+   .text-on-brand and modal scrims use bg-black/60. ────────────────────────────────────────── */
 [data-theme="light"] {
   --color-slate-50:  #0F172A;
   --color-slate-100: #0F172A;
@@ -431,7 +456,10 @@ body {
   --color-slate-700: #E2E8F0;
   --color-slate-800: #F1F5F9;
   --color-slate-900: #FFFFFF;
+  --color-slate-950: #FFFFFF;
 
+  --color-brand-300:   #067355;
+  --color-brand-400:   #067355;
   --color-amber-300:   #B45309;
   --color-amber-400:   #92400E;
   --color-emerald-300: #047857;
@@ -456,10 +484,6 @@ body {
   --color-sky-400:     #0369A1;
 }
 
-/* Solid slate-950 panels (inset fields, dials) are white in light mode; opacity
-   variants stay dark so modal scrims keep working. */
-[data-theme="light"] .bg-slate-950 { background-color: #FFFFFF; }
-
 /* Amber/orange gradient buttons stay vivid in both modes — no override needed.
    Status colours (emerald/rose/indigo) keep sufficient contrast via their
    own /10–/20 opacity backgrounds in both themes, verified manually. */
@@ -467,7 +491,7 @@ body {
 /* ─── Accessibility ───────────────────────────────────────────────────────── */
 /* Keyboard focus must always be visible; overrides per-component focus:outline-none. */
 :focus-visible {
-  outline: 2px solid #FBBF24 !important;
+  outline: 2px solid var(--color-brand) !important;
   outline-offset: 2px !important;
 }
 

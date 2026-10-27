@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect } from 'react';
-import { DhikrReminder, UserPreferences, Routine, SalahLog } from './types';
+import { DhikrReminder, UserPreferences, Routine, SalahLog, ConfirmModalState } from './types';
 import { DEFAULT_ROUTINES } from './adhkaar-data';
 import { findDueReminders, shouldTriggerReminderOccurrence, findCatchUpReminderCandidates, findMissedReminderCandidates, parseStoredArray } from './domain';
 import { playBeadSound, playCompletionSound } from './audio';
@@ -174,7 +174,7 @@ interface DhikrActionDeps {
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
   setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla'>>;
   setHistory: React.Dispatch<React.SetStateAction<DhikrHistory[]>>;
-  setConfirmModal: React.Dispatch<React.SetStateAction<{ title: string; message: string; onConfirm: () => void; } | null>>;
+  setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState | null>>;
 }
 
 export const useDhikrActions = (deps: DhikrActionDeps) => {
@@ -247,7 +247,7 @@ interface CounterFlowDeps {
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
   setCurrentDhikrId: React.Dispatch<React.SetStateAction<string>>;
   setHistory: React.Dispatch<React.SetStateAction<DhikrHistory[]>>;
-  setConfirmModal: React.Dispatch<React.SetStateAction<{ title: string; message: string; onConfirm: () => void; } | null>>;
+  setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState | null>>;
 }
 
 export const useCounterFlow = (deps: CounterFlowDeps) => {
@@ -349,7 +349,7 @@ interface HistoryFlowDeps {
   setRoutines: React.Dispatch<React.SetStateAction<Routine[]>>;
   setSalahLogs: React.Dispatch<React.SetStateAction<SalahLog[]>>;
   setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla'>>;
-  setConfirmModal: React.Dispatch<React.SetStateAction<{ title: string; message: string; onConfirm: () => void; } | null>>;
+  setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState | null>>;
   systemDhikrs: Dhikr[];
   defaultPreferences: UserPreferences;
   defaultReminders: DhikrReminder[];
@@ -359,6 +359,7 @@ interface HistoryFlowDeps {
 export const useHistoryActions = (deps: HistoryFlowDeps) => {
   const handleClearHistory = () => {
     deps.setConfirmModal({
+      destructive: true,
       title: 'Erase Completion Logs',
       message: 'Are you sure you want to securely erase all completion log histories? Daily streaks will reset to zero.',
       onConfirm: () => {
@@ -371,6 +372,7 @@ export const useHistoryActions = (deps: HistoryFlowDeps) => {
 
   const handleResetAllData = () => {
     deps.setConfirmModal({
+      destructive: true,
       title: 'Erase All App Data',
       message: 'Are you absolutely sure? This will delete all custom chants, history, preferences and reset the database.',
       onConfirm: () => {

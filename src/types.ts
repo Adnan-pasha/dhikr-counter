@@ -7,7 +7,8 @@ export type Madhab = 'hanafi' | 'shafi' | 'maliki' | 'hanbali';
 
 export type PrayerCalculationMethod = 'Karachi' | 'MWL' | 'UmmAlQura' | 'ISNA' | 'Egypt';
 
-export type AzanSound = 'mecca' | 'medina';
+/** Bundled adhan recordings. Legacy 'mecca'/'medina' values migrate to 'standard'. */
+export type AzanSound = 'standard';
 
 export type PrayerAzanId = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 
@@ -135,3 +136,11 @@ export const CATEGORY_META: Record<AdhkaarCategory, { label: string; emoji: stri
   quranic:    { label: 'Quranic',    emoji: '📖', color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
   motivation: { label: 'Motivation', emoji: '✨', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
 };
+
+/** State for the app-wide confirm dialog. `destructive` switches the confirm button to the danger style. */
+export interface ConfirmModalState {
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  destructive?: boolean;
+}

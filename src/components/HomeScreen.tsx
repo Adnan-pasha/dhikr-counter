@@ -147,8 +147,8 @@ export default function HomeScreen({
         style={{ background: 'linear-gradient(180deg, var(--color-bg-surface) 0%, transparent 100%)', borderBottom: '1px solid var(--color-border-muted)' }}
       >
         {/* Decorative glows */}
-        <div className="absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(245,158,11,0.07) 0%, transparent 70%)' }} />
-        <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%)' }} />
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(52,211,160,0.08) 0%, transparent 70%)' }} />
+        <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full blur-3xl pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(52,211,160,0.05) 0%, transparent 70%)' }} />
 
         {/* Greeting + date */}
         <div className="relative z-10">
@@ -178,8 +178,8 @@ export default function HomeScreen({
           <div className="flex gap-2.5 mt-4">
             {[
               { icon: <Flame className="w-3.5 h-3.5" />, label: 'Streak', value: streak, unit: 'days', color: '#FB923C' },
-              { icon: <Target className="w-3.5 h-3.5" />, label: 'Today', value: completedTodayIds.length, unit: 'adhkaar', color: '#F59E0B' },
-              { icon: <Trophy className="w-3.5 h-3.5" />, label: 'Total', value: allTimeCount >= 1000 ? `${(allTimeCount / 1000).toFixed(1)}k` : allTimeCount, unit: 'beads', color: '#FBBF24' },
+              { icon: <Target className="w-3.5 h-3.5" />, label: 'Today', value: completedTodayIds.length, unit: 'adhkaar', color: 'var(--color-text-brand)' },
+              { icon: <Trophy className="w-3.5 h-3.5" />, label: 'Total', value: allTimeCount >= 1000 ? `${(allTimeCount / 1000).toFixed(1)}k` : allTimeCount, unit: 'beads', color: 'var(--color-text-brand)' },
             ].map(({ icon, label, value, unit, color }) => (
               <div key={label} className="flex-1 rounded-2xl p-3" style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)' }}>
                 <div className="flex items-center gap-1.5 mb-1.5" style={{ color }}>
@@ -209,7 +209,7 @@ export default function HomeScreen({
             onClick={() => onStartDhikr(currentDhikrId)}
             className="w-full card-featured rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all hover:brightness-110"
           >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.2)' }}>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--color-brand-dim)', border: '1px solid var(--color-brand-border)' }}>
               <span className="text-xl font-arabic" style={{ color: 'var(--color-text-brand)' }}>{currentDhikr.nameAr.slice(0, 3)}</span>
             </div>
             <div className="flex-1 text-left min-w-0">
@@ -220,8 +220,8 @@ export default function HomeScreen({
               <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{currentDhikr.meaning}</p>
             </div>
             <div className="shrink-0 flex flex-col items-center gap-1">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #F59E0B, #F97316)', boxShadow: '0 4px 16px rgba(245,158,11,0.3)' }}>
-                <Play className="w-4 h-4 fill-slate-950 text-slate-950" />
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #34D3A0, #14B88A)', boxShadow: '0 4px 16px rgba(52,211,160,0.3)' }}>
+                <Play className="w-4 h-4 fill-[#070E0C] text-on-brand" />
               </div>
               <span className="text-xs font-bold" style={{ color: 'var(--color-text-muted)' }}>{currentDhikr.targetCount}×</span>
             </div>
@@ -230,14 +230,14 @@ export default function HomeScreen({
 
         {/* ── Daily Ayah ──────────────────────────────────────────────────── */}
         <section>
-          <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.06))', border: '1px solid rgba(99,102,241,0.2)' }}>
+          <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, var(--color-brand-dim), transparent)', border: '1px solid var(--color-brand-border)' }}>
             <div className="flex items-center gap-1.5 mb-3">
-              <Star className="w-3 h-3" style={{ color: '#818CF8' }} />
-              <span className="section-label" style={{ color: '#818CF8' }}>Ayah of the Day</span>
+              <Star className="w-3 h-3" style={{ color: 'var(--color-text-brand)' }} />
+              <span className="section-label" style={{ color: 'var(--color-text-brand)' }}>Ayah of the Day</span>
             </div>
             <p className="font-arabic text-lg leading-loose text-right mb-2" style={{ color: 'var(--color-text-primary)' }}>{ayah.ar}</p>
             <p className="text-sm leading-relaxed italic" style={{ color: 'var(--color-text-secondary)' }}>"{ayah.en}"</p>
-            <p className="text-xs font-bold mt-2" style={{ color: '#818CF8', opacity: 0.7 }}>{ayah.ref}</p>
+            <p className="text-xs font-bold mt-2" style={{ color: 'var(--color-text-brand)', opacity: 0.85 }}>{ayah.ref}</p>
           </div>
         </section>
 
@@ -285,7 +285,7 @@ export default function HomeScreen({
                           whileTap={{ scale: 0.93 }}
                           onClick={() => routine.firstPending && onStartRoutine(routine.id, routine.firstPending.id)}
                           className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-black cursor-pointer"
-                          style={{ background: 'linear-gradient(135deg, #F59E0B, #F97316)', color: '#0B1120', boxShadow: '0 2px 10px rgba(245,158,11,0.25)' }}
+                          style={{ background: 'linear-gradient(135deg, #34D3A0, #14B88A)', color: '#070E0C', boxShadow: '0 2px 10px rgba(52,211,160,0.25)' }}
                         >
                           <Play className="w-2.5 h-2.5 fill-current" />
                           {routine.completed === 0 ? 'Begin' : 'Continue'}
@@ -354,12 +354,12 @@ export default function HomeScreen({
           <h2 className="section-label mb-2.5">Explore</h2>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { icon: '📿', label: 'Counter',  tab: 'counter'  as const, bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.18)', text: '#F59E0B' },
-              { icon: '📖', label: 'Adhkaar',  tab: 'adhkaar'  as const, bg: 'rgba(20,184,166,0.10)', border: 'rgba(20,184,166,0.18)', text: '#2DD4BF' },
-              { icon: '🌅', label: 'Routines', tab: 'routine'  as const, bg: 'rgba(99,102,241,0.10)', border: 'rgba(99,102,241,0.18)', text: '#818CF8' },
-              { icon: '🕌', label: 'Salah',    tab: 'salah'    as const, bg: 'rgba(16,185,129,0.10)', border: 'rgba(16,185,129,0.18)', text: '#34D399' },
-              { icon: '📗', label: 'Quran',    tab: 'quran'    as const, bg: 'rgba(34,197,94,0.10)',  border: 'rgba(34,197,94,0.18)',  text: '#4ADE80' },
-              { icon: '🧭', label: 'Qibla',    tab: 'qibla'    as const, bg: 'rgba(6,182,212,0.10)',  border: 'rgba(6,182,212,0.18)',  text: '#22D3EE' },
+              { icon: '📿', label: 'Counter',  tab: 'counter'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: '📖', label: 'Adhkaar',  tab: 'adhkaar'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: '🌅', label: 'Routines', tab: 'routine'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: '🕌', label: 'Salah',    tab: 'salah'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: '📗', label: 'Quran',    tab: 'quran'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: '🧭', label: 'Qibla',    tab: 'qibla'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
             ].map(({ icon, label, tab, bg, border, text }) => (
               <motion.button
                 key={tab}
