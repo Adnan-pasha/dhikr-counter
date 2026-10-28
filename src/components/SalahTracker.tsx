@@ -144,7 +144,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, afterSalah, on
         )}
 
         {/* Stats row */}
-        <div className="flex gap-3 mt-4">
+        <div className="flex gap-3 mt-4 pb-4">
           <div className="flex-1 bg-slate-800/60 rounded-2xl p-3 border border-slate-700/60 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
               <Flame className="w-3.5 h-3.5 text-orange-400" />
