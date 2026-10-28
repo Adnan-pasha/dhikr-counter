@@ -54,7 +54,7 @@ export interface DailyProgress {
 const isDateString = (value: unknown): value is string =>
   typeof value === 'string' && DATE_PATTERN.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
 
-const toLocalDate = (date: Date): string => {
+export const toLocalDate = (date: Date): string => {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');

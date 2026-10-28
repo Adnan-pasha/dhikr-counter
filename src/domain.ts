@@ -139,8 +139,19 @@ export const sanitizePreferences = (value: unknown, fallback: UserPreferences): 
     completionSoundOn: isBool(value.completionSoundOn) ? value.completionSoundOn : fallback.completionSoundOn,
     hapticStrength,
     dailyGoal: value.dailyGoal === undefined ? fallback.dailyGoal : sanitizeDailyGoal(value.dailyGoal),
+    showTransliteration: isBool(value.showTransliteration) ? value.showTransliteration : fallback.showTransliteration,
+    showTranslation: isBool(value.showTranslation) ? value.showTranslation : fallback.showTranslation,
   };
 };
+
+/** The transliteration and translation lines to show for a dhikr, or null where hidden or empty. */
+export const dhikrReadingLines = (
+  dhikr: Pick<Dhikr, 'transliteration' | 'meaning'>,
+  prefs: Pick<UserPreferences, 'showTransliteration' | 'showTranslation'>,
+): { transliteration: string | null; translation: string | null } => ({
+  transliteration: prefs.showTransliteration ? dhikr.transliteration?.trim() || null : null,
+  translation: prefs.showTranslation ? dhikr.meaning?.trim() || null : null,
+});
 
 export const sanitizeReminders = (value: unknown, fallback: DhikrReminder[]): DhikrReminder[] => {
   if (!Array.isArray(value)) return fallback;

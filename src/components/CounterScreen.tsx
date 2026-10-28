@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { RotateCcw, Undo2, Volume2, VolumeX, Maximize2, Minimize2, Check, ChevronLeft } from 'lucide-react';
 import { Dhikr, DhikrHistory, UserPreferences } from '../types';
-import { isTimestampOnLocalDay, shouldCountOnKey, getCounterLiveMessage } from '../domain';
+import { isTimestampOnLocalDay, shouldCountOnKey, getCounterLiveMessage, dhikrReadingLines } from '../domain';
 import { roundInfo, getBeadState, heroFontSize, countDisplay } from '../counter';
 import { warmTone } from '../audio';
 import BeadString from './BeadString';
@@ -100,6 +100,7 @@ export default function CounterScreen({
   const beads = getBeadState(currentCount, target);
   const progress = target > 0 ? inRound / target : (currentCount % 100) / 100;
   const display = countDisplay(target > 0 ? inRound : currentCount, target);
+  const reading = dhikrReadingLines(currentDhikr, preferences);
   const isCompletedToday = history.some(log => log.dhikrId === currentDhikr.id && isTimestampOnLocalDay(log.timestamp));
 
   // Pre-render this tone so the first taps are as cheap as the rest.
@@ -304,14 +305,16 @@ export default function CounterScreen({
                 >
                   {currentDhikr.nameAr}
                 </p>
-                {currentDhikr.transliteration && (
+                {reading.transliteration && (
                   <p className="text-sm italic mt-0.5" style={{ color: 'var(--color-text-brand)' }}>
-                    {currentDhikr.transliteration}
+                    {reading.transliteration}
                   </p>
                 )}
-                <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-                  "{currentDhikr.meaning}"
-                </p>
+                {reading.translation && (
+                  <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                    "{reading.translation}"
+                  </p>
+                )}
               </motion.div>
             </AnimatePresence>
 
