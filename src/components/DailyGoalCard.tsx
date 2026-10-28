@@ -1,7 +1,7 @@
 import React from 'react';
 import { Flame, Pause, Play } from 'lucide-react';
 import { motion } from 'motion/react';
-import { streakMessage, MAX_PAUSE_DAYS, type DailyProgress, type StreakInfo } from '../habits';
+import { streakMessage, progressLabel, MAX_PAUSE_DAYS, type DailyProgress, type StreakInfo } from '../habits';
 
 interface DailyGoalCardProps {
   progress: DailyProgress;
@@ -15,8 +15,6 @@ const STROKE = 8;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const PAUSE_CHOICES = [3, 7, MAX_PAUSE_DAYS] as const;
-
-const formatBeads = (n: number) => (n >= 10000 ? `${(n / 1000).toFixed(n >= 100000 ? 0 : 1)}k` : String(n));
 
 /** Today's goal ring beside the streak, with a calm way to put the streak on hold. */
 export default function DailyGoalCard({ progress, streakInfo, onStartPause, onEndPause }: DailyGoalCardProps) {
@@ -77,7 +75,7 @@ export default function DailyGoalCard({ progress, streakInfo, onStartPause, onEn
         <div className="min-w-0 flex-1">
           <p className="section-label">Today</p>
           <p className="font-display font-black text-xl leading-tight tabular-nums" style={{ color: 'var(--color-text-primary)' }}>
-            {formatBeads(progress.beads)} <span className="text-sm font-semibold" style={{ color: 'var(--color-text-muted)' }}>/ {formatBeads(progress.goal)} beads</span>
+            {progressLabel(progress)}
           </p>
           <p className="text-xs mt-1 flex items-start gap-1.5" style={{ color: 'var(--color-text-secondary)' }}>
             <Flame className="w-3.5 h-3.5 shrink-0 mt-px" style={{ color: streakInfo.paused ? 'var(--color-text-muted)' : '#FB923C' }} aria-hidden="true" />

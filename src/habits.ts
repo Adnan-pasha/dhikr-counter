@@ -8,8 +8,20 @@ export const MAX_FREEZES = 2;
 export const MAX_PAUSE_DAYS = 30;
 
 export const DEFAULT_DAILY_GOAL = 100;
-/** Quick picks in Settings; any value in range is still accepted from storage. */
-export const DAILY_GOAL_CHOICES = [33, 100, 300, 1000] as const;
+export interface GoalTemplate {
+  id: string;
+  name: string;
+  goal: number;
+  blurb: string;
+}
+
+/** Starting points offered in onboarding and Settings. Any value in range is still accepted from storage. */
+export const GOAL_TEMPLATES: readonly GoalTemplate[] = [
+  { id: 'gentle', name: 'Gentle', goal: 33, blurb: 'One round a day' },
+  { id: 'steady', name: 'Steady', goal: 100, blurb: 'A small daily habit' },
+  { id: 'devoted', name: 'Devoted', goal: 300, blurb: 'About three rounds' },
+  { id: 'dedicated', name: 'Dedicated', goal: 1000, blurb: 'A full daily wird' },
+];
 const MIN_DAILY_GOAL = 10;
 const MAX_DAILY_GOAL = 100000;
 
@@ -165,3 +177,7 @@ export const streakMessage = (info: StreakInfo): string => {
   const freeze = info.freezes > 0 ? ` · ${info.freezes} ${info.freezes === 1 ? 'freeze' : 'freezes'} in reserve` : '';
   return info.atRisk ? `${base}. One bead today keeps it going.${freeze}` : `${base}${freeze}`;
 };
+
+/** "40 / 100 beads" while working towards the goal, then a plain statement once it is met. */
+export const progressLabel = (progress: DailyProgress): string =>
+  progress.done ? `Goal reached · ${progress.beads} beads` : `${progress.beads} / ${progress.goal} beads`;

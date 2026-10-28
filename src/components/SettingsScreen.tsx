@@ -6,7 +6,7 @@ import { AppIcon } from '../icons';
 import { playBeadSound, playCompletionSound } from '../audio';
 import { THIRD_PARTY_NOTICES } from '../licenses';
 import { getHapticPattern } from '../counter';
-import { DAILY_GOAL_CHOICES } from '../habits';
+import { GOAL_TEMPLATES } from '../habits';
 
 interface SettingsScreenProps {
   preferences: UserPreferences;
@@ -421,11 +421,12 @@ export default function SettingsScreen({
             <p className="text-xs font-bold text-slate-200">Daily goal</p>
             <p className="text-xs text-slate-400 font-medium mb-1.5">Beads a day to fill your Home ring</p>
             <div className="flex gap-2">
-              {DAILY_GOAL_CHOICES.map((goal) => (
+              {GOAL_TEMPLATES.map(({ id, name, goal, blurb }) => (
                 <button
-                  key={goal}
+                  key={id}
                   type="button"
                   aria-pressed={preferences.dailyGoal === goal}
+                  aria-label={`${name}, ${goal} beads a day. ${blurb}`}
                   onClick={() => onChangePreferences({ dailyGoal: goal })}
                   className={`tap-target flex-1 rounded-xl border text-xs font-bold cursor-pointer transition-colors ${
                     preferences.dailyGoal === goal
@@ -433,7 +434,8 @@ export default function SettingsScreen({
                       : 'border-slate-700 bg-slate-800 text-slate-300'
                   }`}
                 >
-                  {goal}
+                  <span className="block">{goal}</span>
+                  <span className="block text-2xs font-semibold opacity-80">{name}</span>
                 </button>
               ))}
             </div>

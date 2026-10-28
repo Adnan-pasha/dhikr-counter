@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, Flame, Calendar, ChevronLeft, ChevronRight, Moon } from 'lucide-react';
-import { SalahLog, SalahName, SALAH_META, HIJRI_MONTHS } from '../types';
+import { SalahLog, SalahName, Routine, SALAH_META, HIJRI_MONTHS } from '../types';
 import { AppIcon } from '../icons';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -9,6 +9,10 @@ import { AppIcon } from '../icons';
 interface SalahTrackerProps {
   salahLogs: SalahLog[];
   onTogglePrayer: (date: string, prayer: SalahName) => void;
+  /** Set right after a prayer is marked done, to offer the dhikr that follows it. */
+  afterSalah?: { prayer: SalahName; routine: Routine | null } | null;
+  onStartAfterSalah?: () => void;
+  onDismissAfterSalah?: () => void;
   onGoBack: () => void;
 }
 
@@ -72,7 +76,7 @@ const getStreakCount = (salahLogs: SalahLog[]): number => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function SalahTracker({ salahLogs, onTogglePrayer, onGoBack }: SalahTrackerProps) {
+export default function SalahTracker({ salahLogs, onTogglePrayer, afterSalah, onStartAfterSalah, onDismissAfterSalah, onGoBack }: SalahTrackerProps) {
   const today = new Date();
   const todayStr = getLocalDateString(today);
   const last7Days = useMemo(() => getLast7Days(), []);
@@ -107,6 +111,37 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onGoBack }: Sa
             <p className="text-sm font-medium" style={{ color: 'var(--color-text-brand)', opacity: 0.8 }}>{getHijriDate(today)}</p>
           </div>
         </div>
+
+        {afterSalah?.routine && (
+          <div id="after_salah_prompt" role="status" className="mt-4 rounded-2xl p-3.5" style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)' }}>
+            <p className="text-sm font-black" style={{ color: 'var(--color-text-primary)' }}>
+              {SALAH_META[afterSalah.prayer].label} logged. Barakallahu feek.
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+              Continue with your {afterSalah.routine.name.toLowerCase()} dhikr ({afterSalah.routine.dhikrIds.length} adhkaar)?
+            </p>
+            <div className="flex gap-2 mt-3">
+              <button
+                id="btn_start_after_salah"
+                type="button"
+                onClick={onStartAfterSalah}
+                className="tap-target flex-1 rounded-xl text-xs font-black cursor-pointer text-on-brand"
+                style={{ background: 'var(--color-brand-500)' }}
+              >
+                Start dhikr
+              </button>
+              <button
+                id="btn_dismiss_after_salah"
+                type="button"
+                onClick={onDismissAfterSalah}
+                className="tap-target rounded-xl px-4 text-xs font-bold cursor-pointer"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="flex gap-3 mt-4">
