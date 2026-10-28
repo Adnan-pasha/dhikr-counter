@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { RotateCcw, Volume2, VolumeX, Maximize2, Minimize2, Check, ChevronLeft, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { RotateCcw, Undo2, Volume2, VolumeX, Maximize2, Minimize2, Check, ChevronLeft } from 'lucide-react';
 import { Dhikr, DhikrHistory, UserPreferences } from '../types';
 import { isTimestampOnLocalDay, shouldCountOnKey, getCounterLiveMessage } from '../domain';
+import { roundInfo, getBeadState, heroFontSize } from '../counter';
+import { warmTone } from '../audio';
+import BeadString from './BeadString';
 
 // Elements that own Space/Enter themselves; the global counting shortcut must not hijack them.
 const INTERACTIVE_SELECTOR = [
@@ -19,9 +22,15 @@ interface CounterScreenProps {
   history: DhikrHistory[];
   preferences: UserPreferences;
   onIncrement: () => void;
+  onUndo: () => void;
+  canUndo: boolean;
   onReset: () => void;
   onToggleSound: () => void;
   onNavigateToLibrary: () => void;
+  /** The next phrases in the sequence, shown dimmed under the current one. */
+  upcoming: Dhikr[];
+  /** Set during the short pause after a round completes, before the counter moves on. */
+  pendingNext: Dhikr | null;
   /** True while a confirm dialog is open; the keyboard counting shortcut is paused. */
   modalOpen?: boolean;
 }
@@ -29,11 +38,11 @@ interface CounterScreenProps {
 // ─── Theme config ─────────────────────────────────────────────────────────────
 
 const THEME_CONFIG = {
-  amber:    { ring: '#F59E0B', glow: 'rgba(245,158,11,0.18)',  text: '#FCD34D', bg: 'rgba(245,158,11,0.08)'  },
-  emerald:  { ring: '#10B981', glow: 'rgba(16,185,129,0.18)',  text: '#6EE7B7', bg: 'rgba(16,185,129,0.08)'  },
-  indigo:   { ring: '#818CF8', glow: 'rgba(129,140,248,0.18)', text: '#A5B4FC', bg: 'rgba(129,140,248,0.08)' },
-  midnight: { ring: '#F43F5E', glow: 'rgba(244,63,94,0.18)',   text: '#FDA4AF', bg: 'rgba(244,63,94,0.08)'   },
-  slate:    { ring: '#94A3B8', glow: 'rgba(148,163,184,0.15)', text: '#CBD5E1', bg: 'rgba(148,163,184,0.08)' },
+  amber:    { ring: '#F59E0B', glow: 'rgba(245,158,11,0.18)',  text: '#FCD34D' },
+  emerald:  { ring: '#34D3A0', glow: 'rgba(52,211,160,0.18)',  text: '#5EEAB5' },
+  indigo:   { ring: '#818CF8', glow: 'rgba(129,140,248,0.18)', text: '#A5B4FC' },
+  midnight: { ring: '#F43F5E', glow: 'rgba(244,63,94,0.18)',   text: '#FDA4AF' },
+  slate:    { ring: '#94A3B8', glow: 'rgba(148,163,184,0.15)', text: '#CBD5E1' },
 } as const;
 
 // ─── SVG ring progress ────────────────────────────────────────────────────────
@@ -44,20 +53,18 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 function ProgressRing({ progress, color }: { progress: number; color: string }) {
   const offset = CIRCUMFERENCE * (1 - Math.min(progress, 1));
   return (
-    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 256 256">
-      {/* Track */}
-      <circle cx="128" cy="128" r={RADIUS} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
-      {/* Progress */}
+    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 256 256" aria-hidden="true" focusable="false">
+      <circle cx="128" cy="128" r={RADIUS} fill="none" stroke="var(--color-border)" strokeWidth="5" />
       <motion.circle
         cx="128" cy="128" r={RADIUS}
         fill="none"
         stroke={color}
-        strokeWidth="8"
+        strokeWidth="7"
         strokeLinecap="round"
         strokeDasharray={CIRCUMFERENCE}
         animate={{ strokeDashoffset: offset }}
-        transition={{ type: 'spring', stiffness: 60, damping: 14 }}
-        style={{ filter: `drop-shadow(0 0 6px ${color}60)` }}
+        transition={{ type: 'spring', stiffness: 90, damping: 16 }}
+        style={{ filter: `drop-shadow(0 0 6px ${color}66)` }}
       />
     </svg>
   );
@@ -71,49 +78,72 @@ export default function CounterScreen({
   history,
   preferences,
   onIncrement,
+  onUndo,
+  canUndo,
   onReset,
   onToggleSound,
   onNavigateToLibrary,
+  upcoming,
+  pendingNext,
   modalOpen = false,
 }: CounterScreenProps) {
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
   const [showFlash, setShowFlash] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
-  const tapAreaRef = useRef<HTMLButtonElement>(null);
   const rippleId = useRef(0);
-  const theme = THEME_CONFIG[preferences.theme] ?? THEME_CONFIG.amber;
+  const reduceMotion = useReducedMotion();
+  const theme = THEME_CONFIG[preferences.theme] ?? THEME_CONFIG.emerald;
 
+  const target = currentDhikr.targetCount;
+  const { inRound, rounds, remaining } = roundInfo(currentCount, target);
+  const beads = getBeadState(currentCount, target);
+  const progress = target > 0 ? inRound / target : (currentCount % 100) / 100;
   const isCompletedToday = history.some(log => log.dhikrId === currentDhikr.id && isTimestampOnLocalDay(log.timestamp));
 
-  const progress = currentDhikr.targetCount > 0
-    ? Math.min(currentCount / currentDhikr.targetCount, 1)
-    : (currentCount % 100) / 100;
+  // Pre-render this tone so the first taps are as cheap as the rest.
+  useEffect(() => { void warmTone(preferences.soundTone); }, [preferences.soundTone]);
 
-  // Completion flash
+  // Previous count drives the live announcement, the completion moment and undo detection.
+  const previousCountRef = useRef(currentCount);
+  const liveMessage = getCounterLiveMessage({
+    count: currentCount,
+    previousCount: previousCountRef.current,
+    target,
+    name: currentDhikr.nameEn,
+  });
+
   useEffect(() => {
-    if (currentDhikr.targetCount > 0 && currentCount === currentDhikr.targetCount) {
-      setShowFlash(true);
-      setJustCompleted(true);
-      setTimeout(() => setShowFlash(false), 600);
-      setTimeout(() => setJustCompleted(false), 3000);
-    }
-  }, [currentCount, currentDhikr.targetCount]);
+    const previous = previousCountRef.current;
+    previousCountRef.current = currentCount;
+    const completed = target > 0 && currentCount > previous && currentCount % target === 0;
+    if (!completed) return undefined;
+    setShowFlash(true);
+    setJustCompleted(true);
+    const flash = setTimeout(() => setShowFlash(false), 600);
+    const toast = setTimeout(() => setJustCompleted(false), 2600);
+    return () => { clearTimeout(flash); clearTimeout(toast); };
+  }, [currentCount, target]);
 
-  // Add ripple on tap
-  const addRipple = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+  const addRipple = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
     const id = rippleId.current++;
-    setRipples(prev => [...prev, { id, x, y }]);
+    setRipples(prev => [...prev.slice(-3), { id, x: e.clientX - rect.left, y: e.clientY - rect.top }]);
     setTimeout(() => setRipples(prev => prev.filter(r => r.id !== id)), 600);
   }, []);
 
-  const handleTap = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+  // Pointer path: counts on touch-down, which feels faster than waiting for the click.
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     addRipple(e);
     onIncrement();
   }, [addRipple, onIncrement]);
+
+  // Keyboard and assistive-technology activation arrive as a click with no pointer (detail 0).
+  // Pointer-initiated clicks have detail >= 1 and were already counted on pointer down.
+  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    if (e.detail === 0) onIncrement();
+  }, [onIncrement]);
 
   // Keyboard shortcut. Focused controls (buttons, links, dialogs) keep their native
   // Space/Enter behaviour, otherwise the tap button would count twice per press.
@@ -139,49 +169,43 @@ export default function CounterScreen({
     return () => window.removeEventListener('keydown', onKey);
   }, [onIncrement, modalOpen]);
 
-  // Announce milestones only: reading every tap aloud would drown a screen-reader user.
-  const previousCountRef = useRef(currentCount);
-  const liveMessage = getCounterLiveMessage({
-    count: currentCount,
-    previousCount: previousCountRef.current,
-    target: currentDhikr.targetCount,
-    name: currentDhikr.nameEn,
-  });
-  useEffect(() => { previousCountRef.current = currentCount; }, [currentCount]);
-
-  const countLabel = currentDhikr.targetCount > 0
-    ? `${currentDhikr.nameEn}, ${currentCount} of ${currentDhikr.targetCount}`
+  const countLabel = target > 0
+    ? `${currentDhikr.nameEn}, ${inRound} of ${target}`
     : `${currentDhikr.nameEn}, ${currentCount}`;
 
-  const roundsComplete = currentDhikr.targetCount > 0
-    ? Math.floor(currentCount / currentDhikr.targetCount)
-    : 0;
+  const caption = justCompleted
+    ? pendingNext
+      ? `Masha'Allah! Next: ${pendingNext.nameEn}`
+      : "Masha'Allah! Round complete"
+    : pendingNext
+      ? `Next: ${pendingNext.nameEn}`
+      : target <= 0
+        ? 'Free count'
+        : remaining === 0
+          ? 'Round complete'
+          : `${remaining} remaining${rounds > 0 ? ` · round ${rounds + 1}` : ''}`;
+  const captionIsHighlight = justCompleted || pendingNext !== null;
 
   return (
-    <div
-      className="relative flex flex-col h-full overflow-hidden"
-      style={{ background: 'var(--color-bg-base)' }}
-    >
+    <div className="relative flex flex-col h-full overflow-hidden" style={{ background: 'var(--color-bg-base)' }}>
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{liveMessage}</div>
 
-      {/* Ambient background glow */}
+      {/* Ambient glow */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse 60% 40% at 50% 70%, ${theme.glow}, transparent 70%)`,
-        }}
+        style={{ background: `radial-gradient(ellipse 70% 45% at 50% 62%, ${theme.glow}, transparent 70%)` }}
       />
 
-      {/* Completion flash */}
+      {/* Completion flash (opacity only, so it is safe with reduced motion) */}
       <AnimatePresence>
-        {showFlash && (
+        {showFlash && !reduceMotion && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.3, 0] }}
+            animate={{ opacity: [0, 0.35, 0] }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6 }}
-            className="absolute inset-0 z-50 pointer-events-none"
-            style={{ background: `radial-gradient(circle, ${theme.glow} 0%, transparent 70%)` }}
+            className="absolute inset-0 z-30 pointer-events-none"
+            style={{ background: `radial-gradient(circle at 50% 55%, ${theme.glow} 0%, transparent 70%)` }}
           />
         )}
       </AnimatePresence>
@@ -190,16 +214,17 @@ export default function CounterScreen({
       <motion.div
         animate={{ opacity: isFocusMode ? 0 : 1, y: isFocusMode ? -16 : 0 }}
         transition={{ duration: 0.25 }}
-        className="screen-header z-10"
+        className="screen-header z-20"
         style={{ pointerEvents: isFocusMode ? 'none' : 'auto' }}
+        aria-hidden={isFocusMode}
       >
         <div className="header-row">
-          {/* Back / Dhikr selector */}
           <button
             id="btn_dhikr_selector"
             aria-label="Browse and change active dhikr"
             onClick={onNavigateToLibrary}
             className="back-btn group"
+            tabIndex={isFocusMode ? -1 : 0}
           >
             <ChevronLeft className="w-5 h-5 shrink-0" />
             <div className="flex flex-col items-start min-w-0">
@@ -210,306 +235,196 @@ export default function CounterScreen({
             </div>
           </button>
 
-          {/* Status + controls */}
           <div className="flex items-center gap-2">
             {isCompletedToday
               ? <span className="badge badge-emerald"><Check className="w-2.5 h-2.5 stroke-[3]" /> Done</span>
-              : <span className="badge badge-slate">Pending</span>
-            }
+              : <span className="badge badge-slate">Pending</span>}
             <button
               onClick={onToggleSound}
               aria-label={preferences.soundOn ? 'Mute sound' : 'Unmute sound'}
-              className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all"
+              className="tap-target rounded-xl cursor-pointer transition-all"
               style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)' }}
+              tabIndex={isFocusMode ? -1 : 0}
             >
               {preferences.soundOn
-                ? <Volume2 className="w-4.5 h-4.5" style={{ color: theme.text }} />
-                : <VolumeX className="w-4.5 h-4.5 text-slate-500" />}
+                ? <Volume2 className="w-5 h-5" style={{ color: 'var(--color-text-brand)' }} />
+                : <VolumeX className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} />}
             </button>
             <button
               onClick={() => setIsFocusMode(true)}
               aria-label="Enter focus mode"
-              className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-all"
+              className="tap-target rounded-xl cursor-pointer transition-all"
               style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}
+              tabIndex={isFocusMode ? -1 : 0}
             >
-              <Maximize2 className="w-4.5 h-4.5" />
+              <Maximize2 className="w-5 h-5" />
             </button>
           </div>
         </div>
       </motion.div>
 
-      {/* ── Arabic text ────────────────────────────────────────────────── */}
+      {/* ── Tap stage: everything between the header and the controls is one big target ── */}
+      <button
+        id="tap_bead_clicker"
+        type="button"
+        aria-label={`Tap anywhere to count ${countLabel}`}
+        onPointerDown={handlePointerDown}
+        onClick={handleClick}
+        className="relative flex-1 min-h-0 w-full select-none cursor-pointer overflow-hidden z-10 touch-manipulation"
+        style={{ background: 'transparent', border: 0, padding: 0, WebkitUserSelect: 'none' }}
+      >
+        {ripples.map(r => (
+          <motion.span
+            key={r.id}
+            className="absolute rounded-full pointer-events-none"
+            style={{ left: r.x - 8, top: r.y - 8, width: 16, height: 16, background: theme.ring, opacity: 0.35 }}
+            initial={{ scale: 0.5, opacity: 0.4 }}
+            animate={{ scale: 12, opacity: 0 }}
+            transition={{ duration: 0.55, ease: 'easeOut' }}
+          />
+        ))}
+
+        <div className="pointer-events-none relative flex h-full flex-col items-center justify-between px-5 pt-3 pb-3">
+          {/* Phrase + queue */}
+          <div className="w-full text-center" style={{ opacity: isFocusMode ? 0.9 : 1 }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentDhikr.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25 }}
+              >
+                <p
+                  className="font-arabic text-center"
+                  dir="rtl"
+                  lang="ar"
+                  style={{ fontSize: heroFontSize(currentDhikr.nameAr), lineHeight: 1.7, color: 'var(--color-text-primary)', overflowWrap: 'anywhere' }}
+                >
+                  {currentDhikr.nameAr}
+                </p>
+                {currentDhikr.transliteration && (
+                  <p className="text-sm italic mt-0.5" style={{ color: 'var(--color-text-brand)' }}>
+                    {currentDhikr.transliteration}
+                  </p>
+                )}
+                <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                  "{currentDhikr.meaning}"
+                </p>
+              </motion.div>
+            </AnimatePresence>
+
+            {upcoming.length > 0 && !isFocusMode && (
+              <div className="mt-2 flex flex-col items-center" aria-label="Up next">
+                {upcoming.map((d, i) => (
+                  <p
+                    key={d.id}
+                    className={`font-arabic max-w-full truncate ${i > 0 ? '[@media(max-height:760px)]:hidden' : ''}`}
+                    dir="rtl"
+                    lang="ar"
+                    style={{ fontSize: i === 0 ? 24 : 19, lineHeight: 1.5, color: 'var(--color-text-muted)' }}
+                  >
+                    {d.nameAr}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Count inside the progress ring */}
+          <div className="relative w-48 h-48 [@media(max-height:760px)]:w-40 [@media(max-height:760px)]:h-40 shrink-0 flex items-center justify-center">
+            <ProgressRing progress={progress} color={theme.ring} />
+            <div className="flex flex-col items-center text-center">
+              <motion.div
+                key={`count-${currentCount}`}
+                initial={{ scale: 0.88, opacity: 0.7 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 20 }}
+                className="flex items-baseline justify-center font-display font-black tabular-nums leading-none"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                <span style={{ fontSize: inRound >= 1000 ? 'clamp(36px, 6vh, 48px)' : 'clamp(50px, 8.4vh, 70px)' }}>{target > 0 ? inRound : currentCount}</span>
+                {target > 0 && (
+                  <span className="font-bold" style={{ fontSize: 'clamp(22px, 3.6vh, 30px)', color: 'var(--color-text-muted)', marginInlineStart: 4 }}>
+                    /{target}
+                  </span>
+                )}
+              </motion.div>
+            </div>
+          </div>
+
+          <p
+            className="section-label max-w-full truncate text-center"
+            style={{ color: captionIsHighlight ? 'var(--color-text-brand)' : 'var(--color-text-muted)', minHeight: 20 }}
+          >
+            {caption}
+          </p>
+
+          {/* Bead string + hint */}
+          <div className="w-full flex flex-col items-center min-h-0 flex-1 max-h-[132px]">
+            <BeadString total={beads.total} filled={beads.filled} color={theme.ring} className="w-full max-w-sm min-h-0 flex-1" />
+            <p className="text-xs mt-1 shrink-0" style={{ color: 'var(--color-text-muted)', minHeight: 16 }}>
+              {currentCount === 0 && !pendingNext ? 'Tap anywhere to count' : ''}
+            </p>
+          </div>
+        </div>
+      </button>
+
+      {/* ── Controls ──────────────────────────────────────────────────── */}
       <motion.div
         animate={{ opacity: isFocusMode ? 0 : 1 }}
         transition={{ duration: 0.25 }}
-        className="px-6 pb-2 z-10 text-center shrink-0"
+        className="relative z-20 flex items-center justify-between gap-3 px-5 pb-4 pt-2 shrink-0"
         style={{ pointerEvents: isFocusMode ? 'none' : 'auto' }}
+        aria-hidden={isFocusMode}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentDhikr.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* Arabic — 36px minimum for comfortable reading */}
-            <p
-              className="font-arabic text-center select-none"
-              style={{ fontSize: '2.25rem', lineHeight: '2.2', color: 'var(--color-text-primary)' }}
-            >
-              {currentDhikr.nameAr}
-            </p>
-            {currentDhikr.transliteration && (
-              <p className="text-sm italic mt-1 select-none" style={{ color: theme.text, opacity: 0.75 }}>
-                {currentDhikr.transliteration}
-              </p>
-            )}
-            <p className="text-sm mt-1 select-none" style={{ color: 'var(--color-text-muted)' }}>
-              "{currentDhikr.meaning}"
-            </p>
-          </motion.div>
-        </AnimatePresence>
-      </motion.div>
+        <div
+          className="px-3 py-2 rounded-xl flex items-center gap-2 text-sm font-bold"
+          style={{ background: 'var(--color-brand-dim)', border: '1px solid var(--color-brand-border)', color: 'var(--color-text-brand)' }}
+        >
+          <span className="section-label" style={{ color: 'var(--color-text-brand)' }}>Target</span>
+          <span className="font-display font-black">{target > 0 ? `${target}×` : '∞'}</span>
+        </div>
 
-      {/* ── Main tap area ──────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 z-10">
-
-        {/* Progress ring + counter */}
-        <div className="relative w-64 h-64 flex items-center justify-center">
-
-          {/* Outer glow ring */}
-          <div
-            className="absolute inset-[-2px] rounded-full pointer-events-none"
-            style={{ boxShadow: `0 0 40px ${theme.glow}, 0 0 80px ${theme.glow.replace('0.18', '0.06')}` }}
-          />
-
-          {/* SVG progress ring */}
-          <ProgressRing progress={progress} color={theme.ring} />
-
-          {/* Tap button */}
+        <div className="flex items-center gap-2">
           <button
-            id="tap_bead_clicker"
-            aria-label={`Tap to count ${countLabel}`}
-            ref={tapAreaRef}
-            onClick={handleTap}
-            className="relative w-52 h-52 rounded-full flex flex-col items-center justify-center select-none cursor-pointer focus:outline-none overflow-hidden ripple-container"
-            style={{
-              background: `radial-gradient(circle at 40% 35%, var(--color-bg-raised), var(--color-bg-surface))`,
-              border: `1px solid ${theme.ring}25`,
-              boxShadow: `0 20px 60px -12px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.05), 0 0 0 1px ${theme.ring}10`,
-            }}
+            id="btn_undo"
+            onClick={onUndo}
+            disabled={!canUndo}
+            aria-label="Undo last count"
+            className="tap-target gap-1.5 px-4 rounded-xl font-bold text-sm cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+            tabIndex={isFocusMode ? -1 : 0}
           >
-            {/* Ripples */}
-            {ripples.map(r => (
-              <motion.span
-                key={r.id}
-                className="absolute rounded-full pointer-events-none"
-                style={{
-                  left: r.x - 8,
-                  top: r.y - 8,
-                  width: 16,
-                  height: 16,
-                  background: `${theme.ring}40`,
-                }}
-                initial={{ scale: 1, opacity: 0.8 }}
-                animate={{ scale: 14, opacity: 0 }}
-                transition={{ duration: 0.55, ease: 'easeOut' }}
-              />
-            ))}
-
-            {/* Count */}
-            <motion.span
-              key={`count-${currentCount}`}
-              initial={{ scale: 0.85, opacity: 0.6 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="font-display font-black tabular-nums select-none leading-none"
-              style={{
-                fontSize: currentCount >= 1000 ? '3.5rem' : '5rem',
-                color: 'var(--color-text-primary)',
-              }}
-            >
-              {currentCount}
-            </motion.span>
-
-            {/* Progress label */}
-            <span className="section-label mt-2 select-none" style={{ color: 'var(--color-text-muted)' }}>
-              {currentDhikr.targetCount > 0
-                ? currentCount >= currentDhikr.targetCount
-                  ? '✓ Complete'
-                  : `${currentDhikr.targetCount - currentCount} remaining`
-                : 'tap to count'}
-            </span>
-
-            {/* Rounds indicator */}
-            {roundsComplete > 0 && (
-              <div className="mt-1.5 flex items-center gap-1">
-                {Array.from({ length: Math.min(roundsComplete, 5) }, (_, i) => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: theme.ring }} />
-                ))}
-                {roundsComplete > 5 && (
-                  <span className="text-xs font-bold" style={{ color: theme.text }}>×{roundsComplete}</span>
-                )}
-              </div>
-            )}
+            <Undo2 className="w-4 h-4" /> Undo
+          </button>
+          <button
+            id="btn_reset_counter"
+            onClick={onReset}
+            aria-label="Reset counter"
+            className="tap-target gap-1.5 px-4 rounded-xl font-bold text-sm cursor-pointer transition-all"
+            style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+            tabIndex={isFocusMode ? -1 : 0}
+          >
+            <RotateCcw className="w-4 h-4" /> Reset
           </button>
         </div>
-
-        {/* Completion card */}
-        <AnimatePresence>
-          {justCompleted && (
-            <motion.div
-              initial={{ opacity: 0, y: 12, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.95 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="mt-4 flex items-center gap-2.5 px-5 py-3 rounded-2xl"
-              style={{
-                background: 'rgba(16,185,129,0.12)',
-                border: '1px solid rgba(16,185,129,0.3)',
-              }}
-            >
-              <Sparkles className="w-4 h-4 text-emerald-400" />
-              <div>
-                <p className="text-sm font-black text-emerald-400">Masha'Allah!</p>
-                <p className="text-sm text-slate-400">Target complete — keep going or reset</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* ── Footer actions ─────────────────────────────────────────────── */}
-      <motion.div
-        animate={{ opacity: isFocusMode ? 0 : 1, y: isFocusMode ? 16 : 0 }}
-        transition={{ duration: 0.25 }}
-        className="px-6 pb-5 pt-2 flex items-center justify-between z-10 shrink-0"
-        style={{ pointerEvents: isFocusMode ? 'none' : 'auto' }}
-      >
-        {/* Target badge */}
-        <div
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl"
-          style={{ background: theme.bg, border: `1px solid ${theme.ring}30` }}
-        >
-          <span className="caption uppercase tracking-widest" style={{ color: theme.text, opacity: 0.8 }}>Target</span>
-          <span className="text-sm font-black" style={{ color: theme.text }}>
-            {currentDhikr.targetCount > 0 ? `${currentDhikr.targetCount}×` : '∞'}
-          </span>
-        </div>
-
-        {/* Reset button */}
-        <motion.button
-          whileTap={{ scale: 0.92 }}
-          id="btn_reset_counter"
-          onClick={onReset}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all"
-          style={{
-            background: 'var(--color-bg-raised)',
-            border: '1px solid var(--color-border)',
-            color: 'var(--color-text-secondary)',
-          }}
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span className="text-sm font-semibold">Reset</span>
-        </motion.button>
       </motion.div>
 
-      {/* ── Focus mode overlay ─────────────────────────────────────────── */}
+      {/* Exit focus mode */}
       <AnimatePresence>
         {isFocusMode && (
-          <motion.div
+          <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0 z-40 flex flex-col"
-            style={{ background: '#070B14' }}
+            onClick={() => setIsFocusMode(false)}
+            aria-label="Exit focus mode"
+            className="tap-target absolute right-3 top-3 z-30 rounded-xl cursor-pointer"
+            style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)', color: 'var(--color-text-muted)' }}
           >
-            {/* Ambient glow */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: `radial-gradient(ellipse 70% 50% at 50% 60%, ${theme.glow.replace('0.18', '0.25')}, transparent 70%)` }}
-            />
-
-            {/* Dhikr info */}
-            <div className="text-center pt-12 px-6 z-10">
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="font-arabic text-5xl leading-loose select-none"
-                style={{ color: theme.text }}
-              >
-                {currentDhikr.nameAr}
-              </motion.p>
-              <p className="text-sm font-medium mt-1 select-none" style={{ color: 'var(--color-text-muted)' }}>
-                {currentDhikr.nameEn}
-              </p>
-            </div>
-
-            {/* Fullscreen tap target */}
-            <button
-              aria-label={`Tap anywhere to count ${countLabel}`}
-              className="flex-1 flex flex-col items-center justify-center cursor-pointer select-none"
-              onClick={onIncrement}
-            >
-              {/* Pulse rings */}
-              {[1, 2, 3].map(i => (
-                <motion.div
-                  key={i}
-                  className="absolute rounded-full border"
-                  style={{
-                    width: 160 + i * 48,
-                    height: 160 + i * 48,
-                    borderColor: `${theme.ring}${20 - i * 4}`,
-                  }}
-                  animate={{ scale: [1, 1.08, 1], opacity: [0.4, 0.1, 0.4] }}
-                  transition={{ repeat: Infinity, duration: 2.5 + i * 0.5, ease: 'easeInOut', delay: i * 0.4 }}
-                />
-              ))}
-
-              {/* Count */}
-              <motion.span
-                key={`focus-${currentCount}`}
-                initial={{ scale: 0.88 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                className="font-display font-black tabular-nums select-none relative z-10"
-                style={{ fontSize: '6rem', color: 'var(--color-text-primary)', lineHeight: 1 }}
-              >
-                {currentCount}
-              </motion.span>
-
-              {currentDhikr.targetCount > 0 && (
-                <p className="text-sm mt-3 select-none z-10" style={{ color: theme.text, opacity: 0.6 }}>
-                  {currentCount} / {currentDhikr.targetCount}
-                </p>
-              )}
-
-              <p className="text-xs font-bold uppercase tracking-widest mt-6 select-none z-10" style={{ color: 'var(--color-text-muted)' }}>
-                tap anywhere to count
-              </p>
-            </button>
-
-            {/* Exit */}
-            <div className="pb-10 flex justify-center z-10">
-              <motion.button
-                whileTap={{ scale: 0.93 }}
-                id="btn_focus_exit"
-                aria-label="Exit focus mode"
-                onClick={() => setIsFocusMode(false)}
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl cursor-pointer"
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                <Minimize2 className="w-4 h-4" />
-                <span className="text-sm font-semibold">Exit Focus</span>
-              </motion.button>
-            </div>
-          </motion.div>
+            <Minimize2 className="w-5 h-5" />
+          </motion.button>
         )}
       </AnimatePresence>
     </div>

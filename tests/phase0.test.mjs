@@ -94,9 +94,18 @@ test('fonts are self-hosted, not loaded via render-blocking @import', () => {
 test('persistence effects are gated on hydration so initial empty state never overwrites saved data', () => {
   const hooks = read('src/hooks.ts');
   const body = hooks.slice(hooks.indexOf('export const usePersistentAppState'), hooks.indexOf('interface DhikrActionDeps'));
-  const writes = body.match(/localStorage\.setItem\('tasbih_(dhikrs|current_id|current_count|history|preferences|reminders|favourites|routines|salah_logs)'/g) || [];
-  assert.equal(writes.length, 9, 'nine persisted slices');
-  const guarded = body.match(/hydrated[^\n]*localStorage\.setItem\('tasbih_|if \(!hydrated\) return;/g) || [];
-  assert.ok(guarded.length >= 9, `all persist effects check hydrated (found ${guarded.length})`);
+  const slices = ['dhikrs', 'current_id', 'current_count', 'history', 'preferences', 'reminders', 'favourites', 'routines', 'salah_logs'];
+  for (const slice of slices) {
+    const effect = body.split('useEffect(').find((chunk) => chunk.includes(`setItem('tasbih_${slice}'`));
+    assert.ok(effect, `an effect persists ${slice}`);
+    assert.match(effect, /hydrated/, `${slice} is gated on hydration`);
+  }
   assert.match(body, /setHydrated\(true\)/);
+});
+
+test('the running count is debounced and flushed when the page is hidden', () => {
+  const hooks = read('src/hooks.ts');
+  assert.match(hooks, /COUNT_PERSIST_DELAY_MS/);
+  assert.match(hooks, /addEventListener\('pagehide'/);
+  assert.match(hooks, /visibilitychange/);
 });

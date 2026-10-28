@@ -325,3 +325,25 @@ test('legacy mecca/medina adhan choices migrate to the bundled standard adhan', 
     assert.equal(sanitizePrayerSettings({ azanSound: legacy }).azanSound, 'standard', legacy);
   }
 });
+
+const PREF_FALLBACK = {
+  soundOn: true, soundTone: 'wooden', vibrateOn: true, autoAdvance: true, theme: 'emerald', colorMode: 'dark',
+  volume: 0.5, madhab: 'shafi', completionSoundOn: true, hapticStrength: 'medium',
+};
+
+test('sanitizePreferences keeps valid completion sound and haptic strength settings', () => {
+  const result = sanitizePreferences({ ...PREF_FALLBACK, completionSoundOn: false, hapticStrength: 'strong' }, PREF_FALLBACK);
+  assert.equal(result.completionSoundOn, false);
+  assert.equal(result.hapticStrength, 'strong');
+});
+
+test('sanitizePreferences repairs invalid or missing haptic strength and completion sound', () => {
+  const invalid = sanitizePreferences({ ...PREF_FALLBACK, completionSoundOn: 'no', hapticStrength: 'earthquake' }, PREF_FALLBACK);
+  assert.equal(invalid.completionSoundOn, true);
+  assert.equal(invalid.hapticStrength, 'medium');
+  // Preferences saved before these settings existed must pick up the defaults.
+  const { completionSoundOn, hapticStrength, ...legacy } = PREF_FALLBACK;
+  const migrated = sanitizePreferences(legacy, PREF_FALLBACK);
+  assert.equal(migrated.completionSoundOn, true);
+  assert.equal(migrated.hapticStrength, 'medium');
+});
