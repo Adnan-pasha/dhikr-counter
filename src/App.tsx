@@ -18,6 +18,7 @@ import OnboardingFlow from './components/OnboardingFlow';
 import { ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 import { isTimestampOnLocalDay, parseStoredArray, getLocalDateString } from './domain';
+import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer } from './routines';
 import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
@@ -84,6 +85,13 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla'>('home');
   const [streakPauses, setStreakPauses] = useState<StreakPause[]>([]);
   const [activeDays, setActiveDays] = useState<string[]>([]);
+  /** Routine the user started, so shared dhikr (SubhanAllah) continue the right one. */
+  const [startedRoutineId, setStartedRoutineId] = useState<string | null>(null);
+  const [afterSalahPrayer, setAfterSalahPrayer] = useState<SalahName | null>(null);
+  // Latest prayer logs, updated synchronously so two quick taps compose instead of overwriting each other.
+  const salahLogsRef = React.useRef<SalahLog[]>([]);
+  // The after-prayer offer belongs to the Salah screen; do not show it stale when coming back later.
+  useEffect(() => { if (activeTab !== 'salah') setAfterSalahPrayer(null); }, [activeTab]);
   // Re-read the date when the app returns to the foreground so the streak and ring roll over at midnight.
   const [today, setToday] = useState<string>(() => getLocalDateString(new Date()));
   useEffect(() => {
@@ -104,6 +112,7 @@ export default function App() {
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [salahLogs, setSalahLogs] = useState<SalahLog[]>([]);
+  salahLogsRef.current = salahLogs;
   const [quranBookmarks, setQuranBookmarks] = useState<string[]>([]);
   const [lastReadSurah, setLastReadSurah] = useState<number>(0);
   const [confirmModal, setConfirmModal] = useState<ConfirmModalState | null>(null);
@@ -151,13 +160,13 @@ export default function App() {
 
   // Find active routine based on current dhikr — use persisted routines for auto-advance
   const activeRoutine = React.useMemo(() => {
-    const matched = routines.find(r => r.dhikrIds.includes(currentDhikrId));
+    const matched = resolveActiveRoutine(routines, startedRoutineId, currentDhikrId);
     if (!matched) return null;
     const allAvailable = [...ADHKAAR_LIBRARY, ...dhikrs];
     return matched.dhikrIds
       .map((id: string) => allAvailable.find((d: Dhikr) => d.id === id))
       .filter(Boolean) as Dhikr[];
-  }, [currentDhikrId, routines, dhikrs]);
+  }, [currentDhikrId, routines, dhikrs, startedRoutineId]);
 
   const { handleIncrement, handleUndo, handleReset, canUndo, upcoming, pendingNext } = useCounterFlow({
     activeDhikr,
@@ -186,6 +195,12 @@ export default function App() {
     );
   };
 
+  // Hooks that fall back to a default dhikr (delete, reset) go through this so a stale routine is forgotten.
+  const setCurrentDhikrIdAndForgetRoutine: React.Dispatch<React.SetStateAction<string>> = (value) => {
+    setStartedRoutineId(null);
+    setCurrentDhikrId(value);
+  };
+
   const { handleAddDhikr, handleDeleteDhikr, handleToggleCompleteToday } = useDhikrActions({
     dhikrs,
     currentDhikrId,
@@ -193,7 +208,7 @@ export default function App() {
     preferences,
     systemDhikrs: SYSTEM_DHIKRS,
     setDhikrs,
-    setCurrentDhikrId,
+    setCurrentDhikrId: setCurrentDhikrIdAndForgetRoutine,
     setCurrentCount,
     setActiveTab,
     setHistory,
@@ -208,7 +223,7 @@ export default function App() {
     setStreakPauses,
     setActiveDays,
     setDhikrs,
-    setCurrentDhikrId,
+    setCurrentDhikrId: setCurrentDhikrIdAndForgetRoutine,
     setCurrentCount,
     setPreferences,
     setReminders,
@@ -226,8 +241,9 @@ export default function App() {
   const handleOnboardingComplete = (
     madhab: Madhab,
     notificationChoice: NotificationPermission | 'unsupported' | 'skipped',
+    dailyGoal: number,
   ) => {
-    setPreferences((prev) => ({ ...prev, madhab }));
+    setPreferences((prev) => ({ ...prev, madhab, dailyGoal }));
     localStorage.setItem('tasbih_notification_choice', notificationChoice);
     localStorage.setItem('tasbih_onboarding_completed', 'true');
     setOnboardingCompleted(true);
@@ -235,7 +251,7 @@ export default function App() {
   };
 
   if (!onboardingCompleted) {
-    return <OnboardingFlow defaultMadhab={preferences.madhab} onComplete={handleOnboardingComplete} />;
+    return <OnboardingFlow defaultMadhab={preferences.madhab} defaultGoal={preferences.dailyGoal} onComplete={handleOnboardingComplete} />;
   }
 
   const getThemeBg = () => {
@@ -301,6 +317,7 @@ export default function App() {
             onDismiss={dismissReminder}
             onStartChanting={(dhikrId) => {
               setCurrentDhikrId(dhikrId);
+              setStartedRoutineId(null);
               setCurrentCount(0);
               setActiveTab('counter');
               dismissReminder();
@@ -346,10 +363,12 @@ export default function App() {
                 onNavigateTo={(tab) => setActiveTab(tab)}
                 onStartDhikr={(id) => {
                   setCurrentDhikrId(id);
+                  setStartedRoutineId(null);
                   setCurrentCount(0);
                   setActiveTab('counter');
                 }}
                 onStartRoutine={(routineId, firstDhikrId) => {
+                  setStartedRoutineId(routineId);
                   setCurrentDhikrId(firstDhikrId);
                   setCurrentCount(0);
                   setActiveTab('counter');
@@ -388,6 +407,7 @@ export default function App() {
                 }
                 onSelectDhikr={(id) => {
                   setCurrentDhikrId(id);
+                  setStartedRoutineId(null);
                   setCurrentCount(0);
                   setActiveTab('counter');
                 }}
@@ -410,6 +430,7 @@ export default function App() {
                   .map((h) => h.dhikrId)}
                 onStartDhikr={(id) => {
                   setCurrentDhikrId(id);
+                  setStartedRoutineId(null);
                   setCurrentCount(0);
                   setActiveTab('counter');
                 }}
@@ -438,18 +459,22 @@ export default function App() {
               <SalahTracker
                 salahLogs={salahLogs}
                 onTogglePrayer={(date, prayer) => {
-                  setSalahLogs(prev => {
-                    const existing = prev.find(l => l.date === date);
-                    if (existing) {
-                      return prev.map(l =>
-                        l.date === date
-                          ? { ...l, prayers: { ...l.prayers, [prayer]: !l.prayers[prayer as SalahName] } }
-                          : l
-                      );
-                    }
-                    return [...prev, { date, prayers: { [prayer]: true } }];
-                  });
+                  const { logs, nowDone } = togglePrayerLog(salahLogsRef.current, date, prayer);
+                  salahLogsRef.current = logs;
+                  setSalahLogs(logs);
+                  setAfterSalahPrayer(nowDone && isFardPrayer(prayer) && afterSalahRoutine(routines) ? prayer : null);
                 }}
+                afterSalah={afterSalahPrayer ? { prayer: afterSalahPrayer, routine: afterSalahRoutine(routines) } : null}
+                onStartAfterSalah={() => {
+                  const routine = afterSalahRoutine(routines);
+                  if (!routine) return;
+                  setAfterSalahPrayer(null);
+                  setStartedRoutineId(routine.id);
+                  setCurrentDhikrId(routine.dhikrIds[0]);
+                  setCurrentCount(0);
+                  setActiveTab('counter');
+                }}
+                onDismissAfterSalah={() => setAfterSalahPrayer(null)}
                 onGoBack={() => setActiveTab('home')}
               />
             )}

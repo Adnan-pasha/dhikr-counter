@@ -1,13 +1,16 @@
 ﻿import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowRight, Bell, BellRing, BookOpenText, Check, ChevronLeft, Clock3, Compass, MoonStar, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, Bell, BellRing, BookOpenText, Check, ChevronLeft, Clock3, Compass, MoonStar, ShieldCheck, Sparkles, Target } from 'lucide-react';
 import { Madhab } from '../types';
+import { GOAL_TEMPLATES } from '../habits';
 
 type NotificationChoice = NotificationPermission | 'unsupported' | 'skipped';
 
 interface OnboardingFlowProps {
   defaultMadhab: Madhab;
-  onComplete: (madhab: Madhab, notificationChoice: NotificationChoice) => void;
+  /** The goal already in use, so skipping onboarding never overwrites it. */
+  defaultGoal: number;
+  onComplete: (madhab: Madhab, notificationChoice: NotificationChoice, dailyGoal: number) => void;
 }
 
 const MADHABS: Array<{ id: Madhab; name: string; detail: string; asrMethod: string }> = [
@@ -20,6 +23,7 @@ const MADHABS: Array<{ id: Madhab; name: string; detail: string; asrMethod: stri
 const STEPS = [
   { eyebrow: 'Your daily companion', title: 'Worship, made beautifully simple.', body: 'Keep your prayers, adhkaar, Quran reading, and daily remembrance close—wherever the day takes you.' },
   { eyebrow: 'Personalise prayer times', title: 'Choose your madhab.', body: 'This determines the Asr calculation used by prayer-time features. You can change it later.' },
+  { eyebrow: 'Make it yours', title: 'Set a daily goal.', body: 'A gentle target for the ring on your Home screen. Start small; you can change it any time in Settings.' },
   { eyebrow: 'Stay gently connected', title: 'Never miss a meaningful moment.', body: 'Enable thoughtful reminders for prayer, morning and evening adhkaar, and the routines that matter to you.' },
 ];
 
@@ -54,18 +58,19 @@ function NotificationArt() {
   );
 }
 
-export default function OnboardingFlow({ defaultMadhab, onComplete }: OnboardingFlowProps) {
+export default function OnboardingFlow({ defaultMadhab, defaultGoal, onComplete }: OnboardingFlowProps) {
   const [step, setStep] = useState(0);
   const [madhab, setMadhab] = useState<Madhab>(defaultMadhab);
+  const [goal, setGoal] = useState<number>(defaultGoal);
   const [requesting, setRequesting] = useState(false);
   const copy = STEPS[step];
 
   const enableNotifications = async () => {
-    if (!('Notification' in window)) return onComplete(madhab, 'unsupported');
-    if (Notification.permission !== 'default') return onComplete(madhab, Notification.permission);
+    if (!('Notification' in window)) return onComplete(madhab, 'unsupported', goal);
+    if (Notification.permission !== 'default') return onComplete(madhab, Notification.permission, goal);
     setRequesting(true);
-    try { onComplete(madhab, await Notification.requestPermission()); }
-    catch { onComplete(madhab, 'skipped'); }
+    try { onComplete(madhab, await Notification.requestPermission(), goal); }
+    catch { onComplete(madhab, 'skipped', goal); }
     finally { setRequesting(false); }
   };
 
@@ -76,7 +81,7 @@ export default function OnboardingFlow({ defaultMadhab, onComplete }: Onboarding
         <div className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
         <header className="relative z-10 flex items-center justify-between px-6 pb-2 pt-[max(1.5rem,env(safe-area-inset-top))]">
           {step > 0 ? <button onClick={() => setStep(step - 1)} aria-label="Go back" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-300"><ChevronLeft className="h-5 w-5" /></button> : <div className="flex items-center gap-2"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400 text-emerald-950"><MoonStar className="h-5 w-5" /></div><span className="font-display text-sm font-bold">Dhikr</span></div>}
-          {step === 0 && <button onClick={() => onComplete(defaultMadhab, 'skipped')} className="rounded-full px-3 py-2 text-xs font-bold text-slate-400 hover:text-white">Skip</button>}
+          {step === 0 && <button onClick={() => onComplete(defaultMadhab, 'skipped', defaultGoal)} className="rounded-full px-3 py-2 text-xs font-bold text-slate-400 hover:text-white">Skip</button>}
         </header>
 
         <main className="relative z-10 flex min-h-0 flex-1 flex-col px-6">
@@ -88,17 +93,21 @@ export default function OnboardingFlow({ defaultMadhab, onComplete }: Onboarding
                   const selected = item.id === madhab;
                   return <motion.button key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.045 }} onClick={() => setMadhab(item.id)} aria-pressed={selected} className={`flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left focus-visible:ring-2 focus-visible:ring-emerald-300 ${selected ? 'border-emerald-300/55 bg-emerald-400/15' : 'border-white/8 bg-white/[0.035]'}`}><div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${selected ? 'bg-emerald-300 text-emerald-950' : 'bg-white/5 text-slate-400'}`}>{selected ? <Check className="h-5 w-5" strokeWidth={3} /> : <BookOpenText className="h-5 w-5" />}</div><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="text-sm font-extrabold">{item.name}</p><span className={`rounded-full px-2 py-0.5 text-[8px] font-black uppercase ${selected ? 'bg-emerald-300/15 text-emerald-200' : 'bg-white/5 text-slate-500'}`}>{item.asrMethod}</span></div><p className="mt-0.5 text-[9px] text-slate-400">{item.detail}</p></div></motion.button>;
                 })}</div>}
-                {step === 2 && <NotificationArt />}
+                {step === 2 && <div className="w-full space-y-2.5 py-3" role="group" aria-label="Daily goal">{GOAL_TEMPLATES.map((item, index) => {
+                  const selected = item.goal === goal;
+                  return <motion.button key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.045 }} onClick={() => setGoal(item.goal)} aria-pressed={selected} className={`flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left focus-visible:ring-2 focus-visible:ring-emerald-300 ${selected ? 'border-emerald-300/55 bg-emerald-400/15' : 'border-white/8 bg-white/[0.035]'}`}><div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${selected ? 'bg-emerald-300 text-emerald-950' : 'bg-white/5 text-slate-400'}`}>{selected ? <Check className="h-5 w-5" strokeWidth={3} /> : <Target className="h-5 w-5" />}</div><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="text-sm font-extrabold">{item.name}</p><span className={`rounded-full px-2 py-0.5 text-2xs font-black ${selected ? 'bg-emerald-300/15 text-emerald-200' : 'bg-white/5 text-slate-400'}`}>{item.goal} beads / day</span></div><p className="mt-0.5 text-xs text-slate-400">{item.blurb}</p></div></motion.button>;
+                })}</div>}
+                {step === 3 && <NotificationArt />}
               </div>
 
               <div className="pb-[max(1.5rem,env(safe-area-inset-bottom))]">
                 <div className="mb-3 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.19em] text-emerald-300"><Sparkles className="h-3 w-3" />{copy.eyebrow}</div>
                 <h1 className="font-display text-[30px] font-bold leading-[1.08] tracking-[-0.035em]">{copy.title}</h1>
                 <p className="mt-3 text-[13px] leading-6 text-slate-400">{copy.body}</p>
-                {step === 2 && <div className="mt-4 grid grid-cols-2 gap-2"><div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.035] p-2.5"><Clock3 className="h-4 w-4 text-emerald-300" /><span className="text-[9px] font-bold text-slate-300">Prayer reminders</span></div><div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.035] p-2.5"><MoonStar className="h-4 w-4 text-emerald-300" /><span className="text-[9px] font-bold text-slate-300">Daily adhkaar</span></div></div>}
+                {step === 3 && <div className="mt-4 grid grid-cols-2 gap-2"><div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.035] p-2.5"><Clock3 className="h-4 w-4 text-emerald-300" /><span className="text-[9px] font-bold text-slate-300">Prayer reminders</span></div><div className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.035] p-2.5"><MoonStar className="h-4 w-4 text-emerald-300" /><span className="text-[9px] font-bold text-slate-300">Daily adhkaar</span></div></div>}
                 <div className="mt-6 flex gap-2">{STEPS.map((_, i) => <motion.span key={i} animate={{ width: i === step ? 24 : 6, opacity: i === step ? 1 : 0.35 }} className="h-1.5 rounded-full bg-emerald-300" />)}</div>
                 <div className="mt-5 space-y-2">
-                  {step < 2 ? <motion.button whileTap={{ scale: 0.98 }} onClick={() => setStep(step + 1)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-300 py-3.5 text-sm font-black text-emerald-950 shadow-xl"><span>Continue</span><ArrowRight className="h-4 w-4" /></motion.button> : <><motion.button whileTap={{ scale: 0.98 }} onClick={enableNotifications} disabled={requesting} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-300 py-3.5 text-sm font-black text-emerald-950 shadow-xl disabled:opacity-70"><Bell className="h-4 w-4" />{requesting ? 'Waiting for permission…' : 'Enable notifications'}</motion.button><button onClick={() => onComplete(madhab, 'skipped')} className="w-full py-2 text-xs font-bold text-slate-400 hover:text-white">Not now</button></>}
+                  {step < STEPS.length - 1 ? <motion.button whileTap={{ scale: 0.98 }} onClick={() => setStep(step + 1)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-300 py-3.5 text-sm font-black text-emerald-950 shadow-xl"><span>Continue</span><ArrowRight className="h-4 w-4" /></motion.button> : <><motion.button whileTap={{ scale: 0.98 }} onClick={enableNotifications} disabled={requesting} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-300 py-3.5 text-sm font-black text-emerald-950 shadow-xl disabled:opacity-70"><Bell className="h-4 w-4" />{requesting ? 'Waiting for permission…' : 'Enable notifications'}</motion.button><button onClick={() => onComplete(madhab, 'skipped', goal)} className="w-full py-2 text-xs font-bold text-slate-400 hover:text-white">Not now</button></>}
                 </div>
               </div>
             </motion.div>

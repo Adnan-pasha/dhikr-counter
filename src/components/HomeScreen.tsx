@@ -187,7 +187,7 @@ export default function HomeScreen({
           <div className="flex gap-2.5 mt-4">
             {[
               { icon: <Flame className="w-3.5 h-3.5" />, label: 'Streak', value: streakInfo.streak, unit: 'days', color: '#FB923C' },
-              { icon: <Target className="w-3.5 h-3.5" />, label: 'Today', value: completedTodayIds.length, unit: 'adhkaar', color: 'var(--color-text-brand)' },
+              { icon: <Target className="w-3.5 h-3.5" />, label: 'Adhkaar', value: completedTodayIds.length, unit: 'done today', color: 'var(--color-text-brand)' },
               { icon: <Trophy className="w-3.5 h-3.5" />, label: 'Total', value: allTimeCount >= 1000 ? `${(allTimeCount / 1000).toFixed(1)}k` : allTimeCount, unit: 'beads', color: 'var(--color-text-brand)' },
             ].map(({ icon, label, value, unit, color }) => (
               <div key={label} className="flex-1 rounded-2xl p-3" style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)' }}>
