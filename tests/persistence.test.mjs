@@ -29,17 +29,18 @@ const useHarness = () => {
   const [history, setHistory] = React.useState([]);
   const [preferences, setPreferences] = React.useState(DEFAULT_PREFS);
   const [reminders, setReminders] = React.useState([]);
-  const [streak, setStreak] = React.useState(0);
+  const [streakPauses, setStreakPauses] = React.useState([]);
+  const [activeDays, setActiveDays] = React.useState([]);
   const [favouriteIds, setFavouriteIds] = React.useState([]);
   const [routines, setRoutines] = React.useState([]);
   const [salahLogs, setSalahLogs] = React.useState([]);
 
   usePersistentAppState(
     { defaultDhikrs: [{ id: 'subhanallah', nameAr: 'x', nameEn: 'SubhanAllah', meaning: 'm', targetCount: 33 }], defaultPreferences: DEFAULT_PREFS, defaultReminders: [] },
-    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds, setRoutines, setSalahLogs },
-    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs },
+    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreakPauses, setActiveDays, setFavouriteIds, setRoutines, setSalahLogs },
+    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs, streakPauses, activeDays },
   );
-  return { routines, favouriteIds, setRoutines, setFavouriteIds, streak, currentCount, setCurrentCount };
+  return { routines, favouriteIds, setRoutines, setFavouriteIds, streakPauses, setStreakPauses, activeDays, setActiveDays, currentCount, setCurrentCount };
 };
 
 const strictWrapper = ({ children }) => React.createElement(React.StrictMode, null, children);
@@ -121,4 +122,23 @@ test('the pending count is flushed immediately when the page is hidden', async (
   await act(async () => { result.current.setCurrentCount(7); });
   dom.window.dispatchEvent(new dom.window.Event('pagehide'));
   assert.equal(localStorage.getItem('tasbih_current_count'), '7');
+});
+
+test('streak pauses are restored on launch and persisted when changed', async () => {
+  localStorage.setItem('tasbih_streak_pauses', JSON.stringify([{ from: '2026-03-01', until: '2026-03-03' }, { from: 'bad', until: 'x' }]));
+  const { result } = renderHook(useHarness, { wrapper: strictWrapper });
+  await act(async () => {});
+  assert.deepEqual(result.current.streakPauses, [{ from: '2026-03-01', until: '2026-03-03' }], 'malformed entries dropped');
+
+  await act(async () => { result.current.setStreakPauses([{ from: '2026-04-01', until: '2026-04-02' }]); });
+  assert.deepEqual(JSON.parse(localStorage.getItem('tasbih_streak_pauses')), [{ from: '2026-04-01', until: '2026-04-02' }]);
+});
+
+test('active days are restored (invalid dropped) and persisted when changed', async () => {
+  localStorage.setItem('tasbih_active_days', JSON.stringify(['2026-03-02', 'nope', 7]));
+  const { result } = renderHook(useHarness, { wrapper: strictWrapper });
+  await act(async () => {});
+  assert.deepEqual(result.current.activeDays, ['2026-03-02']);
+  await act(async () => { result.current.setActiveDays(['2026-03-02', '2026-03-03']); });
+  assert.deepEqual(JSON.parse(localStorage.getItem('tasbih_active_days')), ['2026-03-02', '2026-03-03']);
 });

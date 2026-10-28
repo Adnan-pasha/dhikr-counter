@@ -17,7 +17,8 @@ import BottomNav from './components/BottomNav';
 import OnboardingFlow from './components/OnboardingFlow';
 import { ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
-import { isTimestampOnLocalDay, parseStoredArray } from './domain';
+import { isTimestampOnLocalDay, parseStoredArray, getLocalDateString } from './domain';
+import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
 // Use the full rich ADHKAAR_LIBRARY as system dhikrs
@@ -35,6 +36,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   madhab: 'shafi',
   completionSoundOn: true,
   hapticStrength: 'medium',
+  dailyGoal: 100,
 };
 
 // Default Dhikr Reminders Preset
@@ -80,7 +82,24 @@ export default function App() {
   const [reminders, setReminders] = useState<DhikrReminder[]>([]);
   const [activeReminderTriggered, setActiveReminderTriggered] = useState<DhikrReminder | null>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla'>('home');
-  const [streak, setStreak] = useState<number>(0);
+  const [streakPauses, setStreakPauses] = useState<StreakPause[]>([]);
+  const [activeDays, setActiveDays] = useState<string[]>([]);
+  // Re-read the date when the app returns to the foreground so the streak and ring roll over at midnight.
+  const [today, setToday] = useState<string>(() => getLocalDateString(new Date()));
+  useEffect(() => {
+    const refresh = () => setToday(getLocalDateString(new Date()));
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    // Also roll over if the app stays open across midnight.
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+    const timer = setTimeout(refresh, nextMidnight - now.getTime() + 1000);
+    return () => {
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
+      clearTimeout(timer);
+    };
+  }, [today]);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -93,9 +112,13 @@ export default function App() {
 
   usePersistentAppState(
     { defaultDhikrs: SYSTEM_DHIKRS, defaultPreferences: DEFAULT_PREFERENCES, defaultReminders: DEFAULT_REMINDERS },
-    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds, setRoutines, setSalahLogs },
-    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs },
+    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreakPauses, setActiveDays, setFavouriteIds, setRoutines, setSalahLogs },
+    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs, streakPauses, activeDays },
   );
+
+  const streakInfo = React.useMemo(() => computeStreakInfo(history, streakPauses, today, activeDays), [history, streakPauses, today, activeDays]);
+  const finishedToday = React.useMemo(() => beadsOnDay(history, today), [history, today]);
+  const progress = dailyProgress(finishedToday, currentCount, preferences.dailyGoal);
 
   // Quran bookmarks & last read persistence
   React.useEffect(() => {
@@ -148,6 +171,11 @@ export default function App() {
     setCurrentDhikrId,
     setHistory,
     setConfirmModal,
+    onActivity: () => {
+      const now = getLocalDateString(new Date());
+      setToday(now);
+      setActiveDays((prev) => addActiveDay(prev, now));
+    },
   });
 
   const handleEditDhikr = (id: string, nameEn: string, nameAr: string, meaning: string, targetCount: number) => {
@@ -177,7 +205,8 @@ export default function App() {
 
   const { handleClearHistory, handleResetAllData } = useHistoryActions({
     setHistory,
-    setStreak,
+    setStreakPauses,
+    setActiveDays,
     setDhikrs,
     setCurrentDhikrId,
     setCurrentCount,
@@ -304,7 +333,10 @@ export default function App() {
           >
             {activeTab === 'home' && (
               <HomeScreen
-                streak={streak}
+                streakInfo={streakInfo}
+                progress={progress}
+                onStartPause={(days) => setStreakPauses((prev) => startPause(prev, today, days))}
+                onEndPause={() => setStreakPauses((prev) => endPause(prev, today))}
                 history={history}
                 routines={routines}
                 currentDhikrId={currentDhikrId}
@@ -439,7 +471,7 @@ export default function App() {
             {activeTab === 'stats' && (
               <StatsScreen
                 history={history}
-                streak={streak}
+                streak={streakInfo.streak}
                 allTimeCount={history.reduce((sum, current) => sum + current.count, 0) + currentCount}
                 onClearHistory={handleClearHistory}
                 dhikrs={dhikrs}

@@ -84,7 +84,8 @@ export const useReminderScheduler = (
 
 
 import { Dhikr, DhikrHistory } from './types';
-import { migrateAndHydrateStorage, computeStreak, isTimestampOnLocalDay } from './domain';
+import { migrateAndHydrateStorage, isTimestampOnLocalDay } from './domain';
+import { sanitizePauses, sanitizeActiveDays, type StreakPause } from './habits';
 
 interface PersistenceDefaults {
   defaultDhikrs: Dhikr[];
@@ -99,7 +100,8 @@ interface PersistenceSetters {
   setHistory: (value: DhikrHistory[]) => void;
   setPreferences: (value: UserPreferences) => void;
   setReminders: (value: DhikrReminder[]) => void;
-  setStreak: (value: number) => void;
+  setStreakPauses: (value: StreakPause[]) => void;
+  setActiveDays: (value: string[]) => void;
   setFavouriteIds: (value: string[]) => void;
   setRoutines: (value: Routine[]) => void;
   setSalahLogs: (value: SalahLog[]) => void;
@@ -121,6 +123,8 @@ export const usePersistentAppState = (
     favouriteIds: string[];
     routines: Routine[];
     salahLogs: SalahLog[];
+    streakPauses: StreakPause[];
+    activeDays: string[];
   },
 ) => {
   const [hydrated, setHydrated] = React.useState(false);
@@ -151,6 +155,8 @@ export const usePersistentAppState = (
     setters.setSalahLogs(
       parseStoredArray<SalahLog>(localStorage.getItem('tasbih_salah_logs'), [], (v): v is SalahLog => isRecord(v)),
     );
+    setters.setStreakPauses(sanitizePauses(parseStoredArray(localStorage.getItem('tasbih_streak_pauses'), [], isRecord)));
+    setters.setActiveDays(sanitizeActiveDays(parseStoredArray(localStorage.getItem('tasbih_active_days'), [], (v): v is string => typeof v === 'string')));
     setHydrated(true);
   }, []);
 
@@ -184,13 +190,14 @@ export const usePersistentAppState = (
   useEffect(() => {
     if (!hydrated) return;
     localStorage.setItem('tasbih_history', JSON.stringify(state.history));
-    setters.setStreak(computeStreak(state.history));
   }, [hydrated, state.history]);
   useEffect(() => { if (hydrated) localStorage.setItem('tasbih_preferences', JSON.stringify(state.preferences)); }, [hydrated, state.preferences]);
   useEffect(() => { if (hydrated) localStorage.setItem('tasbih_reminders', JSON.stringify(state.reminders)); }, [hydrated, state.reminders]);
   useEffect(() => { if (hydrated) localStorage.setItem('tasbih_favourites', JSON.stringify(state.favouriteIds)); }, [hydrated, state.favouriteIds]);
   useEffect(() => { if (hydrated) localStorage.setItem('tasbih_routines', JSON.stringify(state.routines)); }, [hydrated, state.routines]);
   useEffect(() => { if (hydrated) localStorage.setItem('tasbih_salah_logs', JSON.stringify(state.salahLogs)); }, [hydrated, state.salahLogs]);
+  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_streak_pauses', JSON.stringify(state.streakPauses)); }, [hydrated, state.streakPauses]);
+  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_active_days', JSON.stringify(state.activeDays)); }, [hydrated, state.activeDays]);
 };
 
 
@@ -279,6 +286,8 @@ interface CounterFlowDeps {
   setCurrentDhikrId: React.Dispatch<React.SetStateAction<string>>;
   setHistory: React.Dispatch<React.SetStateAction<DhikrHistory[]>>;
   setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState | null>>;
+  /** Called on every counted tap, so the app can log the day as practised. */
+  onActivity?: () => void;
 }
 
 /** Pause after a round completes before the counter moves on; undo or a tap inside it. */
@@ -355,6 +364,7 @@ export const useCounterFlow = (deps: CounterFlowDeps) => {
     const result = tapCount(countRef.current, dhikr.targetCount);
     countRef.current = result.count;
     d.setCurrentCount(result.count);
+    d.onActivity?.();
 
     if (prefs.soundOn) playBeadSound(prefs.soundTone, prefs.volume);
     if (result.roundCompleted && prefs.soundOn && prefs.completionSoundOn) playCompletionSound(prefs.volume);
@@ -426,7 +436,8 @@ export const useCounterFlow = (deps: CounterFlowDeps) => {
 
 interface HistoryFlowDeps {
   setHistory: React.Dispatch<React.SetStateAction<DhikrHistory[]>>;
-  setStreak: React.Dispatch<React.SetStateAction<number>>;
+  setStreakPauses: React.Dispatch<React.SetStateAction<StreakPause[]>>;
+  setActiveDays: React.Dispatch<React.SetStateAction<string[]>>;
   setDhikrs: React.Dispatch<React.SetStateAction<Dhikr[]>>;
   setCurrentDhikrId: React.Dispatch<React.SetStateAction<string>>;
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
@@ -451,7 +462,8 @@ export const useHistoryActions = (deps: HistoryFlowDeps) => {
       message: 'Are you sure you want to securely erase all completion log histories? Daily streaks will reset to zero.',
       onConfirm: () => {
         deps.setHistory([]);
-        deps.setStreak(0);
+        deps.setStreakPauses([]);
+        deps.setActiveDays([]);
         deps.setConfirmModal(null);
       }
     });
@@ -469,7 +481,8 @@ export const useHistoryActions = (deps: HistoryFlowDeps) => {
         deps.setHistory([]);
         deps.setPreferences(deps.defaultPreferences);
         deps.setReminders(deps.defaultReminders);
-        deps.setStreak(0);
+        deps.setStreakPauses([]);
+        deps.setActiveDays([]);
         deps.setFavouriteIds([]);
         deps.setRoutines(DEFAULT_ROUTINES);
         deps.setSalahLogs([]);

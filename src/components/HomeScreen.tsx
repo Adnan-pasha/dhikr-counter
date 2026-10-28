@@ -9,11 +9,16 @@ import { Dhikr, DhikrHistory, Routine, UserPreferences } from '../types';
 import { AppIcon, IconKey } from '../icons';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
 import { isTimestampOnLocalDay } from '../domain';
+import type { DailyProgress, StreakInfo } from '../habits';
+import DailyGoalCard from './DailyGoalCard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface HomeScreenProps {
-  streak: number;
+  streakInfo: StreakInfo;
+  progress: DailyProgress;
+  onStartPause: (days: number) => void;
+  onEndPause: () => void;
   history: DhikrHistory[];
   routines: Routine[];
   currentDhikrId: string;
@@ -92,7 +97,10 @@ function getAllTimeCount(history: DhikrHistory[]): number {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function HomeScreen({
-  streak,
+  streakInfo,
+  progress,
+  onStartPause,
+  onEndPause,
   history,
   routines,
   currentDhikrId,
@@ -178,7 +186,7 @@ export default function HomeScreen({
           {/* Stats row */}
           <div className="flex gap-2.5 mt-4">
             {[
-              { icon: <Flame className="w-3.5 h-3.5" />, label: 'Streak', value: streak, unit: 'days', color: '#FB923C' },
+              { icon: <Flame className="w-3.5 h-3.5" />, label: 'Streak', value: streakInfo.streak, unit: 'days', color: '#FB923C' },
               { icon: <Target className="w-3.5 h-3.5" />, label: 'Today', value: completedTodayIds.length, unit: 'adhkaar', color: 'var(--color-text-brand)' },
               { icon: <Trophy className="w-3.5 h-3.5" />, label: 'Total', value: allTimeCount >= 1000 ? `${(allTimeCount / 1000).toFixed(1)}k` : allTimeCount, unit: 'beads', color: 'var(--color-text-brand)' },
             ].map(({ icon, label, value, unit, color }) => (
@@ -196,6 +204,8 @@ export default function HomeScreen({
       </div>
 
       <div className="scroll-area space-y-5">
+
+        <DailyGoalCard progress={progress} streakInfo={streakInfo} onStartPause={onStartPause} onEndPause={onEndPause} />
 
         {/* ── Quick Tasbih ─────────────────────────────────────────────────── */}
         <section>
