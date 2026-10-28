@@ -33,3 +33,21 @@ test('html and body fill the viewport and do not scroll on their own', () => {
   const css = read('src/index.css');
   assert.match(css, /html\s*,\s*body\s*\{[^}]*overflow\s*:\s*hidden/);
 });
+
+// .screen clips its own overflow and the page cannot scroll, so a screen needs an inner scroll area
+// or everything below the fold is unreachable (the Salah list could not be scrolled to Maghrib/Isha).
+test('every screen built on .screen has its own scroll container', () => {
+  const dir = path.join(root, 'src/components');
+  const offenders = [];
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.tsx'))) {
+    const src = fs.readFileSync(path.join(dir, file), 'utf8');
+    if (!src.includes('className="screen"')) continue;
+    if (!/scroll-area|overflow-y-auto/.test(src)) offenders.push(file);
+  }
+  assert.deepEqual(offenders, []);
+});
+
+test('the Salah prayer list scrolls inside the screen', () => {
+  const src = read('src/components/SalahTracker.tsx');
+  assert.match(src, /className="scroll-area space-y-5"/);
+});
