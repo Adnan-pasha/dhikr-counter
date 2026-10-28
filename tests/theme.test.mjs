@@ -189,3 +189,27 @@ test('slate-950 is a surface shade in light mode; call-to-action text uses text-
   assert.match(css, /\.text-on-brand\s*\{[^}]*color\s*:\s*#070E0C/i);
   assert.ok(contrast('#070E0C', dark['--color-brand-500']) >= 4.5);
 });
+
+test('custom text sizes used in components are defined and at least 12px', () => {
+  const walkTsx = (dir) => fs.readdirSync(dir, { withFileTypes: true })
+    .flatMap((e) => (e.isDirectory() ? walkTsx(path.join(dir, e.name)) : [path.join(dir, e.name)]))
+    .filter((f) => f.endsWith('.tsx'));
+  const used = new Set();
+  for (const file of walkTsx(path.join(root, 'src'))) {
+    for (const m of fs.readFileSync(file, 'utf8').matchAll(/(?<![-\w])text-(\d?xs)\b/g)) used.add(m[1]);
+  }
+  assert.ok(used.size > 0);
+  for (const name of used) {
+    if (name === 'xs') continue; // Tailwind default (0.75rem)
+    const decl = css.match(new RegExp(String.raw`--text-${name}:\s*([\d.]+)rem`));
+    assert.ok(decl, `--text-${name} is used in components but not defined in @theme`);
+    assert.ok(parseFloat(decl[1]) >= 0.75, `--text-${name} = ${decl[1]}rem is below 12px`);
+  }
+});
+
+test('icon-only action buttons meet the 44px touch target', () => {
+  for (const file of ['AdhkaarLibrary.tsx', 'RoutineManager.tsx']) {
+    const src = fs.readFileSync(path.join(root, 'src/components', file), 'utf8');
+    assert.doesNotMatch(src, /className=(\{`|")p-1\.5 rounded-(xl|lg) /, `${file} has an undersized icon button`);
+  }
+});

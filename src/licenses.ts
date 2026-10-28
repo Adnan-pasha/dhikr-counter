@@ -35,6 +35,13 @@ export const THIRD_PARTY_NOTICES: ThirdPartyNotice[] = [
     url: 'https://github.com/floriankarsten/space-grotesk',
   },
   {
+    name: 'Lateef',
+    author: 'SIL International (Bob Hallissy, Martin Hosken)',
+    license: 'SIL OFL 1.1',
+    url: 'https://software.sil.org/lateef/',
+    note: 'Arabic typeface for dhikr and Quran text.',
+  },
+  {
     name: 'Noto Naskh Arabic',
     author: 'The Noto Project Authors',
     license: 'SIL OFL 1.1',

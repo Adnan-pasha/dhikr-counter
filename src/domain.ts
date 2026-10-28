@@ -423,7 +423,7 @@ export const getMotivationalMessage = (streak: number): { arabic: string; englis
       arabic: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً',
       english: 'Our Lord, give us good in this world',
       note: streak > 0
-        ? `Masha'Allah! ${streak}-day streak 🌅 The early morning is the most blessed time for dhikr.`
+        ? `Masha'Allah! ${streak}-day streak. The early morning is the most blessed time for dhikr.`
         : 'Beautiful — you are remembering Allah in the blessed morning hours.',
     };
   }

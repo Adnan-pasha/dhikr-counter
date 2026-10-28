@@ -8,6 +8,7 @@ Kept in sync with `src/licenses.ts`, which the app shows under Settings.
 | adhan | Batoul Apps | MIT | https://github.com/batoulapps/adhan-js |
 | Inter | The Inter Project Authors | SIL OFL 1.1 | https://github.com/rsms/inter |
 | Space Grotesk | Florian Karsten | SIL OFL 1.1 | https://github.com/floriankarsten/space-grotesk |
+| Lateef | SIL International | SIL OFL 1.1 | https://software.sil.org/lateef/ |
 | Noto Naskh Arabic | The Noto Project Authors | SIL OFL 1.1 | https://github.com/notofonts/arabic |
 | Lucide icons | Lucide Contributors | ISC | https://lucide.dev |
 

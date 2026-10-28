@@ -6,6 +6,7 @@ import {
   Shield, Edit3
 } from 'lucide-react';
 import { Dhikr, AdhkaarCategory, CATEGORY_META } from '../types';
+import { AppIcon } from '../icons';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
 import { isTimestampOnLocalDay } from '../domain';
 
@@ -207,7 +208,7 @@ export default function AdhkaarLibrary({
                   isActive ? 'bg-brand-500 text-on-brand border-brand-500' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
                 }`}
               >
-                {meta ? <span>{meta.emoji}</span> : cat === 'custom' ? '✏️' : null}
+                {meta ? <AppIcon name={meta.icon} className="w-3.5 h-3.5" /> : cat === 'custom' ? <AppIcon name="edit" className="w-3.5 h-3.5" /> : null}
                 {cat === 'all' ? 'All' : cat === 'custom' ? 'Custom' : meta!.label}
               </button>
             );
@@ -225,7 +226,7 @@ export default function AdhkaarLibrary({
             className="overflow-hidden border-b border-brand-500/20 bg-slate-900/80"
           >
             <div className="px-4 py-4 space-y-2">
-              <p className="text-xs font-black uppercase tracking-widest text-brand-500 mb-2">➕ New Custom Dhikr</p>
+              <p className="text-xs font-black uppercase tracking-widest text-brand-500 mb-2 flex items-center gap-1.5"><AppIcon name="plus" className="w-3.5 h-3.5" /> New Custom Dhikr</p>
               <input value={newEn} onChange={(e) => setNewEn(e.target.value)} placeholder="English name *" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <input value={newAr} onChange={(e) => setNewAr(e.target.value)} placeholder="Arabic text (optional)" dir="rtl" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 text-right" />
               <input value={newMeaning} onChange={(e) => setNewMeaning(e.target.value)} placeholder="Meaning / description" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
@@ -369,13 +370,13 @@ function AdhkaarCard({
               <Shield className="w-2.5 h-2.5" /> Authentic
             </span>
           ) : (
-            <span className="text-xs font-black px-2 py-0.5 rounded-full border text-brand-400 bg-brand-500/10 border-brand-500/20">
-              ✏️ Custom
+            <span className="text-xs font-black px-2 py-0.5 rounded-full border text-brand-400 bg-brand-500/10 border-brand-500/20 inline-flex items-center gap-1">
+              <AppIcon name="edit" className="w-3 h-3" /> Custom
             </span>
           )}
           {catMeta && (
-            <span className={`text-xs font-black px-2 py-0.5 rounded-full border ${catMeta.color}`}>
-              {catMeta.emoji} {catMeta.label}
+            <span className={`text-xs font-black px-2 py-0.5 rounded-full border inline-flex items-center gap-1 ${catMeta.color}`}>
+              <AppIcon name={catMeta.icon} className="w-3 h-3" /> {catMeta.label}
             </span>
           )}
           {diffMeta && (
@@ -436,7 +437,7 @@ function AdhkaarCard({
           <button
             aria-label={isCompleted ? 'Mark pending' : 'Mark complete'}
             onClick={onToggleComplete}
-            className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+            className={`tap-target rounded-xl border transition-all cursor-pointer ${
               isCompleted ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
               : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-emerald-400'
             }`}
@@ -448,7 +449,7 @@ function AdhkaarCard({
           <button
             aria-label={isFavourite ? 'Remove favourite' : 'Add favourite'}
             onClick={onToggleFavourite}
-            className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+            className={`tap-target rounded-xl border transition-all cursor-pointer ${
               isFavourite ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
               : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-rose-400'
             }`}
@@ -460,9 +461,9 @@ function AdhkaarCard({
           <button
             aria-label="Add to routine"
             onClick={onAddToRoutine}
-            className="p-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-500 hover:text-brand-400 hover:border-brand-500/30 transition-all cursor-pointer"
+            className="tap-target rounded-xl border border-slate-700 bg-slate-800 text-slate-500 hover:text-brand-400 hover:border-brand-500/30 transition-all cursor-pointer"
           >
-            🌅
+            <AppIcon name="routines" className="w-4 h-4" />
           </button>
 
           {/* Custom-only: edit + delete */}
@@ -471,7 +472,7 @@ function AdhkaarCard({
               <button
                 aria-label="Edit dhikr"
                 onClick={onStartEdit}
-                className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                className={`tap-target rounded-xl border transition-all cursor-pointer ${
                   isEditing ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
                   : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-brand-400'
                 }`}
@@ -481,7 +482,7 @@ function AdhkaarCard({
               <button
                 aria-label="Delete dhikr"
                 onClick={onDelete}
-                className="p-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-500 hover:text-red-400 hover:border-red-500/30 transition-all cursor-pointer"
+                className="tap-target rounded-xl border border-slate-700 bg-slate-800 text-slate-500 hover:text-red-400 hover:border-red-500/30 transition-all cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>

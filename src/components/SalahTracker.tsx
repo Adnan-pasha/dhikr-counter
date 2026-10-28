@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, Flame, Calendar, ChevronLeft, ChevronRight, Moon } from 'lucide-react';
 import { SalahLog, SalahName, SALAH_META, HIJRI_MONTHS } from '../types';
+import { AppIcon } from '../icons';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -166,8 +167,12 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onGoBack }: Sa
                       : 'bg-slate-900/60 border-slate-800 hover:border-brand-500/30'
                   }`}
                 >
-                  {/* Emoji */}
-                  <span className="text-2xl shrink-0">{meta.emoji}</span>
+                  {/* Prayer icon */}
+                  <span
+                    className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${done ? 'bg-emerald-500/15 text-emerald-400' : 'bg-brand-500/10 text-brand-400'}`}
+                  >
+                    <AppIcon name={meta.icon} className="w-5 h-5" />
+                  </span>
 
                   {/* Info */}
                   <div className="flex-1 text-left">
@@ -213,10 +218,10 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onGoBack }: Sa
               exit={{ opacity: 0 }}
               className="bg-gradient-to-r from-emerald-500/15 to-teal-500/10 border border-emerald-500/30 rounded-2xl p-4 text-center"
             >
-              <p className="text-2xl mb-2">🎉</p>
+              <AppIcon name="celebrate" className="w-7 h-7 mx-auto mb-2 text-emerald-400" />
               <p className="text-sm font-black text-emerald-400">All 6 Prayers Complete!</p>
               <p className="text-xs text-slate-400 mt-1">
-                Alhamdulillah! May Allah accept your prayers. 🤲
+                Alhamdulillah! May Allah accept your prayers.
               </p>
             </motion.div>
           )}

@@ -20,6 +20,7 @@ import {
   Compass
 } from 'lucide-react';
 import { DhikrHistory, DailyLog, Dhikr } from '../types';
+import { AppIcon } from '../icons';
 import { getMotivationalMessage, computeAchievements, getLocalDateString, isTimestampOnLocalDay } from '../domain';
 
 interface StatsScreenProps {
@@ -782,7 +783,7 @@ export default function StatsScreen({
                   </div>
                 ) : (
                   <div className="text-xs font-bold text-emerald-400 mt-4 pt-3 border-t border-slate-850 animate-pulse">
-                    🏆 Ultimate Level Achieved! May Allah bless you.
+                    <span className="inline-flex items-center gap-1.5"><AppIcon name="trophy" className="w-4 h-4" /> Ultimate Level Achieved! May Allah bless you.</span>
                   </div>
                 )}
               </div>
@@ -830,7 +831,7 @@ export default function StatsScreen({
 
                       <div className="mt-2.5 pt-2 border-t border-slate-800/10 flex justify-between items-center">
                         <span className="text-xs font-black tracking-widest uppercase opacity-75">
-                          {badge.isUnlocked ? 'Unlocked 🎉' : 'Locked 🔒'}
+                          <span className="inline-flex items-center gap-1"><AppIcon name={badge.isUnlocked ? 'celebrate' : 'lock'} className="w-3 h-3" />{badge.isUnlocked ? 'Unlocked' : 'Locked'}</span>
                         </span>
                       </div>
                     </div>

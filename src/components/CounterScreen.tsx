@@ -372,7 +372,7 @@ export default function CounterScreen({
             >
               <Sparkles className="w-4 h-4 text-emerald-400" />
               <div>
-                <p className="text-sm font-black text-emerald-400">Masha'Allah! 🎉</p>
+                <p className="text-sm font-black text-emerald-400">Masha'Allah!</p>
                 <p className="text-sm text-slate-400">Target complete — keep going or reset</p>
               </div>
             </motion.div>

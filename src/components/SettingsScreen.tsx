@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Settings, Volume2, Sparkles, Sliders, Smartphone, HelpCircle, User, Clock, Plus, Trash2, Bell, BookOpenText, Check, ChevronLeft } from 'lucide-react';
 import { UserPreferences, SoundTone, AppTheme, DhikrReminder, Dhikr, Madhab } from '../types';
+import { AppIcon } from '../icons';
 import { playBeadSound, playCompletionSound } from '../audio';
 import { THIRD_PARTY_NOTICES } from '../licenses';
 
@@ -56,7 +57,7 @@ export default function SettingsScreen({
   const handleToggleReminder = (id: string, isEnabled: boolean) => {
     onUpdateReminders(prev => prev.map(rem => {
       if (rem.id === id) {
-        triggerFeedback(`Saved: "${rem.label}" is now ${isEnabled ? 'Active 🔔' : 'Muted 🔕'}`);
+        triggerFeedback(`Saved: "${rem.label}" is now ${isEnabled ? 'Active' : 'Muted'}`);
         return { ...rem, isEnabled };
       }
       return rem;
@@ -104,7 +105,7 @@ export default function SettingsScreen({
 
     onUpdateReminders(prev => [...prev, fresh]);
     setIsAddingReminder(false);
-    triggerFeedback(`Success: Added reminder "${fresh.label}" for ${timeHour}:${timeMinute} ${timePeriod}! 🔔`);
+    triggerFeedback(`Success: Added reminder "${fresh.label}" for ${timeHour}:${timeMinute} ${timePeriod}!`);
     
     // Reset inputs
     setNewReminderLabel('Daily Tasbih Duty');
@@ -224,8 +225,8 @@ export default function SettingsScreen({
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {([
-              { id: 'dark' as const, label: 'Dark Mode', icon: '🌙' },
-              { id: 'light' as const, label: 'Light Mode', icon: '☀️' },
+              { id: 'dark' as const, label: 'Dark Mode', icon: 'moon' as const },
+              { id: 'light' as const, label: 'Light Mode', icon: 'sun' as const },
             ]).map((mode) => {
               const matches = preferences.colorMode === mode.id;
               return (
@@ -239,7 +240,7 @@ export default function SettingsScreen({
                     borderColor: matches ? 'var(--color-brand-border)' : 'var(--color-border)',
                   }}
                 >
-                  <span className="text-xl shrink-0">{mode.icon}</span>
+                  <AppIcon name={mode.icon} className="w-5 h-5 shrink-0" />
                   <span className="text-sm font-bold" style={{ color: matches ? 'var(--color-text-brand)' : 'var(--color-text-primary)' }}>
                     {mode.label}
                   </span>
@@ -342,7 +343,7 @@ export default function SettingsScreen({
                 onClick={testCompletion}
                 className="w-full py-1.5 text-xs font-bold bg-slate-950 border border-slate-800 text-brand-450 rounded-xl hover:bg-slate-900 transition-colors cursor-pointer"
               >
-                🔊 Play Goal Complete Chime Trial
+                <AppIcon name="volume" className="w-4 h-4" /> Play Goal Complete Chime Trial
               </button>
             </div>
           )}
@@ -438,7 +439,7 @@ export default function SettingsScreen({
               >
                 <div className="flex justify-between items-center border-b border-slate-900 pb-2.5">
                   <div className="flex items-center gap-1.5 bg-transparent">
-                    <span className="text-xs shrink-0">🔔</span>
+                    <AppIcon name="bell" className="w-3.5 h-3.5 shrink-0" />
                     <span className="text-xs font-black uppercase text-brand-500 tracking-wider">New Auto-Tasbih Duty</span>
                   </div>
                   <button
@@ -670,7 +671,7 @@ export default function SettingsScreen({
                   type="submit"
                   className="w-full py-2.5 bg-gradient-to-r from-brand-500 to-brand-600 text-on-brand font-black text-xs uppercase tracking-wider rounded-xl hover:brightness-110 active:scale-98 transition-all shadow-lg shadow-brand-950/20 cursor-pointer font-sans"
                 >
-                  Save Active Dhikr Schedule 🔔
+                  Save Active Dhikr Schedule
                 </button>
               </motion.form>
             )}

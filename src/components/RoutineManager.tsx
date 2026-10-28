@@ -6,6 +6,7 @@ import {
   ChevronUp, Sparkles
 } from 'lucide-react';
 import { Dhikr, Routine } from '../types';
+import { AppIcon, IconKey, ROUTINE_ICON_KEYS } from '../icons';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -17,14 +18,13 @@ interface RoutineManagerProps {
   completedTodayIds: string[];
   onStartDhikr: (id: string) => void;
   onAddRoutine: (routine: Omit<Routine, 'id' | 'createdAt'>) => void;
-  onEditRoutine: (id: string, name: string, emoji: string, dhikrIds: string[]) => void;
+  onEditRoutine: (id: string, name: string, icon: IconKey, dhikrIds: string[]) => void;
   onDeleteRoutine: (id: string) => void;
   onNavigateToAdhkaar: () => void;
   onGoBack: () => void;
 }
 
 // ─── Emoji picker options ────────────────────────────────────────────────────
-const ROUTINE_EMOJIS = ['🌅','🌙','🤲','📿','✨','🕌','💚','🌟','☀️','🌙','🌿','💎'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const allDhikrs = (customDhikrs: Dhikr[]) => [...ADHKAAR_LIBRARY, ...customDhikrs];
@@ -54,14 +54,14 @@ export default function RoutineManager({
 
   // Create form state
   const [newName, setNewName] = useState('');
-  const [newEmoji, setNewEmoji] = useState('🌅');
+  const [newIcon, setNewIcon] = useState<IconKey>('sunrise');
   const [newDhikrIds, setNewDhikrIds] = useState<string[]>([]);
   const [showDhikrPicker, setShowDhikrPicker] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
 
   // Edit form state
   const [editName, setEditName] = useState('');
-  const [editEmoji, setEditEmoji] = useState('🌅');
+  const [editIcon, setEditIcon] = useState<IconKey>('sunrise');
   const [editDhikrIds, setEditDhikrIds] = useState<string[]>([]);
   const [showEditPicker, setShowEditPicker] = useState(false);
   const [editPickerSearch, setEditPickerSearch] = useState('');
@@ -70,21 +70,21 @@ export default function RoutineManager({
 
   const handleCreate = () => {
     if (!newName.trim() || newDhikrIds.length === 0) return;
-    onAddRoutine({ name: newName.trim(), emoji: newEmoji, dhikrIds: newDhikrIds });
-    setNewName(''); setNewEmoji('🌅'); setNewDhikrIds([]);
+    onAddRoutine({ name: newName.trim(), icon: newIcon, dhikrIds: newDhikrIds });
+    setNewName(''); setNewIcon('sunrise'); setNewDhikrIds([]);
     setShowCreateForm(false); setShowDhikrPicker(false);
   };
 
   const handleSaveEdit = (routineId: string) => {
     if (!editName.trim() || editDhikrIds.length === 0) return;
-    onEditRoutine(routineId, editName.trim(), editEmoji, editDhikrIds);
+    onEditRoutine(routineId, editName.trim(), editIcon, editDhikrIds);
     setEditingRoutineId(null);
   };
 
   const startEdit = (routine: Routine) => {
     setEditingRoutineId(routine.id);
     setEditName(routine.name);
-    setEditEmoji(routine.emoji);
+    setEditIcon(routine.icon);
     setEditDhikrIds([...routine.dhikrIds]);
     setShowCreateForm(false);
   };
@@ -140,7 +140,7 @@ export default function RoutineManager({
                     : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
                 }`}
               >
-                <span>{r.emoji}</span>
+                <AppIcon name={r.icon} className="w-3.5 h-3.5" />
                 {r.name}
               </button>
             ))}
@@ -158,13 +158,13 @@ export default function RoutineManager({
             className="overflow-hidden border-b border-brand-500/20 bg-slate-900/80"
           >
             <div className="px-4 py-4 space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-brand-500">➕ Create New Routine</p>
+              <p className="text-xs font-black uppercase tracking-widest text-brand-500 flex items-center gap-1.5"><AppIcon name="plus" className="w-3.5 h-3.5" /> Create New Routine</p>
 
               {/* Emoji + Name */}
               <div className="flex gap-2">
                 <div className="flex gap-1 flex-wrap">
-                  {ROUTINE_EMOJIS.map(e => (
-                    <button key={e} onClick={() => setNewEmoji(e)} className={`text-lg w-8 h-8 rounded-lg flex items-center justify-center border cursor-pointer transition-all ${newEmoji === e ? 'border-brand-500 bg-brand-500/20' : 'border-slate-700 bg-slate-800 hover:border-brand-500/50'}`}>{e}</button>
+                  {ROUTINE_ICON_KEYS.map(e => (
+                    <button key={e} type="button" aria-label={`Icon: ${e}`} aria-pressed={newIcon === e} onClick={() => setNewIcon(e)} className={`w-8 h-8 rounded-lg flex items-center justify-center border cursor-pointer transition-all ${newIcon === e ? 'border-brand-500 bg-brand-500/20' : 'border-slate-700 bg-slate-800 hover:border-brand-500/50'}`}><AppIcon name={e} className="w-4 h-4" /></button>
                   ))}
                 </div>
               </div>
@@ -245,11 +245,11 @@ export default function RoutineManager({
       <div className="scroll-area">
         {routines.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-            <span className="text-5xl mb-4">🌅</span>
+            <AppIcon name="sunrise" className="w-14 h-14 mb-4 text-brand-400" strokeWidth={1.25} />
             <h3 className="text-sm font-black text-slate-300">No routines yet</h3>
             <p className="text-xs text-slate-500 mt-2 leading-relaxed">Create your first routine by tapping <strong className="text-brand-400">+ New</strong> above. Add adhkaar from the library and build your daily practice.</p>
             <button onClick={onNavigateToAdhkaar} className="mt-4 text-xs font-black text-brand-400 hover:text-brand-300 cursor-pointer">
-              📖 Browse Adhkaar Library →
+              Browse Adhkaar Library →
             </button>
           </div>
         ) : activeRoutine && (
@@ -260,13 +260,13 @@ export default function RoutineManager({
             completedTodayIds={completedTodayIds}
             isEditing={editingRoutineId === activeRoutine.id}
             editName={editName}
-            editEmoji={editEmoji}
+            editIcon={editIcon}
             editDhikrIds={editDhikrIds}
             editPickerSearch={editPickerSearch}
             showEditPicker={showEditPicker}
             editPickedDhikrs={editPickedDhikrs}
             onEditNameChange={setEditName}
-            onEditEmojiChange={setEditEmoji}
+            onEditIconChange={setEditIcon}
             onEditDhikrIdsChange={setEditDhikrIds}
             onEditPickerSearchChange={setEditPickerSearch}
             onToggleEditPicker={() => setShowEditPicker(v => !v)}
@@ -295,13 +295,13 @@ interface RoutineDetailProps {
   completedTodayIds: string[];
   isEditing: boolean;
   editName: string;
-  editEmoji: string;
+  editIcon: IconKey;
   editDhikrIds: string[];
   editPickerSearch: string;
   showEditPicker: boolean;
   editPickedDhikrs: Dhikr[];
   onEditNameChange: (v: string) => void;
-  onEditEmojiChange: (v: string) => void;
+  onEditIconChange: (v: string) => void;
   onEditDhikrIdsChange: (ids: string[]) => void;
   onEditPickerSearchChange: (v: string) => void;
   onToggleEditPicker: () => void;
@@ -315,8 +315,8 @@ interface RoutineDetailProps {
 
 function RoutineDetail({
   routine, customDhikrs, currentDhikrId, completedTodayIds,
-  isEditing, editName, editEmoji, editDhikrIds, editPickerSearch, showEditPicker, editPickedDhikrs,
-  onEditNameChange, onEditEmojiChange, onEditDhikrIdsChange, onEditPickerSearchChange,
+  isEditing, editName, editIcon, editDhikrIds, editPickerSearch, showEditPicker, editPickedDhikrs,
+  onEditNameChange, onEditIconChange, onEditDhikrIdsChange, onEditPickerSearchChange,
   onToggleEditPicker, onStartDhikr, onStartEdit, onCancelEdit, onSaveEdit, onDelete, onNavigateToAdhkaar,
 }: RoutineDetailProps) {
   const dhikrs = routine.dhikrIds.map(id => getDhikr(id, customDhikrs)).filter(Boolean) as Dhikr[];
@@ -351,7 +351,7 @@ function RoutineDetail({
         <div className="flex items-start justify-between mb-3">
           <div>
             <h2 className="text-base font-black text-brand-400 flex items-center gap-2">
-              <span className="text-xl">{routine.emoji}</span>
+              <AppIcon name={routine.icon} className="w-5 h-5" />
               {routine.name}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">{dhikrs.length} adhkaar in sequence</p>
@@ -362,14 +362,14 @@ function RoutineDetail({
                 <button
                   aria-label="Edit routine"
                   onClick={onStartEdit}
-                  className={`p-1.5 rounded-xl border cursor-pointer transition-all ${isEditing ? 'bg-brand-500/20 text-brand-400 border-brand-500/30' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-brand-400'}`}
+                  className={`tap-target rounded-xl border cursor-pointer transition-all ${isEditing ? 'bg-brand-500/20 text-brand-400 border-brand-500/30' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-brand-400'}`}
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                 </button>
                 <button
                   aria-label="Delete routine"
                   onClick={onDelete}
-                  className="p-1.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-400 hover:text-red-400 hover:border-red-500/30 cursor-pointer transition-all"
+                  className="tap-target rounded-xl border border-slate-700 bg-slate-800 text-slate-400 hover:text-red-400 hover:border-red-500/30 cursor-pointer transition-all"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -395,7 +395,7 @@ function RoutineDetail({
         {allComplete ? (
           <div className="w-full py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 font-black text-xs flex items-center justify-center gap-2">
             <Check className="w-3.5 h-3.5" />
-            Complete! Masha'Allah 🎉
+            Complete! Masha'Allah
           </div>
         ) : (
           <button
@@ -418,12 +418,12 @@ function RoutineDetail({
             className="overflow-hidden"
           >
             <div className="rounded-2xl border border-brand-500/30 bg-slate-900 p-4 space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-brand-500">✏️ Editing Routine</p>
+              <p className="text-xs font-black uppercase tracking-widest text-brand-500 flex items-center gap-1.5"><AppIcon name="edit" className="w-3.5 h-3.5" /> Editing Routine</p>
 
               {/* Emoji picker */}
               <div className="flex gap-1 flex-wrap">
-                {ROUTINE_EMOJIS.map(e => (
-                  <button key={e} onClick={() => onEditEmojiChange(e)} className={`text-lg w-8 h-8 rounded-lg flex items-center justify-center border cursor-pointer ${editEmoji === e ? 'border-brand-500 bg-brand-500/20' : 'border-slate-700 bg-slate-800'}`}>{e}</button>
+                {ROUTINE_ICON_KEYS.map(e => (
+                  <button key={e} type="button" aria-label={`Icon: ${e}`} aria-pressed={editIcon === e} onClick={() => onEditIconChange(e)} className={`w-8 h-8 rounded-lg flex items-center justify-center border cursor-pointer ${editIcon === e ? 'border-brand-500 bg-brand-500/20' : 'border-slate-700 bg-slate-800'}`}><AppIcon name={e} className="w-4 h-4" /></button>
                 ))}
               </div>
 
@@ -554,7 +554,7 @@ function RoutineDetail({
                     <button
                       aria-label={`Start reciting ${dhikr.nameEn}`}
                       onClick={() => onStartDhikr(dhikr.id)}
-                      className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-brand-400 hover:border-brand-500/30 transition-all cursor-pointer"
+                      className="tap-target rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-brand-400 hover:border-brand-500/30 transition-all cursor-pointer"
                     >
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
@@ -568,7 +568,7 @@ function RoutineDetail({
 
       {/* Browse library link */}
       <button onClick={onNavigateToAdhkaar} className="w-full py-3 rounded-xl border border-dashed border-slate-700 text-slate-400 text-xs font-black hover:border-brand-500/30 hover:text-brand-400 cursor-pointer transition-all flex items-center justify-center gap-2">
-        📖 Browse Adhkaar Library to discover more
+        Browse Adhkaar Library to discover more
       </button>
 
       <div className="h-4" />

@@ -376,9 +376,9 @@ export default function App() {
                   };
                   setRoutines(prev => [...prev, newRoutine]);
                 }}
-                onEditRoutine={(id, name, emoji, dhikrIds) => {
+                onEditRoutine={(id, name, icon, dhikrIds) => {
                   setRoutines(prev =>
-                    prev.map(r => r.id === id ? { ...r, name, emoji, dhikrIds } : r)
+                    prev.map(r => r.id === id ? { ...r, name, icon, dhikrIds } : r)
                   );
                 }}
                 onDeleteRoutine={(id) => {

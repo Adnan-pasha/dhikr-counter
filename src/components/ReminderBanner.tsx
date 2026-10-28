@@ -57,7 +57,7 @@ export default function ReminderBanner({
                 }}
                 className="px-3 py-1.5 rounded-xl bg-gradient-to-tr from-brand-500 to-brand-400 text-on-brand font-black text-[10px] shadow-md cursor-pointer hover:opacity-90 transition-opacity whitespace-nowrap"
               >
-                Start 📿
+                Start
               </button>
               <button
                 onClick={onDismiss}

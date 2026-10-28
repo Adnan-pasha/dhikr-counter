@@ -90,3 +90,13 @@ test('fonts are self-hosted, not loaded via render-blocking @import', () => {
   const css = read('src/index.css');
   assert.doesNotMatch(css, /@import url\(['"]https:\/\/fonts\.googleapis/);
 });
+
+test('persistence effects are gated on hydration so initial empty state never overwrites saved data', () => {
+  const hooks = read('src/hooks.ts');
+  const body = hooks.slice(hooks.indexOf('export const usePersistentAppState'), hooks.indexOf('interface DhikrActionDeps'));
+  const writes = body.match(/localStorage\.setItem\('tasbih_(dhikrs|current_id|current_count|history|preferences|reminders|favourites|routines|salah_logs)'/g) || [];
+  assert.equal(writes.length, 9, 'nine persisted slices');
+  const guarded = body.match(/hydrated[^\n]*localStorage\.setItem\('tasbih_|if \(!hydrated\) return;/g) || [];
+  assert.ok(guarded.length >= 9, `all persist effects check hydrated (found ${guarded.length})`);
+  assert.match(body, /setHydrated\(true\)/);
+});

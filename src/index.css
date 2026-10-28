@@ -1,11 +1,46 @@
 /* Fonts are self-hosted via @fontsource imports in main.tsx (no render-blocking @import). */
 @import "tailwindcss";
 
+/* Lateef is a compact face: size-adjust gives it the optical size of the Naskh/Kufi faces so
+   Arabic text does not look small beside the Latin UI. Only the Arabic subset is shipped. */
+@font-face {
+  font-family: "Lateef Adjusted";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 124%;
+  src: url("../node_modules/@fontsource/lateef/files/lateef-arabic-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Lateef Adjusted";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  size-adjust: 124%;
+  src: url("../node_modules/@fontsource/lateef/files/lateef-arabic-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Lateef Adjusted";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  size-adjust: 124%;
+  src: url("../node_modules/@fontsource/lateef/files/lateef-arabic-700-normal.woff2") format("woff2");
+}
+
 /* ─── Design Tokens ───────────────────────────────────────────────────────── */
 @theme {
-  --font-sans:    "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-arabic:  "Noto Naskh Arabic", "Amiri", serif;
+  --font-sans:    "Inter Variable", "Noto Naskh Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-arabic:  "Lateef Adjusted", "Noto Naskh Arabic", serif;
   --font-display: "Space Grotesk Variable", sans-serif;
+
+  /* Compact label sizes used by dense screens. Never below 12px for legibility. */
+  --text-2xs: 0.75rem;
+  --text-2xs--line-height: 1.1rem;
+  --text-3xs: 0.75rem;
+  --text-3xs--line-height: 1rem;
+  --text-4xs: 0.75rem;
+  --text-4xs--line-height: 1rem;
 
   /* App backgrounds */
   --color-bg-deep:    #08100E;

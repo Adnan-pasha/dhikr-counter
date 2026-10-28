@@ -6,6 +6,7 @@ import {
   RefreshCw, Star, Clock
 } from 'lucide-react';
 import { Dhikr, DhikrHistory, Routine, UserPreferences } from '../types';
+import { AppIcon, IconKey } from '../icons';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
 import { isTimestampOnLocalDay } from '../domain';
 
@@ -51,15 +52,15 @@ function getHijriDate(): string {
 }
 
 // Time of day greeting
-function getGreeting(): { text: string; emoji: string } {
+function getGreeting(): { text: string; icon: IconKey } {
   const h = new Date().getHours();
-  if (h >= 4 && h < 7)  return { text: 'Fajr Time',     emoji: '🌄' };
-  if (h >= 7 && h < 12) return { text: 'Good Morning',  emoji: '🌅' };
-  if (h >= 12 && h < 15) return { text: 'Good Afternoon', emoji: '☀️' };
-  if (h >= 15 && h < 18) return { text: 'Asr Time',     emoji: '🌤️' };
-  if (h >= 18 && h < 20) return { text: 'Maghrib Time', emoji: '🌇' };
-  if (h >= 20 && h < 22) return { text: 'Isha Time',    emoji: '🌙' };
-  return { text: 'Good Night',   emoji: '✨' };
+  if (h >= 4 && h < 7)  return { text: 'Fajr Time',     icon: 'fajr' };
+  if (h >= 7 && h < 12) return { text: 'Good Morning',  icon: 'morning' };
+  if (h >= 12 && h < 15) return { text: 'Good Afternoon', icon: 'dhuhr' };
+  if (h >= 15 && h < 18) return { text: 'Asr Time',     icon: 'asr' };
+  if (h >= 18 && h < 20) return { text: 'Maghrib Time', icon: 'maghrib' };
+  if (h >= 20 && h < 22) return { text: 'Isha Time',    icon: 'isha' };
+  return { text: 'Good Night',   icon: 'sparkles' };
 }
 
 // Daily ayah - rotates by day of year
@@ -155,7 +156,7 @@ export default function HomeScreen({
           <div className="flex items-start justify-between">
             <div>
               <p className="section-label" style={{ color: 'var(--color-text-brand)', opacity: 0.9 }}>
-                {greeting.emoji} {greeting.text}
+                <span className="inline-flex items-center gap-1.5"><AppIcon name={greeting.icon} className="w-3.5 h-3.5" />{greeting.text}</span>
               </p>
               <h1 className="font-display font-black text-2xl mt-0.5 leading-tight" style={{ color: 'var(--color-text-primary)' }}>
                 Dhikr Counter
@@ -268,7 +269,7 @@ export default function HomeScreen({
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">{routine.emoji}</span>
+                        <AppIcon name={routine.icon} className="w-5 h-5" />
                         <div>
                           <p className="text-xs font-black leading-tight" style={{ color: allDone ? '#10B981' : 'var(--color-text-primary)' }}>
                             {routine.name}
@@ -312,7 +313,7 @@ export default function HomeScreen({
         {favDhikrs.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-2.5">
-              <h2 className="section-label">❤️ Favourites</h2>
+              <h2 className="section-label inline-flex items-center gap-1.5"><AppIcon name="heart" className="w-3.5 h-3.5" /> Favourites</h2>
               <button onClick={() => onNavigateTo('adhkaar')} className="text-xs font-black cursor-pointer flex items-center gap-0.5" style={{ color: 'var(--color-text-brand)' }}>
                 All <ChevronRight className="w-3 h-3" />
               </button>
@@ -354,12 +355,12 @@ export default function HomeScreen({
           <h2 className="section-label mb-2.5">Explore</h2>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { icon: '📿', label: 'Counter',  tab: 'counter'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
-              { icon: '📖', label: 'Adhkaar',  tab: 'adhkaar'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
-              { icon: '🌅', label: 'Routines', tab: 'routine'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
-              { icon: '🕌', label: 'Salah',    tab: 'salah'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
-              { icon: '📗', label: 'Quran',    tab: 'quran'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
-              { icon: '🧭', label: 'Qibla',    tab: 'qibla'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: 'beads' as const, label: 'Counter',  tab: 'counter'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: 'quran' as const, label: 'Adhkaar',  tab: 'adhkaar'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: 'routines' as const, label: 'Routines', tab: 'routine'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: 'mosque' as const, label: 'Salah',    tab: 'salah'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: 'book' as const, label: 'Quran',    tab: 'quran'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: 'qibla' as const, label: 'Qibla',    tab: 'qibla'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
             ].map(({ icon, label, tab, bg, border, text }) => (
               <motion.button
                 key={tab}
@@ -368,7 +369,7 @@ export default function HomeScreen({
                 className="flex flex-col items-center gap-2 p-3 rounded-2xl cursor-pointer"
                 style={{ background: bg, border: `1px solid ${border}` }}
               >
-                <span className="text-2xl">{icon}</span>
+                <AppIcon name={icon} className="w-6 h-6" />
                 <span className="section-label" style={{ color: text }}>{label}</span>
               </motion.button>
             ))}

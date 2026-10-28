@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Coordinates, CalculationMethod, PrayerTimes, Madhab as AdhanMadhab } from 'adhan';
 import { getAzanSource } from '../azan';
+import { AppIcon } from '../icons';
 import { AppTheme, Madhab as UserMadhab, PrayerSettings, PrayerCalculationMethod, PrayerAzanId } from '../types';
 import { readPrayerSettings, writePrayerSettings } from '../domain';
 
@@ -808,7 +809,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
         // Trigger if within a 2-minute window after prayer time
         if (diffMs >= 0 && diffMs < 120000) {
           lastAlarmTriggerTime.current = currentMinKey;
-          setAzanAlert(`🕌 ${p.label} Prayer Time`);
+          setAzanAlert(`${p.label} Prayer Time`);
           playAzan(azanUrls, `${p.label} Prayer`);
         }
       });
@@ -902,7 +903,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-950"></span>
               </span>
               <p className="line-clamp-1">
-                🕌 Now Broadcasting: <span className="font-extrabold">{playingAlarmName || 'Adhan'}</span> ({getAzanSource(selectedAzanSound).label})
+                <AppIcon name="mosque" className="w-4 h-4 inline -mt-0.5 mr-1" /> Now Broadcasting: <span className="font-extrabold">{playingAlarmName || 'Adhan'}</span> ({getAzanSource(selectedAzanSound).label})
               </p>
             </div>
             <button
@@ -975,7 +976,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <span className="text-xs shrink-0 leading-none">🕌</span>
+            <AppIcon name="mosque" className="w-3.5 h-3.5 shrink-0" />
             Namaz & Azan
           </button>
         </div>
@@ -1042,8 +1043,8 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                   {searchQuery === '' && (
                     <div className="flex flex-wrap gap-1 items-center pb-1 border-b border-slate-900 bg-transparent shrink-0">
                       {[
-                        { name: 'Mecca 🕋', query: 'Mecca' },
-                        { name: 'Medina 🕌', query: 'Medina' },
+                        { name: 'Mecca', query: 'Mecca' },
+                        { name: 'Medina', query: 'Medina' },
                         { name: 'London 🇬🇧', query: 'London' },
                         { name: 'Jakarta 🇮🇩', query: 'Jakarta' },
                         { name: 'Cairo 🇪🇬', query: 'Cairo' },
@@ -1165,10 +1166,10 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             >
               <div className="absolute inset-4 rounded-full border border-dashed border-slate-850/40" />
 
-              <span className="absolute top-3 font-semibold text-xs tracking-wider text-red-500 font-mono">N</span>
-              <span className="absolute bottom-3 font-semibold text-xs tracking-wider text-slate-500 font-mono">S</span>
-              <span className="absolute left-3 font-semibold text-xs tracking-wider text-slate-500 font-mono">W</span>
-              <span className="absolute right-3 font-semibold text-xs tracking-wider text-slate-500 font-mono">E</span>
+              <span className="absolute top-7 font-bold text-sm tracking-wider text-red-500 font-mono">N</span>
+              <span className="absolute bottom-7 font-bold text-sm tracking-wider text-slate-300 font-mono">S</span>
+              <span className="absolute left-7 font-bold text-sm tracking-wider text-slate-300 font-mono">W</span>
+              <span className="absolute right-7 font-bold text-sm tracking-wider text-slate-300 font-mono">E</span>
 
               {[...Array(12)].map((_, i) => (
                 <div 
@@ -1376,7 +1377,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             
             {/* Animated background mosque dome silhouette trace */}
             <div className="absolute right-2 -bottom-4 opacity-[0.03] select-none pointer-events-none">
-              <span className="text-[120px]">🕌</span>
+              <AppIcon name="mosque" className="w-32 h-32" strokeWidth={1} />
             </div>
 
             {/* Top row with location & state details */}
@@ -1431,7 +1432,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
           {azanAlert && (
             <div className="mx-1 mb-3 p-4 rounded-2xl bg-brand-500/10 border border-brand-500/40 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">🕌</span>
+                <AppIcon name="mosque" className="w-7 h-7" />
                 <div>
                   <p className="text-sm font-black text-brand-400">{azanAlert}</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">It is time for prayer. Allahu Akbar!</p>
@@ -1470,7 +1471,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                     <div className="flex items-center gap-3 bg-transparent">
                       {/* Prayer Number / Icon */}
                       <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black font-mono ${isActive ? 'bg-brand-500 text-on-brand' : 'bg-slate-900 text-slate-400'}`}>
-                        {p.id === 'sunrise' ? '☀️' : (index === 0 ? '➊' : index === 1 ? '➋' : index === 2 ? '➌' : index === 3 ? '➍' : index === 4 ? '➎' : '➏')}
+                        {p.id === 'sunrise' ? <AppIcon name="sunrise" className="w-3.5 h-3.5" /> : index + 1}
                       </div>
                       
                       {/* Labels */}
@@ -1518,7 +1519,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                       ) : (
                         // Sunrise does not sound an Azan, show sun placeholder
                         <div className="w-6.5 h-6.5 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 select-none">
-                          ☀️
+                          <AppIcon name="sunrise" className="w-3.5 h-3.5" />
                         </div>
                       )}
                     </div>

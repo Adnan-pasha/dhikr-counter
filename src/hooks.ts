@@ -2,6 +2,7 @@ import React from 'react';
 import { useEffect } from 'react';
 import { DhikrReminder, UserPreferences, Routine, SalahLog, ConfirmModalState } from './types';
 import { DEFAULT_ROUTINES } from './adhkaar-data';
+import { normalizeRoutine } from './icons';
 import { findDueReminders, shouldTriggerReminderOccurrence, findCatchUpReminderCandidates, findMissedReminderCandidates, parseStoredArray } from './domain';
 import { playBeadSound, playCompletionSound } from './audio';
 import { trackEvent } from './telemetry';
@@ -118,19 +119,21 @@ export const usePersistentAppState = (
     salahLogs: SalahLog[];
   },
 ) => {
+  const [hydrated, setHydrated] = React.useState(false);
+
   useEffect(() => {
-    const hydrated = migrateAndHydrateStorage({
+    const stored = migrateAndHydrateStorage({
       defaultDhikrs: defaults.defaultDhikrs,
       defaultPreferences: defaults.defaultPreferences,
       defaultReminders: defaults.defaultReminders,
     });
 
-    setters.setDhikrs(hydrated.dhikrs);
-    setters.setCurrentDhikrId(hydrated.currentDhikrId);
-    setters.setCurrentCount(hydrated.currentCount);
-    setters.setHistory(hydrated.history);
-    setters.setPreferences(hydrated.preferences);
-    setters.setReminders(hydrated.reminders);
+    setters.setDhikrs(stored.dhikrs);
+    setters.setCurrentDhikrId(stored.currentDhikrId);
+    setters.setCurrentCount(stored.currentCount);
+    setters.setHistory(stored.history);
+    setters.setPreferences(stored.preferences);
+    setters.setReminders(stored.reminders);
     const isId = (v: unknown): v is string => typeof v === 'string';
     const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
     setters.setFavouriteIds(parseStoredArray(localStorage.getItem('tasbih_favourites'), [], isId));
@@ -140,26 +143,31 @@ export const usePersistentAppState = (
       DEFAULT_ROUTINES,
       (v): v is Routine => isRecord(v) && typeof v.id === 'string' && typeof v.name === 'string' && Array.isArray(v.dhikrIds),
     );
-    setters.setRoutines(savedRoutines);
+    setters.setRoutines(savedRoutines.map(normalizeRoutine));
     setters.setSalahLogs(
       parseStoredArray<SalahLog>(localStorage.getItem('tasbih_salah_logs'), [], (v): v is SalahLog => isRecord(v)),
     );
+    setHydrated(true);
   }, []);
 
+  // Persist only after hydration. Before it, `state` holds the empty initial values; writing
+  // them would overwrite saved data (React StrictMode re-runs the load effect in development
+  // and would then read back the overwritten values).
   useEffect(() => {
-    if (state.dhikrs.length > 0) localStorage.setItem('tasbih_dhikrs', JSON.stringify(state.dhikrs));
-  }, [state.dhikrs]);
-  useEffect(() => { localStorage.setItem('tasbih_current_id', state.currentDhikrId); }, [state.currentDhikrId]);
-  useEffect(() => { localStorage.setItem('tasbih_current_count', String(state.currentCount)); }, [state.currentCount]);
+    if (hydrated && state.dhikrs.length > 0) localStorage.setItem('tasbih_dhikrs', JSON.stringify(state.dhikrs));
+  }, [hydrated, state.dhikrs]);
+  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_current_id', state.currentDhikrId); }, [hydrated, state.currentDhikrId]);
+  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_current_count', String(state.currentCount)); }, [hydrated, state.currentCount]);
   useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem('tasbih_history', JSON.stringify(state.history));
     setters.setStreak(computeStreak(state.history));
-  }, [state.history]);
-  useEffect(() => { localStorage.setItem('tasbih_preferences', JSON.stringify(state.preferences)); }, [state.preferences]);
-  useEffect(() => { localStorage.setItem('tasbih_reminders', JSON.stringify(state.reminders)); }, [state.reminders]);
-  useEffect(() => { localStorage.setItem('tasbih_favourites', JSON.stringify(state.favouriteIds)); }, [state.favouriteIds]);
-  useEffect(() => { localStorage.setItem('tasbih_routines', JSON.stringify(state.routines)); }, [state.routines]);
-  useEffect(() => { localStorage.setItem('tasbih_salah_logs', JSON.stringify(state.salahLogs)); }, [state.salahLogs]);
+  }, [hydrated, state.history]);
+  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_preferences', JSON.stringify(state.preferences)); }, [hydrated, state.preferences]);
+  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_reminders', JSON.stringify(state.reminders)); }, [hydrated, state.reminders]);
+  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_favourites', JSON.stringify(state.favouriteIds)); }, [hydrated, state.favouriteIds]);
+  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_routines', JSON.stringify(state.routines)); }, [hydrated, state.routines]);
+  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_salah_logs', JSON.stringify(state.salahLogs)); }, [hydrated, state.salahLogs]);
 };
 
 
