@@ -1,41 +1,106 @@
-/* ─── Fonts ───────────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+/* Fonts are self-hosted via @fontsource imports in main.tsx (no render-blocking @import). */
 @import "tailwindcss";
+
+/* Lateef is a compact face: size-adjust gives it the optical size of the Naskh/Kufi faces so
+   Arabic text does not look small beside the Latin UI. Only the Arabic subset is shipped. */
+@font-face {
+  font-family: "Lateef Adjusted";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  size-adjust: 124%;
+  src: url("../node_modules/@fontsource/lateef/files/lateef-arabic-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Lateef Adjusted";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  size-adjust: 124%;
+  src: url("../node_modules/@fontsource/lateef/files/lateef-arabic-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Lateef Adjusted";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  size-adjust: 124%;
+  src: url("../node_modules/@fontsource/lateef/files/lateef-arabic-700-normal.woff2") format("woff2");
+}
 
 /* ─── Design Tokens ───────────────────────────────────────────────────────── */
 @theme {
-  --font-sans:    "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-arabic:  "Noto Naskh Arabic", "Amiri", serif;
-  --font-display: "Space Grotesk", sans-serif;
+  --font-sans:    "Inter Variable", "Noto Naskh Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-arabic:  "Lateef Adjusted", "Noto Naskh Arabic", serif;
+  --font-display: "Space Grotesk Variable", sans-serif;
+
+  /* Compact label sizes used by dense screens. Never below 12px for legibility. */
+  --text-2xs: 0.75rem;
+  --text-2xs--line-height: 1.1rem;
+  --text-3xs: 0.75rem;
+  --text-3xs--line-height: 1rem;
+  --text-4xs: 0.75rem;
+  --text-4xs--line-height: 1rem;
 
   /* App backgrounds */
-  --color-bg-deep:    #090E1A;
-  --color-bg-base:    #0B1120;
-  --color-bg-surface: #111827;
-  --color-bg-raised:  #1A2438;
-  --color-bg-overlay: #1E2D40;
+  --color-bg-deep:    #08100E;
+  --color-bg-base:    #0A1411;
+  --color-bg-surface: #0F1B17;
+  --color-bg-raised:  #16261F;
+  --color-bg-overlay: #1D3128;
 
   /* Borders */
-  --color-border:       #1E2D40;
-  --color-border-muted: #162032;
-  --color-border-glow:  rgba(251,191,36,0.35);
+  --color-border:       #1D3128;
+  --color-border-muted: #14221C;
+  --color-border-glow:  rgba(52,211,160,0.35);
 
   /* Text — all WCAG AA compliant on dark bg */
-  --color-text-primary:   #F1F5F9;   /* contrast ~15:1 */
-  --color-text-secondary: #CBD5E1;   /* contrast ~8:1  */
-  --color-text-muted:     #94A3B8;   /* contrast ~4.6:1 */
-  --color-text-brand:     #FBBF24;   /* amber-400 — bright on dark */
+  --color-text-primary:   #F1F7F4;   /* contrast ~16:1 */
+  --color-text-secondary: #CFE0D8;   /* contrast ~13:1 */
+  --color-text-muted:     #93ADA1;   /* contrast ~7:1  */
+  --color-text-brand:     #34D3A0;   /* brand-400 */
 
-  /* Brand */
-  --color-brand:        #FBBF24;
-  --color-brand-dim:    rgba(251,191,36,0.12);
-  --color-brand-border: rgba(251,191,36,0.30);
+  /* Brand: teal-green. Amber is reserved for streaks and warnings. */
+  --color-brand:        #34D3A0;
+  --color-brand-dim:    rgba(52,211,160,0.12);
+  --color-brand-border: rgba(52,211,160,0.30);
+
+  --color-brand-50:  #ECFDF6;
+  --color-brand-100: #D1FAEA;
+  --color-brand-200: #A7F3D8;
+  --color-brand-300: #5EEAB5;
+  --color-brand-400: #34D3A0;
+  --color-brand-500: #14B88A;
+  --color-brand-600: #0A9A73;
+  --color-brand-700: #087F5F;
+  --color-brand-800: #0A6650;
+  --color-brand-900: #0B4F40;
+  --color-brand-950: #052E27;
+
+  /* Dark neutral scale: green-tinted replacement for Tailwind's blue-grey slate.
+     50-500 are text shades (AA on the dark surfaces above); 600-950 are surfaces/borders. */
+  --color-slate-50:  #F1F7F4;
+  --color-slate-100: #E3EEE9;
+  --color-slate-200: #CFE0D8;
+  --color-slate-300: #B4CBC1;
+  --color-slate-400: #93ADA1;
+  --color-slate-500: #7A9488;
+  --color-slate-600: #3B5248;
+  --color-slate-700: #24382F;
+  --color-slate-800: #162620;
+  --color-slate-900: #0E1A16;
+  --color-slate-950: #070E0C;
 
   /* Status */
   --color-success:      #34D399;
   --color-success-dim:  rgba(52,211,153,0.12);
   --color-danger:       #F87171;
   --color-info:         #818CF8;
+
+  /* Bottom navigation */
+  --nav-bg:         #09120F;
+  --nav-inactive:   #93ADA1;
+  --nav-active-bg:  rgba(52,211,160,0.14);
 }
 
 /* ─── Global Reset ────────────────────────────────────────────────────────── */
@@ -71,6 +136,19 @@ body {
 /* ─── Layout utilities ────────────────────────────────────────────────────── */
 @layer utilities {
 
+  /* Minimum 44x44 touch target (WCAG 2.5.8 / platform guidelines). */
+  /* Dark text for use on brand-coloured fills (AA on brand-500 in both modes). */
+  .text-on-brand { color: #070E0C; }
+
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+
   /* ── Screen shell ──────────────────────────────────────────────── */
   .screen {
     display: flex;
@@ -88,7 +166,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background: rgba(17,24,39,0.90);
+    background: color-mix(in srgb, var(--color-bg-surface) 90%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--color-border-muted);
@@ -237,8 +315,8 @@ body {
 
   /* ── Buttons ───────────────────────────────────────────────────── */
   .btn-primary {
-    background: linear-gradient(135deg, #FBBF24, #F97316);
-    color: #0B1120;
+    background: linear-gradient(135deg, var(--color-brand-400), var(--color-brand-500));
+    color: #070E0C;
     font-weight: 900;
     font-size: 0.875rem;   /* 14px */
     border-radius: 0.875rem;
@@ -246,7 +324,7 @@ body {
     cursor: pointer;
     border: none;
     transition: all 0.15s;
-    box-shadow: 0 4px 20px rgba(251,191,36,0.22);
+    box-shadow: 0 4px 20px rgba(20,184,138,0.28);
     min-height: 44px;
     display: flex;
     align-items: center;
@@ -288,8 +366,8 @@ body {
     min-height: 48px;
   }
   .input-field:focus {
-    border-color: rgba(251,191,36,0.5);
-    box-shadow: 0 0 0 3px rgba(251,191,36,0.08);
+    border-color: var(--color-brand-border);
+    box-shadow: 0 0 0 3px var(--color-brand-dim);
   }
   .input-field::placeholder { color: var(--color-text-muted); font-size: 0.875rem; }
 
@@ -303,7 +381,7 @@ body {
   .progress-fill {
     height: 100%;
     border-radius: 9999px;
-    background: linear-gradient(90deg, #FBBF24, #F97316);
+    background: linear-gradient(90deg, var(--color-brand-400), var(--color-brand-500));
     transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
   }
 
@@ -361,21 +439,25 @@ body {
 
   --color-border:       #E2E5EB;
   --color-border-muted: #EAECF1;
-  --color-border-glow:  rgba(217,119,6,0.30);
+  --color-border-glow:  rgba(6,115,85,0.30);
 
   --color-text-primary:   #0F172A;
   --color-text-secondary: #334155;
   --color-text-muted:     #64748B;
-  --color-text-brand:     #D97706;
+  --color-text-brand:     #067355;
 
-  --color-brand:        #D97706;
-  --color-brand-dim:    rgba(217,119,6,0.10);
-  --color-brand-border: rgba(217,119,6,0.28);
+  --color-brand:        #067355;
+  --color-brand-dim:    rgba(6,115,85,0.10);
+  --color-brand-border: rgba(6,115,85,0.28);
 
   --color-success:      #059669;
   --color-success-dim:  rgba(5,150,105,0.10);
   --color-danger:       #DC2626;
   --color-info:         #4F46E5;
+
+  --nav-bg:         #FFFFFF;
+  --nav-inactive:   #475569;
+  --nav-active-bg:  rgba(6,115,85,0.12);
 
   color-scheme: light;
 }
@@ -389,43 +471,71 @@ body {
   box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
 }
 
-[data-theme="light"] .screen-header {
-  background: rgba(255,255,255,0.92);
-}
-
-/* ─── Light Mode: Slate Utility Class Remapping ───────────────────────────
-   Components built before the design-token pass use Tailwind slate-*
-   classes directly. Rather than touching every call site, we remap them
-   here so visual hierarchy (bg < raised < overlay, text dark→light)
-   inverts correctly and predictably in light mode. Opacity modifiers
-   (e.g. bg-slate-900/60) are preserved by Tailwind and apply on top of
-   the remapped colour. ────────────────────────────────────────────────── */
-
+/* ─── Light Mode: Palette Remap ───────────────────────────────────────────────
+   Tailwind v4 utilities read their colours from CSS variables (bg-slate-800 ->
+   var(--color-slate-800)), including opacity variants such as bg-slate-900/60.
+   Remapping the variables here inverts the dark-first slate scale and darkens the
+   accent text shades for light mode, with no !important and no per-class rules.
+   Roles by usage: 50-500 are text, 700-900 are surfaces/borders. Every text shade
+   is AA (>= 4.5:1) on white and on #F1F5F9; tests/theme.test.mjs enforces this.
+   slate-950 is a surface shade here too (the deepest panel); text on brand fills uses
+   .text-on-brand and modal scrims use bg-black/60. ────────────────────────────────────────── */
 [data-theme="light"] {
-  /* Backgrounds: dark slate → light surfaces, preserving elevation order */
-  .bg-slate-950, .bg-slate-900, .bg-\[\#0f172a\] { background-color: #FFFFFF !important; }
-  .bg-slate-800  { background-color: #F0F2F6 !important; }
-  .bg-slate-750, .bg-slate-705, .bg-slate-700 { background-color: #E5E8EE !important; }
-  .bg-slate-600  { background-color: #D8DCE3 !important; }
-  .bg-slate-300, .bg-slate-100 { background-color: #F4F6F9 !important; }
+  --color-slate-50:  #0F172A;
+  --color-slate-100: #0F172A;
+  --color-slate-200: #1E293B;
+  --color-slate-300: #334155;
+  --color-slate-400: #475569;
+  --color-slate-500: #566377;
+  --color-slate-600: #94A3B8;
+  --color-slate-700: #E2E8F0;
+  --color-slate-800: #F1F5F9;
+  --color-slate-900: #FFFFFF;
+  --color-slate-950: #FFFFFF;
 
-  /* Text: light slate (readable on dark) → dark slate (readable on light) */
-  .text-slate-50,  .text-slate-100, .text-slate-150 { color: #0F172A !important; }
-  .text-slate-200, .text-slate-300, .text-slate-350 { color: #1E293B !important; }
-  .text-slate-400 { color: #475569 !important; } /* still 4.6:1+ on white */
-  .text-slate-450, .text-slate-500, .text-slate-600, .text-slate-650 { color: #64748B !important; }
-  .text-slate-700 { color: #64748B !important; }
-  .text-slate-950 { color: #FFFFFF !important; } /* inverted: was dark-on-light, now light-on-dark accents */
-
-  /* Borders: dark slate borders → light borders, same elevation logic */
-  .border-slate-900, .border-slate-850, .border-slate-805, .border-slate-800 { border-color: #E2E5EB !important; }
-  .border-slate-700, .border-slate-600 { border-color: #D8DCE3 !important; }
-  .border-slate-500, .border-slate-400\/40 { border-color: #CBD5E1 !important; }
-
-  /* Divide utilities (used for list separators) */
-  .divide-slate-800 > :not([hidden]) ~ :not([hidden]) { border-color: #E2E5EB !important; }
+  --color-brand-300:   #067355;
+  --color-brand-400:   #067355;
+  --color-amber-300:   #B45309;
+  --color-amber-400:   #92400E;
+  --color-emerald-300: #047857;
+  --color-emerald-400: #047857;
+  --color-indigo-300:  #4338CA;
+  --color-indigo-400:  #4338CA;
+  --color-rose-300:    #BE123C;
+  --color-rose-400:    #BE123C;
+  --color-teal-300:    #0F766E;
+  --color-teal-400:    #0F766E;
+  --color-cyan-300:    #0E7490;
+  --color-cyan-400:    #0E7490;
+  --color-violet-300:  #6D28D9;
+  --color-violet-400:  #6D28D9;
+  --color-yellow-300:  #854D0E;
+  --color-yellow-400:  #854D0E;
+  --color-orange-300:  #C2410C;
+  --color-orange-400:  #C2410C;
+  --color-red-300:     #B91C1C;
+  --color-red-400:     #B91C1C;
+  --color-sky-300:     #0369A1;
+  --color-sky-400:     #0369A1;
 }
 
 /* Amber/orange gradient buttons stay vivid in both modes — no override needed.
    Status colours (emerald/rose/indigo) keep sufficient contrast via their
    own /10–/20 opacity backgrounds in both themes, verified manually. */
+
+/* ─── Accessibility ───────────────────────────────────────────────────────── */
+/* Keyboard focus must always be visible; overrides per-component focus:outline-none. */
+:focus-visible {
+  outline: 2px solid var(--color-brand) !important;
+  outline-offset: 2px !important;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

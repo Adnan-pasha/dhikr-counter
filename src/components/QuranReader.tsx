@@ -156,7 +156,7 @@ export default function QuranReader({
                   const s = surahs.find(s => s.number === lastReadSurah);
                   if (s) loadSurah(s);
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 cursor-pointer hover:bg-amber-500/25 transition-all"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold bg-brand-500/15 text-brand-400 border border-brand-500/30 cursor-pointer hover:bg-brand-500/25 transition-all"
               >
                 <BookMarked className="w-4 h-4" />
               </button>
@@ -172,7 +172,7 @@ export default function QuranReader({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search by name or number..."
-              className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+              className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 cursor-pointer">
@@ -186,7 +186,7 @@ export default function QuranReader({
         <div className="flex-1 overflow-y-auto">
           {loadingSurahs ? (
             <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-3" />
+              <Loader2 className="w-8 h-8 text-brand-500 animate-spin mb-3" />
               <p className="text-sm text-slate-400 font-medium">Loading Quran...</p>
             </div>
           ) : surahError ? (
@@ -196,7 +196,7 @@ export default function QuranReader({
               <p className="text-xs text-slate-500 mt-1">Check your internet connection</p>
               <button
                 onClick={() => { setSurahError(false); setLoadingSurahs(true); }}
-                className="mt-4 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 text-xs font-black cursor-pointer"
+                className="mt-4 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-500/15 text-brand-400 border border-brand-500/30 text-xs font-black cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Retry
               </button>
@@ -213,11 +213,11 @@ export default function QuranReader({
                     animate={{ opacity: 1 }}
                     transition={{ delay: Math.min(idx * 0.01, 0.3) }}
                     onClick={() => loadSurah(surah)}
-                    className={`w-full flex items-center gap-4 px-4 py-3.5 text-left cursor-pointer transition-all hover:bg-slate-800/40 ${isLastRead ? 'bg-amber-500/5' : ''}`}
+                    className={`w-full flex items-center gap-4 px-4 py-3.5 text-left cursor-pointer transition-all hover:bg-slate-800/40 ${isLastRead ? 'bg-brand-500/5' : ''}`}
                   >
                     {/* Number circle */}
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-black border ${
-                      isLastRead ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-slate-800 border-slate-700 text-slate-400'
+                      isLastRead ? 'bg-brand-500/20 border-brand-500/40 text-brand-400' : 'bg-slate-800 border-slate-700 text-slate-400'
                     }`}>
                       {surah.number}
                     </div>
@@ -227,11 +227,11 @@ export default function QuranReader({
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-black text-slate-100">{surah.englishName}</p>
                         {isLastRead && (
-                          <span className="text-xs font-black px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                          <span className="text-xs font-black px-1.5 py-0.5 rounded-full bg-brand-500/15 text-brand-400 border border-brand-500/25">
                             Last Read
                           </span>
                         )}
-                        {hasBookmark && <Bookmark className="w-3 h-3 text-amber-400 fill-amber-400" />}
+                        {hasBookmark && <Bookmark className="w-3 h-3 text-brand-400 fill-brand-400" />}
                       </div>
                       <p className="text-xs text-slate-400 mt-0.5">{surah.englishNameTranslation} · {surah.numberOfAyahs} ayahs · {surah.revelationType}</p>
                     </div>
@@ -254,7 +254,7 @@ export default function QuranReader({
     <div className="screen">
 
       {/* Reader header */}
-      <div className="px-4 pt-3 pb-3" style={{ background: 'rgba(17,24,39,0.92)', borderBottom: '1px solid var(--color-border-muted)' }}>
+      <div className="px-4 pt-3 pb-3" style={{ background: 'color-mix(in srgb, var(--color-bg-surface) 92%, transparent)', borderBottom: '1px solid var(--color-border-muted)' }}>
         <div className="flex items-center gap-2">
           {/* Back */}
           <button
@@ -277,7 +277,7 @@ export default function QuranReader({
             {/* Font size */}
             <button
               onClick={() => setFontSize(f => (f + 1) % FONT_SIZES.length)}
-              className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-xs font-black flex items-center justify-center cursor-pointer hover:text-amber-400 transition-all"
+              className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-xs font-black flex items-center justify-center cursor-pointer hover:text-brand-400 transition-all"
             >
               {FONT_LABELS[fontSize]}
             </button>
@@ -287,7 +287,7 @@ export default function QuranReader({
               onClick={() => setShowTranslation(v => !v)}
               aria-label="Toggle translation"
               className={`p-1.5 rounded-lg border cursor-pointer transition-all ${
-                showTranslation ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'
+                showTranslation ? 'bg-brand-500/20 text-brand-400 border-brand-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'
               }`}
             >
               <AlignJustify className="w-3.5 h-3.5" />
@@ -298,7 +298,7 @@ export default function QuranReader({
               onClick={() => setShowJuzMenu(v => !v)}
               aria-label="Jump to Juz"
               className={`p-1.5 rounded-lg border cursor-pointer transition-all ${
-                showJuzMenu ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'
+                showJuzMenu ? 'bg-brand-500/20 text-brand-400 border-brand-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'
               }`}
             >
               <List className="w-3.5 h-3.5" />
@@ -323,9 +323,9 @@ export default function QuranReader({
                       const s = surahs.find(s => s.number === j.surah);
                       if (s) { loadSurah(s); setShowJuzMenu(false); }
                     }}
-                    className="shrink-0 flex flex-col items-center px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 cursor-pointer hover:border-amber-500/40 hover:text-amber-400 transition-all"
+                    className="shrink-0 flex flex-col items-center px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 cursor-pointer hover:border-brand-500/40 hover:text-brand-400 transition-all"
                   >
-                    <span className="text-xs font-black uppercase tracking-widest text-amber-500">Juz {j.juz}</span>
+                    <span className="text-xs font-black uppercase tracking-widest text-brand-500">Juz {j.juz}</span>
                     <span className="text-xs text-slate-400 mt-0.5">{j.label}</span>
                   </button>
                 ))}
@@ -339,7 +339,7 @@ export default function QuranReader({
       <div ref={readerRef} className="flex-1 overflow-y-auto">
         {loadingAyahs ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-amber-500 animate-spin mb-3" />
+            <Loader2 className="w-8 h-8 text-brand-500 animate-spin mb-3" />
             <p className="text-sm text-slate-400 font-medium">Loading {activeSurah?.englishName}...</p>
           </div>
         ) : ayahError ? (
@@ -348,7 +348,7 @@ export default function QuranReader({
             <p className="text-sm font-black text-slate-300">Could not load ayahs</p>
             <button
               onClick={() => activeSurah && loadSurah(activeSurah)}
-              className="mt-4 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500/15 text-amber-400 text-xs font-black cursor-pointer"
+              className="mt-4 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-500/15 text-brand-400 text-xs font-black cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" /> Retry
             </button>
@@ -359,7 +359,7 @@ export default function QuranReader({
             {/* Bismillah (all except Al-Fatihah (1) and At-Tawbah (9)) */}
             {activeSurah && activeSurah.number !== 9 && (
               <div className="text-center mb-6 py-3 border-b border-slate-800/60">
-                <p className="text-xl font-arabic text-amber-400/90 leading-loose">{BASMALA}</p>
+                <p className="text-xl font-arabic text-brand-400/90 leading-loose">{BASMALA}</p>
               </div>
             )}
 
@@ -375,12 +375,12 @@ export default function QuranReader({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: Math.min(idx * 0.02, 0.5) }}
-                  className={`mb-4 pb-4 border-b border-slate-800/40 last:border-0 ${isBookmarked ? 'bg-amber-500/5 -mx-2 px-2 rounded-xl' : ''}`}
+                  className={`mb-4 pb-4 border-b border-slate-800/40 last:border-0 ${isBookmarked ? 'bg-brand-500/5 -mx-2 px-2 rounded-xl' : ''}`}
                 >
                   {/* Ayah number + bookmark */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 text-xs font-black flex items-center justify-center">
+                      <span className="w-7 h-7 rounded-full bg-brand-500/15 border border-brand-500/25 text-brand-400 text-xs font-black flex items-center justify-center">
                         {ayah.numberInSurah}
                       </span>
                       <span className="text-xs text-slate-500">Juz {ayah.juz} · Page {ayah.page}</span>
@@ -389,10 +389,10 @@ export default function QuranReader({
                       onClick={() => onBookmarkToggle(bookmarkKey)}
                       aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark ayah'}
                       className={`p-1.5 rounded-lg border cursor-pointer transition-all ${
-                        isBookmarked ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-slate-800/50 text-slate-600 border-slate-700/50 hover:text-amber-400'
+                        isBookmarked ? 'bg-brand-500/20 text-brand-400 border-brand-500/30' : 'bg-slate-800/50 text-slate-600 border-slate-700/50 hover:text-brand-400'
                       }`}
                     >
-                      <Bookmark className={`w-3 h-3 ${isBookmarked ? 'fill-amber-400' : ''}`} />
+                      <Bookmark className={`w-3 h-3 ${isBookmarked ? 'fill-brand-400' : ''}`} />
                     </button>
                   </div>
 
@@ -423,7 +423,7 @@ export default function QuranReader({
               <button
                 onClick={() => goToSurah(-1)}
                 disabled={!activeSurah || activeSurah.number <= 1}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-700 bg-slate-800/60 text-slate-300 text-xs font-black cursor-pointer hover:border-amber-500/30 hover:text-amber-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-700 bg-slate-800/60 text-slate-300 text-xs font-black cursor-pointer hover:border-brand-500/30 hover:text-brand-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Previous Surah
@@ -431,7 +431,7 @@ export default function QuranReader({
               <button
                 onClick={() => goToSurah(1)}
                 disabled={!activeSurah || activeSurah.number >= 114}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-700 bg-slate-800/60 text-slate-300 text-xs font-black cursor-pointer hover:border-amber-500/30 hover:text-amber-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-700 bg-slate-800/60 text-slate-300 text-xs font-black cursor-pointer hover:border-brand-500/30 hover:text-brand-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 Next Surah
                 <ChevronRight className="w-4 h-4" />

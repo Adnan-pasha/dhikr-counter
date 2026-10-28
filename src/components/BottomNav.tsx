@@ -69,7 +69,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           >
             {/* Handle */}
             <div className="flex justify-center pt-3 pb-2">
-              <div className="w-10 h-1 rounded-full bg-slate-700" />
+              <div className="w-10 h-1 rounded-full" style={{ background: 'var(--color-border)' }} />
             </div>
 
             {/* Header */}
@@ -103,7 +103,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                       style={{
-                        background: isActive ? 'rgba(251,191,36,0.20)' : 'var(--color-bg-raised)',
+                        background: isActive ? 'var(--nav-active-bg)' : 'var(--color-bg-raised)',
                         color: isActive ? 'var(--color-text-brand)' : 'var(--color-text-muted)',
                       }}
                     >
@@ -128,10 +128,10 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         className="shrink-0 flex items-center justify-around px-1 select-none z-30 relative pb-safe"
         style={{
           height: '68px',
-          background: 'rgba(9,14,26,0.96)',
+          background: 'var(--nav-bg)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderTop: '1px solid rgba(255,255,255,0.07)',
+          borderTop: '1px solid var(--color-border)',
         }}
       >
         {PRIMARY_TABS.map(tab => {
@@ -149,19 +149,19 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                 <motion.div
                   layoutId="nav-active-pill"
                   className="absolute top-1 left-1/2 -translate-x-1/2 w-12 h-9 rounded-xl"
-                  style={{ background: 'rgba(251,191,36,0.12)' }}
+                  style={{ background: 'var(--nav-active-bg)' }}
                   transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                 />
               )}
-              <span className="relative z-10 transition-colors duration-150" style={{ color: isActive ? 'var(--color-text-brand)' : '#64748B' }}>
+              <span className="relative z-10 transition-colors duration-150" style={{ color: isActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)' }}>
                 {tab.icon}
               </span>
               {/* 12px minimum for tab labels */}
               <span
                 className="relative z-10 transition-colors duration-150 font-semibold"
                 style={{
-                  fontSize: '0.6875rem', /* 11px — nav label exception, smaller due to 5 tabs */
-                  color: isActive ? 'var(--color-text-brand)' : '#64748B',
+                  fontSize: '0.75rem', /* 12px — minimum readable label size */
+                  color: isActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)',
                   letterSpacing: '0.02em',
                 }}
               >
@@ -182,17 +182,17 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             <motion.div
               layoutId="nav-active-pill"
               className="absolute top-1 left-1/2 -translate-x-1/2 w-12 h-9 rounded-xl"
-              style={{ background: 'rgba(251,191,36,0.12)' }}
+              style={{ background: 'var(--nav-active-bg)' }}
             />
           )}
-          <span className="relative z-10 transition-colors duration-150" style={{ color: showMore || isMoreActive ? 'var(--color-text-brand)' : '#64748B' }}>
+          <span className="relative z-10 transition-colors duration-150" style={{ color: showMore || isMoreActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)' }}>
             <MoreHorizontal className="w-6 h-6" />
           </span>
           <span
             className="relative z-10 font-semibold"
             style={{
               fontSize: '0.6875rem',
-              color: showMore || isMoreActive ? 'var(--color-text-brand)' : '#64748B',
+              color: showMore || isMoreActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)',
             }}
           >
             More

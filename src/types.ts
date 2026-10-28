@@ -1,3 +1,4 @@
+import type { IconKey } from './icons';
 export type SoundTone = 'wooden' | 'chime' | 'digital' | 'bowl';
 
 export type AppTheme = 'slate' | 'emerald' | 'amber' | 'indigo' | 'midnight';
@@ -7,7 +8,8 @@ export type Madhab = 'hanafi' | 'shafi' | 'maliki' | 'hanbali';
 
 export type PrayerCalculationMethod = 'Karachi' | 'MWL' | 'UmmAlQura' | 'ISNA' | 'Egypt';
 
-export type AzanSound = 'mecca' | 'medina';
+/** Bundled adhan recordings. Legacy 'mecca'/'medina' values migrate to 'standard'. */
+export type AzanSound = 'standard';
 
 export type PrayerAzanId = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 
@@ -96,13 +98,13 @@ export interface SalahLog {
   prayers: Partial<Record<SalahName, boolean>>;
 }
 
-export const SALAH_META: Record<SalahName, { label: string; arabicName: string; emoji: string; time: string }> = {
-  fajr:    { label: 'Fajr',    arabicName: 'الفجر',   emoji: '🌄', time: 'Pre-dawn' },
-  sunrise: { label: 'Sunrise', arabicName: 'الشروق',  emoji: '🌅', time: 'After sunrise (Ishraq)' },
-  dhuhr:   { label: 'Dhuhr',   arabicName: 'الظهر',   emoji: '☀️', time: 'Midday' },
-  asr:     { label: 'Asr',     arabicName: 'العصر',   emoji: '🌤️', time: 'Afternoon' },
-  maghrib: { label: 'Maghrib', arabicName: 'المغرب',  emoji: '🌇', time: 'Sunset' },
-  isha:    { label: 'Isha',    arabicName: 'العشاء',  emoji: '🌙', time: 'Night' },
+export const SALAH_META: Record<SalahName, { label: string; arabicName: string; icon: IconKey; time: string }> = {
+  fajr:    { label: 'Fajr',    arabicName: 'الفجر',   icon: 'fajr', time: 'Pre-dawn' },
+  sunrise: { label: 'Sunrise', arabicName: 'الشروق',  icon: 'sunrise', time: 'After sunrise (Ishraq)' },
+  dhuhr:   { label: 'Dhuhr',   arabicName: 'الظهر',   icon: 'dhuhr', time: 'Midday' },
+  asr:     { label: 'Asr',     arabicName: 'العصر',   icon: 'asr', time: 'Afternoon' },
+  maghrib: { label: 'Maghrib', arabicName: 'المغرب',  icon: 'maghrib', time: 'Sunset' },
+  isha:    { label: 'Isha',    arabicName: 'العشاء',  icon: 'isha', time: 'Night' },
 };
 
 // Hijri month names
@@ -115,7 +117,7 @@ export const HIJRI_MONTHS = [
 export interface Routine {
   id: string;
   name: string;            // e.g. "My Fajr Routine"
-  emoji: string;           // e.g. "🌅"
+  icon: IconKey;           // see src/icons.tsx
   dhikrIds: string[];      // ordered list of dhikr IDs from Adhkaar Library
   reminderTime?: string;   // optional HH:MM
   reminderDays?: string[]; // ['mon','tue',...] optional
@@ -124,14 +126,22 @@ export interface Routine {
 }
 
 // Adhkaar category metadata for UI display
-export const CATEGORY_META: Record<AdhkaarCategory, { label: string; emoji: string; color: string }> = {
-  morning:    { label: 'Morning',    emoji: '🌅', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-  evening:    { label: 'Evening',    emoji: '🌙', color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
-  daily:      { label: 'Daily',      emoji: '📿', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  istighfar:  { label: 'Istighfar',  emoji: '🤲', color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
-  salawat:    { label: 'Salawat',    emoji: '☀️', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
-  protection: { label: 'Protection', emoji: '🛡️', color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
-  sleep:      { label: 'Sleep',      emoji: '😴', color: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
-  quranic:    { label: 'Quranic',    emoji: '📖', color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
-  motivation: { label: 'Motivation', emoji: '✨', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
+export const CATEGORY_META: Record<AdhkaarCategory, { label: string; icon: IconKey; color: string }> = {
+  morning:    { label: 'Morning',    icon: 'morning', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+  evening:    { label: 'Evening',    icon: 'evening', color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
+  daily:      { label: 'Daily',      icon: 'beads', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+  istighfar:  { label: 'Istighfar',  icon: 'dua', color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+  salawat:    { label: 'Salawat',    icon: 'salawat', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
+  protection: { label: 'Protection', icon: 'protection', color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
+  sleep:      { label: 'Sleep',      icon: 'sleep', color: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
+  quranic:    { label: 'Quranic',    icon: 'quran', color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
+  motivation: { label: 'Motivation', icon: 'sparkles', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
 };
+
+/** State for the app-wide confirm dialog. `destructive` switches the confirm button to the danger style. */
+export interface ConfirmModalState {
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  destructive?: boolean;
+}

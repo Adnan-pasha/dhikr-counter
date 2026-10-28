@@ -5,7 +5,7 @@ const SOUND_TONES: SoundTone[] = ['wooden', 'chime', 'digital', 'bowl'];
 const THEMES: AppTheme[] = ['slate', 'emerald', 'amber', 'indigo', 'midnight'];
 const MADHABS: Madhab[] = ['hanafi', 'shafi', 'maliki', 'hanbali'];
 const PRAYER_CALCULATION_METHODS: PrayerCalculationMethod[] = ['Karachi', 'MWL', 'UmmAlQura', 'ISNA', 'Egypt'];
-const AZAN_SOUNDS: AzanSound[] = ['mecca', 'medina'];
+const AZAN_SOUNDS: AzanSound[] = ['standard'];
 const PRAYER_AZAN_IDS: PrayerAzanId[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
@@ -20,6 +20,54 @@ export const safeParseJSON = <T>(raw: string | null, fallback: T): T => {
   } catch {
     return fallback;
   }
+};
+
+export interface CounterKeyInfo {
+  code: string;
+  repeat: boolean;
+  defaultPrevented: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  altKey: boolean;
+  isEditable: boolean;
+  /** Focus is on/inside a button, link, tab, switch, dialog etc. that owns Space/Enter. */
+  insideInteractive: boolean;
+  modalOpen: boolean;
+}
+
+/** Whether a keydown should count a bead. Focused controls keep their native behaviour. */
+export const shouldCountOnKey = (info: CounterKeyInfo): boolean => {
+  if (info.code !== 'Space' && info.code !== 'Enter') return false;
+  if (info.repeat || info.defaultPrevented || info.modalOpen) return false;
+  if (info.ctrlKey || info.metaKey || info.altKey) return false;
+  return !info.isEditable && !info.insideInteractive;
+};
+
+export interface CounterLiveInput {
+  count: number;
+  previousCount: number;
+  target: number;
+  name: string;
+}
+
+/**
+ * Screen-reader announcement for the counter. Milestones only (every 10th count and each
+ * completed round), and only when counting up, so undo/reset never announces a milestone.
+ */
+export const getCounterLiveMessage = ({ count, previousCount, target, name }: CounterLiveInput): string => {
+  if (count <= previousCount || count === 0) return '';
+  if (target > 0 && count % target === 0) return `${name} complete, ${count} counted`;
+  return count % 10 === 0 ? `${count} counted` : '';
+};
+
+export const parseStoredArray = <T>(
+  raw: string | null,
+  fallback: T[],
+  isItem?: (value: unknown) => value is T,
+): T[] => {
+  const parsed = safeParseJSON<unknown>(raw, null);
+  if (!Array.isArray(parsed)) return fallback;
+  return isItem ? parsed.filter(isItem) : (parsed as T[]);
 };
 
 export const sanitizeDhikrs = (value: unknown, fallback: Dhikr[]): Dhikr[] => {
@@ -117,7 +165,7 @@ export const sanitizeAzanSettings = (value: unknown): Record<PrayerAzanId, boole
 export const DEFAULT_PRAYER_SETTINGS: PrayerSettings = {
   madhab: 'shafi',
   calculationMethod: 'Karachi',
-  azanSound: 'mecca',
+  azanSound: 'standard',
   azanEnabled: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
 };
 
@@ -375,7 +423,7 @@ export const getMotivationalMessage = (streak: number): { arabic: string; englis
       arabic: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً',
       english: 'Our Lord, give us good in this world',
       note: streak > 0
-        ? `Masha'Allah! ${streak}-day streak 🌅 The early morning is the most blessed time for dhikr.`
+        ? `Masha'Allah! ${streak}-day streak. The early morning is the most blessed time for dhikr.`
         : 'Beautiful — you are remembering Allah in the blessed morning hours.',
     };
   }

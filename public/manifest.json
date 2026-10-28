@@ -1,25 +1,21 @@
 {
   "name": "Tasbih Spiritual Counter",
   "short_name": "Tasbih",
-  "description": "A premium, beautifully-designed interactive spiritual counter (Tasbih) with multiple prayers, history logs, audio feedback, haptics, and custom themes.",
+  "description": "A private, ad-free dhikr counter with prayer routines, history, audio feedback, haptics and custom themes.",
   "start_url": "./",
   "id": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#020617",
-  "theme_color": "#0f172a",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["lifestyle", "utilities"],
+  "background_color": "#090e1a",
+  "theme_color": "#090e1a",
   "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }

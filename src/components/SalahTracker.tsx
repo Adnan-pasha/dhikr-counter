@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, Flame, Calendar, ChevronLeft, ChevronRight, Moon } from 'lucide-react';
 import { SalahLog, SalahName, SALAH_META, HIJRI_MONTHS } from '../types';
+import { AppIcon } from '../icons';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -163,11 +164,15 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onGoBack }: Sa
                   className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
                     done
                       ? 'bg-emerald-500/8 border-emerald-500/30'
-                      : 'bg-slate-900/60 border-slate-800 hover:border-amber-500/30'
+                      : 'bg-slate-900/60 border-slate-800 hover:border-brand-500/30'
                   }`}
                 >
-                  {/* Emoji */}
-                  <span className="text-2xl shrink-0">{meta.emoji}</span>
+                  {/* Prayer icon */}
+                  <span
+                    className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${done ? 'bg-emerald-500/15 text-emerald-400' : 'bg-brand-500/10 text-brand-400'}`}
+                  >
+                    <AppIcon name={meta.icon} className="w-5 h-5" />
+                  </span>
 
                   {/* Info */}
                   <div className="flex-1 text-left">
@@ -184,7 +189,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onGoBack }: Sa
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
                     done
                       ? 'bg-emerald-500 border-emerald-500'
-                      : 'border-slate-600 hover:border-amber-500'
+                      : 'border-slate-600 hover:border-brand-500'
                   }`}>
                     <AnimatePresence>
                       {done && (
@@ -213,10 +218,10 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onGoBack }: Sa
               exit={{ opacity: 0 }}
               className="bg-gradient-to-r from-emerald-500/15 to-teal-500/10 border border-emerald-500/30 rounded-2xl p-4 text-center"
             >
-              <p className="text-2xl mb-2">🎉</p>
+              <AppIcon name="celebrate" className="w-7 h-7 mx-auto mb-2 text-emerald-400" />
               <p className="text-sm font-black text-emerald-400">All 6 Prayers Complete!</p>
               <p className="text-xs text-slate-400 mt-1">
-                Alhamdulillah! May Allah accept your prayers. 🤲
+                Alhamdulillah! May Allah accept your prayers.
               </p>
             </motion.div>
           )}
@@ -237,20 +242,20 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onGoBack }: Sa
 
               const getBg = () => {
                 if (count === 0) return 'bg-slate-800 border-slate-700';
-                if (count <= 2) return 'bg-amber-500/20 border-amber-500/30';
-                if (count <= 4) return 'bg-amber-500/40 border-amber-500/50';
+                if (count <= 2) return 'bg-brand-500/20 border-brand-500/30';
+                if (count <= 4) return 'bg-brand-500/40 border-brand-500/50';
                 if (count === 5) return 'bg-emerald-500/40 border-emerald-500/50';
                 return 'bg-emerald-500 border-emerald-500';
               };
 
               return (
                 <div key={dateStr} className="flex flex-col items-center gap-1">
-                  <div className={`w-full aspect-square rounded-xl border flex items-center justify-center relative ${getBg()} ${isToday ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-slate-950' : ''}`}>
+                  <div className={`w-full aspect-square rounded-xl border flex items-center justify-center relative ${getBg()} ${isToday ? 'ring-2 ring-brand-500 ring-offset-1 ring-offset-slate-950' : ''}`}>
                     <span className={`text-xs font-black ${count === 6 ? 'text-white' : count > 0 ? 'text-slate-200' : 'text-slate-600'}`}>
                       {count}
                     </span>
                   </div>
-                  <span className={`text-xs font-bold ${isToday ? 'text-amber-400' : 'text-slate-500'}`}>
+                  <span className={`text-xs font-bold ${isToday ? 'text-brand-400' : 'text-slate-500'}`}>
                     {day.toLocaleDateString('en-US', { weekday: 'narrow' })}
                   </span>
                 </div>
@@ -261,8 +266,8 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onGoBack }: Sa
           <div className="flex items-center justify-end gap-3 mt-2">
             {[
               { color: 'bg-slate-800', label: '0' },
-              { color: 'bg-amber-500/30', label: '1-2' },
-              { color: 'bg-amber-500/60', label: '3-4' },
+              { color: 'bg-brand-500/30', label: '1-2' },
+              { color: 'bg-brand-500/60', label: '3-4' },
               { color: 'bg-emerald-500/60', label: '5' },
               { color: 'bg-emerald-500', label: '6' },
             ].map(({ color, label }) => (
@@ -310,8 +315,8 @@ function MonthlyGrid({ salahLogs }: { salahLogs: SalahLog[] }) {
   const getBg = (count: number, isFuture: boolean) => {
     if (isFuture) return 'bg-slate-900 border-slate-800/50 text-slate-700';
     if (count === 0) return 'bg-slate-800/60 border-slate-700 text-slate-500';
-    if (count <= 2) return 'bg-amber-500/15 border-amber-500/25 text-amber-400';
-    if (count <= 4) return 'bg-amber-500/30 border-amber-500/40 text-amber-300';
+    if (count <= 2) return 'bg-brand-500/15 border-brand-500/25 text-brand-400';
+    if (count <= 4) return 'bg-brand-500/30 border-brand-500/40 text-brand-300';
     if (count === 5) return 'bg-emerald-500/25 border-emerald-500/35 text-emerald-300';
     return 'bg-emerald-500/40 border-emerald-500 text-emerald-200';
   };
@@ -332,7 +337,7 @@ function MonthlyGrid({ salahLogs }: { salahLogs: SalahLog[] }) {
         {days.map(({ day, count, isToday, isFuture }) => (
           <div
             key={day}
-            className={`aspect-square rounded-lg border flex items-center justify-center text-xs font-black relative ${getBg(count, isFuture)} ${isToday ? 'ring-1 ring-amber-500 ring-offset-1 ring-offset-slate-950' : ''}`}
+            className={`aspect-square rounded-lg border flex items-center justify-center text-xs font-black relative ${getBg(count, isFuture)} ${isToday ? 'ring-1 ring-brand-500 ring-offset-1 ring-offset-slate-950' : ''}`}
           >
             {day}
           </div>

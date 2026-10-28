@@ -874,7 +874,7 @@ export const DEFAULT_ROUTINES: Routine[] = [
   {
     id: 'routine-morning',
     name: 'Morning Routine',
-    emoji: '🌅',
+    icon: 'sunrise',
     dhikrIds: [
       'dua-waking-up',
       'astaghfirullah',
@@ -895,7 +895,7 @@ export const DEFAULT_ROUTINES: Routine[] = [
   {
     id: 'routine-evening',
     name: 'Evening Routine',
-    emoji: '🌙',
+    icon: 'moon',
     dhikrIds: [
       'astaghfirullah',
       'ayatul-kursi',
@@ -914,7 +914,7 @@ export const DEFAULT_ROUTINES: Routine[] = [
   {
     id: 'routine-after-salah',
     name: 'After Salah',
-    emoji: '🤲',
+    icon: 'dua',
     dhikrIds: [
       'subhanallah',
       'alhamdulillah',
@@ -929,7 +929,7 @@ export const DEFAULT_ROUTINES: Routine[] = [
   {
     id: 'routine-sleep',
     name: 'Before Sleep',
-    emoji: '😴',
+    icon: 'sleep',
     dhikrIds: [
       'dua-before-sleeping',
       'ayatul-kursi',

@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Settings, Volume2, Sparkles, Sliders, Smartphone, HelpCircle, User, Clock, Plus, Trash2, Bell, BookOpenText, Check, ChevronLeft } from 'lucide-react';
 import { UserPreferences, SoundTone, AppTheme, DhikrReminder, Dhikr, Madhab } from '../types';
+import { AppIcon } from '../icons';
 import { playBeadSound, playCompletionSound } from '../audio';
+import { THIRD_PARTY_NOTICES } from '../licenses';
 
 interface SettingsScreenProps {
   preferences: UserPreferences;
@@ -55,7 +57,7 @@ export default function SettingsScreen({
   const handleToggleReminder = (id: string, isEnabled: boolean) => {
     onUpdateReminders(prev => prev.map(rem => {
       if (rem.id === id) {
-        triggerFeedback(`Saved: "${rem.label}" is now ${isEnabled ? 'Active 🔔' : 'Muted 🔕'}`);
+        triggerFeedback(`Saved: "${rem.label}" is now ${isEnabled ? 'Active' : 'Muted'}`);
         return { ...rem, isEnabled };
       }
       return rem;
@@ -103,7 +105,7 @@ export default function SettingsScreen({
 
     onUpdateReminders(prev => [...prev, fresh]);
     setIsAddingReminder(false);
-    triggerFeedback(`Success: Added reminder "${fresh.label}" for ${timeHour}:${timeMinute} ${timePeriod}! 🔔`);
+    triggerFeedback(`Success: Added reminder "${fresh.label}" for ${timeHour}:${timeMinute} ${timePeriod}!`);
     
     // Reset inputs
     setNewReminderLabel('Daily Tasbih Duty');
@@ -126,7 +128,7 @@ export default function SettingsScreen({
       type="button"
       onClick={() => onChange(!checked)}
       className={`w-11 h-6 rounded-full p-0.5 transition-colors focus:outline-none cursor-pointer ${
-        checked ? 'bg-amber-500' : 'bg-slate-800'
+        checked ? 'bg-brand-500' : 'bg-slate-800'
       }`}
     >
       <motion.div
@@ -149,9 +151,9 @@ export default function SettingsScreen({
   const themes: { id: AppTheme; label: string; color: string; border: string }[] = [
     { id: 'slate', label: 'Slate Gray', color: 'bg-slate-600', border: 'border-slate-500' },
     { id: 'emerald', label: 'Emerald Mosque', color: 'bg-emerald-600', border: 'border-emerald-500' },
-    { id: 'amber', label: 'Rose Desert', color: 'bg-amber-600', border: 'border-amber-500' },
+    { id: 'amber', label: 'Rose Desert', color: 'bg-brand-600', border: 'border-brand-500' },
     { id: 'indigo', label: 'Tahajjud Blue', color: 'bg-indigo-600', border: 'border-indigo-500' },
-    { id: 'midnight', label: 'Obsidian Jet', color: 'bg-[#030712] border border-slate-800', border: 'border-red-500' },
+    { id: 'midnight', label: 'Obsidian Jet', color: 'bg-slate-950 border border-slate-800', border: 'border-red-500' },
   ];
 
   const madhabs: Array<{ id: Madhab; label: string; note: string }> = [
@@ -223,8 +225,8 @@ export default function SettingsScreen({
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {([
-              { id: 'dark' as const, label: 'Dark Mode', icon: '🌙' },
-              { id: 'light' as const, label: 'Light Mode', icon: '☀️' },
+              { id: 'dark' as const, label: 'Dark Mode', icon: 'moon' as const },
+              { id: 'light' as const, label: 'Light Mode', icon: 'sun' as const },
             ]).map((mode) => {
               const matches = preferences.colorMode === mode.id;
               return (
@@ -238,7 +240,7 @@ export default function SettingsScreen({
                     borderColor: matches ? 'var(--color-brand-border)' : 'var(--color-border)',
                   }}
                 >
-                  <span className="text-xl shrink-0">{mode.icon}</span>
+                  <AppIcon name={mode.icon} className="w-5 h-5 shrink-0" />
                   <span className="text-sm font-bold" style={{ color: matches ? 'var(--color-text-brand)' : 'var(--color-text-primary)' }}>
                     {mode.label}
                   </span>
@@ -263,7 +265,7 @@ export default function SettingsScreen({
                   onClick={() => onChangePreferences({ theme: theme.id })}
                   className={`p-3 rounded-2xl border bg-slate-900/40 flex items-center gap-2.5 cursor-pointer text-left transition-all ${
                     matches 
-                      ? 'border-amber-500 shadow-md bg-slate-900/80' 
+                      ? 'border-brand-500 shadow-md bg-slate-900/80' 
                       : 'border-slate-800 hover:border-slate-700'
                   }`}
                 >
@@ -278,7 +280,7 @@ export default function SettingsScreen({
         {/* Card: Audio Preferences */}
         <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md space-y-4">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 select-none">
-            <Volume2 className="w-3.5 h-3.5 text-amber-400" /> Audio & Tone Settings
+            <Volume2 className="w-3.5 h-3.5 text-brand-400" /> Audio & Tone Settings
           </h3>
 
           <div className="flex justify-between items-center bg-transparent">
@@ -308,7 +310,7 @@ export default function SettingsScreen({
                     }}
                     className={`py-2 rounded-xl text-xs font-bold border capitalize transition-all cursor-pointer ${
                       preferences.soundTone === t
-                        ? 'bg-amber-500 text-slate-950 border-amber-500 font-black'
+                        ? 'bg-brand-500 text-on-brand border-brand-500 font-black'
                         : 'bg-slate-800 border-slate-700 text-slate-350 hover:bg-slate-750'
                     }`}
                   >
@@ -331,7 +333,7 @@ export default function SettingsScreen({
                   step="0.05"
                   value={preferences.volume}
                   onChange={(e) => onChangePreferences({ volume: Number(e.target.value) })}
-                  className="w-full accent-amber-500"
+                  className="w-full accent-brand-500"
                 />
               </div>
 
@@ -339,9 +341,9 @@ export default function SettingsScreen({
               <button
                 id="btn_test_celebration"
                 onClick={testCompletion}
-                className="w-full py-1.5 text-xs font-bold bg-slate-950 border border-slate-800 text-amber-450 rounded-xl hover:bg-slate-900 transition-colors cursor-pointer"
+                className="w-full py-1.5 text-xs font-bold bg-slate-950 border border-slate-800 text-brand-450 rounded-xl hover:bg-slate-900 transition-colors cursor-pointer"
               >
-                🔊 Play Goal Complete Chime Trial
+                <AppIcon name="volume" className="w-4 h-4" /> Play Goal Complete Chime Trial
               </button>
             </div>
           )}
@@ -350,7 +352,7 @@ export default function SettingsScreen({
         {/* Card: Tap Behavior & Automation */}
         <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md space-y-4">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 select-none">
-            <Sliders className="w-3.5 h-3.5 text-amber-400" /> Beads Behavior
+            <Sliders className="w-3.5 h-3.5 text-brand-400" /> Beads Behavior
           </h3>
 
           {/* Haptics Switch */}
@@ -389,13 +391,13 @@ export default function SettingsScreen({
         <div id="reminders_section_card" className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5 select-none font-sans">
-              <Bell className="w-3.5 h-3.5 text-amber-400" /> Schedules & Reminders
+              <Bell className="w-3.5 h-3.5 text-brand-400" /> Schedules & Reminders
             </h3>
             {!isAddingReminder && (
               <button
                 id="btn_open_reminder_creator"
                 onClick={() => setIsAddingReminder(true)}
-                className="py-1 px-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-450 border border-amber-500/15 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                className="py-1 px-2.5 rounded-lg bg-brand-500/10 hover:bg-brand-500/20 text-brand-450 border border-brand-500/15 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <Plus className="w-3 h-3" /> Add New
               </button>
@@ -437,8 +439,8 @@ export default function SettingsScreen({
               >
                 <div className="flex justify-between items-center border-b border-slate-900 pb-2.5">
                   <div className="flex items-center gap-1.5 bg-transparent">
-                    <span className="text-xs shrink-0">🔔</span>
-                    <span className="text-xs font-black uppercase text-amber-500 tracking-wider">New Auto-Tasbih Duty</span>
+                    <AppIcon name="bell" className="w-3.5 h-3.5 shrink-0" />
+                    <span className="text-xs font-black uppercase text-brand-500 tracking-wider">New Auto-Tasbih Duty</span>
                   </div>
                   <button
                     type="button"
@@ -467,7 +469,7 @@ export default function SettingsScreen({
                     value={newReminderLabel}
                     onChange={(e) => setNewReminderLabel(e.target.value)}
                     placeholder="e.g. Astaghfirullah 100x"
-                    className="w-full text-xs py-2 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-150 placeholder-slate-600 focus:outline-none focus:border-amber-500/80 font-bold font-sans transition-all"
+                    className="w-full text-xs py-2 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-150 placeholder-slate-600 focus:outline-none focus:border-brand-500/80 font-bold font-sans transition-all"
                   />
                 </div>
  
@@ -478,7 +480,7 @@ export default function SettingsScreen({
                     id="select_reminder_dhikr"
                     value={newReminderDhikrId}
                     onChange={(e) => setNewReminderDhikrId(e.target.value)}
-                    className="w-full text-xs font-bold py-2 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500 cursor-pointer font-sans"
+                    className="w-full text-xs font-bold py-2 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer font-sans"
                   >
                     {dhikrs.map((d) => (
   <option key={d.id} value={d.id} className="bg-slate-950 text-slate-200">
@@ -512,7 +514,7 @@ export default function SettingsScreen({
                         id="select_time_hour"
                         value={timeHour}
                         onChange={(e) => setTimeHour(e.target.value)}
-                        className="bg-slate-950 text-slate-100 font-mono font-black text-sm px-3 py-1.5 rounded-xl border border-slate-850 focus:outline-none focus:border-amber-500 cursor-pointer text-center"
+                        className="bg-slate-950 text-slate-100 font-mono font-black text-sm px-3 py-1.5 rounded-xl border border-slate-850 focus:outline-none focus:border-brand-500 cursor-pointer text-center"
                       >
                         {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map(h => (
                           <option key={h} value={h}>{h}</option>
@@ -533,7 +535,7 @@ export default function SettingsScreen({
                       </button>
                     </div>
  
-                    <span className="text-amber-500 font-black text-lg select-none mb-1 animate-pulse">:</span>
+                    <span className="text-brand-500 font-black text-lg select-none mb-1 animate-pulse">:</span>
  
                     {/* Minute control column */}
                     <div className="flex flex-col items-center bg-transparent">
@@ -553,7 +555,7 @@ export default function SettingsScreen({
                         id="select_time_minute"
                         value={timeMinute}
                         onChange={(e) => setTimeMinute(e.target.value)}
-                        className="bg-slate-950 text-slate-100 font-mono font-black text-sm px-3 py-1.5 rounded-xl border border-slate-850 focus:outline-none focus:border-amber-500 cursor-pointer text-center"
+                        className="bg-slate-950 text-slate-100 font-mono font-black text-sm px-3 py-1.5 rounded-xl border border-slate-850 focus:outline-none focus:border-brand-500 cursor-pointer text-center"
                       >
                         {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
                           <option key={m} value={m}>{m}</option>
@@ -583,7 +585,7 @@ export default function SettingsScreen({
                             onClick={() => setTimePeriod(p)}
                             className={`px-3 py-1.5 text-xs font-black tracking-wider rounded-lg transition-all cursor-pointer ${
                               timePeriod === p 
-                                ? 'bg-amber-500 text-slate-950 shadow-md font-black' 
+                                ? 'bg-brand-500 text-on-brand shadow-md font-black' 
                                 : 'text-slate-400 hover:text-slate-200'
                             }`}
                           >
@@ -607,21 +609,21 @@ export default function SettingsScreen({
                       <button
                         type="button"
                         onClick={() => setNewReminderDays(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'])}
-                        className="text-[7.5px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-900 hover:bg-amber-500/10 hover:text-amber-450 border border-slate-800 text-slate-400 cursor-pointer transition-colors"
+                        className="text-[7.5px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-900 hover:bg-brand-500/10 hover:text-brand-450 border border-slate-800 text-slate-400 cursor-pointer transition-colors"
                       >
                         Every day
                       </button>
                       <button
                         type="button"
                         onClick={() => setNewReminderDays(['mon', 'tue', 'wed', 'thu', 'fri'])}
-                        className="text-[7.5px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-900 hover:bg-amber-500/10 hover:text-amber-450 border border-slate-800 text-slate-400 cursor-pointer transition-colors"
+                        className="text-[7.5px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-900 hover:bg-brand-500/10 hover:text-brand-450 border border-slate-800 text-slate-400 cursor-pointer transition-colors"
                       >
                         Weekdays
                       </button>
                       <button
                         type="button"
                         onClick={() => setNewReminderDays(['sat', 'sun'])}
-                        className="text-[7.5px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-900 hover:bg-amber-500/10 hover:text-amber-450 border border-slate-800 text-slate-400 cursor-pointer transition-colors"
+                        className="text-[7.5px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-900 hover:bg-brand-500/10 hover:text-brand-450 border border-slate-800 text-slate-400 cursor-pointer transition-colors"
                       >
                         Weekends
                       </button>
@@ -631,7 +633,7 @@ export default function SettingsScreen({
                   {/* Days circular buttons wrap */}
                   <div className="flex justify-between gap-1 mt-1 bg-transparent">
                     {[
-                      { key: 'sun', label: 'S', day: 'Sun', color: 'bg-amber-500' },
+                      { key: 'sun', label: 'S', day: 'Sun', color: 'bg-brand-500' },
                       { key: 'mon', label: 'M', day: 'Mon', color: 'bg-orange-400' },
                       { key: 'tue', label: 'T', day: 'Tue', color: 'bg-yellow-400' },
                       { key: 'wed', label: 'W', day: 'Wed', color: 'bg-emerald-400' },
@@ -647,7 +649,7 @@ export default function SettingsScreen({
                           onClick={() => handleToggleDaySelection(day.key)}
                           className={`relative w-8.5 h-8.5 rounded-full text-xs font-bold transition-all flex flex-col items-center justify-center cursor-pointer border ${
                             active
-                              ? 'bg-slate-900 text-amber-400 border-amber-500/50 shadow-md shadow-amber-950/20 font-black scale-105'
+                              ? 'bg-slate-900 text-brand-400 border-brand-500/50 shadow-md shadow-brand-950/20 font-black scale-105'
                               : 'bg-slate-950 text-slate-500 border-slate-900 hover:border-slate-800'
                           }`}
                           title={`Repeat on ${day.day}`}
@@ -655,7 +657,7 @@ export default function SettingsScreen({
                           <span className="leading-none">{day.label}</span>
                           {/* Active status indicator dot below letter */}
                           {active && (
-                            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-amber-400" />
+                            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-brand-400" />
                           )}
                         </button>
                       );
@@ -667,9 +669,9 @@ export default function SettingsScreen({
                 <button
                   id="btn_submit_reminder_schedule"
                   type="submit"
-                  className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl hover:brightness-110 active:scale-98 transition-all shadow-lg shadow-amber-950/20 cursor-pointer font-sans"
+                  className="w-full py-2.5 bg-gradient-to-r from-brand-500 to-brand-600 text-on-brand font-black text-xs uppercase tracking-wider rounded-xl hover:brightness-110 active:scale-98 transition-all shadow-lg shadow-brand-950/20 cursor-pointer font-sans"
                 >
-                  Save Active Dhikr Schedule 🔔
+                  Save Active Dhikr Schedule
                 </button>
               </motion.form>
             )}
@@ -711,7 +713,7 @@ export default function SettingsScreen({
                   >
                     <div className="flex-1 min-w-0 pr-2">
                       <div className="flex items-center gap-1.5 mb-1 bg-transparent">
-                        <span className="text-xs font-black font-mono text-amber-450">{format12Hour(rem.timeString)}</span>
+                        <span className="text-xs font-black font-mono text-brand-450">{format12Hour(rem.timeString)}</span>
                         <span className="text-xs font-black uppercase tracking-wider text-slate-400 truncate font-sans">{rem.label}</span>
                       </div>
                       <div className="flex flex-col gap-0.5">
@@ -761,10 +763,36 @@ export default function SettingsScreen({
           </button>
         </div>
 
+        {/* Card: Privacy & Licences */}
+        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md space-y-3.5">
+          <div>
+            <p className="text-xs font-bold text-slate-200 uppercase tracking-wider select-none">Privacy &amp; Credits</p>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Your counts, history and settings stay on this device. There are no accounts, ads or trackers.
+            </p>
+          </div>
+          <ul className="space-y-2.5">
+            {THIRD_PARTY_NOTICES.map((notice) => (
+              <li key={notice.name} className="text-xs text-slate-400 leading-relaxed">
+                <a
+                  href={notice.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-slate-200 underline decoration-slate-500 underline-offset-2"
+                >
+                  {notice.name}
+                </a>{' '}
+                by {notice.author}, {notice.license}.
+                {notice.note ? ` ${notice.note}` : ''}
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {/* Brand Information Footer */}
         <div className="text-center py-4 space-y-1 opacity-70">
           <p className="text-xs text-slate-400 uppercase tracking-wider select-none flex items-center justify-center gap-1 font-semibold">
-            <Smartphone className="w-3.5 h-3.5 text-amber-400 animate-pulse" /> Tasbih Companion Hub
+            <Smartphone className="w-3.5 h-3.5 text-brand-400 animate-pulse" /> Tasbih Companion Hub
           </p>
           <p className="text-xs text-slate-500 select-none">Designed and engineered in high-fidelity sandbox context</p>
         </div>
