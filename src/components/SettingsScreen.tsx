@@ -6,6 +6,7 @@ import { AppIcon } from '../icons';
 import { playBeadSound, playCompletionSound } from '../audio';
 import { THIRD_PARTY_NOTICES } from '../licenses';
 import { getHapticPattern } from '../counter';
+import { DAILY_GOAL_CHOICES } from '../habits';
 
 interface SettingsScreenProps {
   preferences: UserPreferences;
@@ -413,6 +414,29 @@ export default function SettingsScreen({
               checked={preferences.completionSoundOn && preferences.soundOn}
               onChange={(val) => onChangePreferences({ completionSoundOn: val })}
             />
+          </div>
+
+          {/* Daily goal that fills the Home ring */}
+          <div className="pt-2" role="group" aria-label="Daily goal">
+            <p className="text-xs font-bold text-slate-200">Daily goal</p>
+            <p className="text-xs text-slate-400 font-medium mb-1.5">Beads a day to fill your Home ring</p>
+            <div className="flex gap-2">
+              {DAILY_GOAL_CHOICES.map((goal) => (
+                <button
+                  key={goal}
+                  type="button"
+                  aria-pressed={preferences.dailyGoal === goal}
+                  onClick={() => onChangePreferences({ dailyGoal: goal })}
+                  className={`tap-target flex-1 rounded-xl border text-xs font-bold cursor-pointer transition-colors ${
+                    preferences.dailyGoal === goal
+                      ? 'border-brand-500 bg-brand-500/15 text-brand-400'
+                      : 'border-slate-700 bg-slate-800 text-slate-300'
+                  }`}
+                >
+                  {goal}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Auto advance */}

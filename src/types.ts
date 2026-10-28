@@ -78,6 +78,8 @@ export interface UserPreferences {
   /** Chime when a round completes, separate from the per-tap bead sound. */
   completionSoundOn: boolean;
   hapticStrength: HapticStrength;
+  /** Beads per day that fill the Home ring. */
+  dailyGoal: number;
 }
 
 export interface DailyLog {

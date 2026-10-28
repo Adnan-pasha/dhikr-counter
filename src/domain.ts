@@ -1,4 +1,5 @@
 import type { HapticStrength } from './counter';
+import { sanitizeDailyGoal } from './habits';
 import { Dhikr, DhikrHistory, DhikrReminder, UserPreferences, SoundTone, AppTheme, Madhab, PrayerSettings, PrayerCalculationMethod, AzanSound, PrayerAzanId } from './types';
 
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -137,6 +138,7 @@ export const sanitizePreferences = (value: unknown, fallback: UserPreferences): 
     madhab,
     completionSoundOn: isBool(value.completionSoundOn) ? value.completionSoundOn : fallback.completionSoundOn,
     hapticStrength,
+    dailyGoal: value.dailyGoal === undefined ? fallback.dailyGoal : sanitizeDailyGoal(value.dailyGoal),
   };
 };
 
