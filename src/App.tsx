@@ -33,6 +33,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   colorMode: 'dark',
   volume: 0.5,
   madhab: 'shafi',
+  completionSoundOn: true,
+  hapticStrength: 'medium',
 };
 
 // Default Dhikr Reminders Preset
@@ -134,7 +136,7 @@ export default function App() {
       .filter(Boolean) as Dhikr[];
   }, [currentDhikrId, routines, dhikrs]);
 
-  const { handleIncrement, handleReset } = useCounterFlow({
+  const { handleIncrement, handleUndo, handleReset, canUndo, upcoming, pendingNext } = useCounterFlow({
     activeDhikr,
     currentCount,
     preferences,
@@ -292,7 +294,14 @@ export default function App() {
             )}
           </AnimatePresence>
 
-   <div className="flex-1 min-h-0 relative">
+          {/* Each screen eases in on entry; opacity-only under reduced motion (MotionConfig). */}
+          <motion.div
+            key={activeTab}
+            className="flex-1 min-h-0 relative"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
             {activeTab === 'home' && (
               <HomeScreen
                 streak={streak}
@@ -323,6 +332,10 @@ export default function App() {
                 history={history}
                 preferences={preferences}
                 onIncrement={handleIncrement}
+                onUndo={handleUndo}
+                canUndo={canUndo}
+                upcoming={upcoming}
+                pendingNext={pendingNext}
                 onReset={handleReset}
                 onToggleSound={() => setPreferences(prev => ({ ...prev, soundOn: !prev.soundOn }))}
                 onNavigateToLibrary={() => setActiveTab('adhkaar')}
@@ -459,7 +472,7 @@ export default function App() {
                 />
               </Suspense>
             )}
-          </div>
+          </motion.div>
 
           {/* ── BOTTOM NAVIGATION ───────────────────────────────────────── */}
           <BottomNav

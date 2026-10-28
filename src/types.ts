@@ -1,4 +1,5 @@
 import type { IconKey } from './icons';
+import type { HapticStrength } from './counter';
 export type SoundTone = 'wooden' | 'chime' | 'digital' | 'bowl';
 
 export type AppTheme = 'slate' | 'emerald' | 'amber' | 'indigo' | 'midnight';
@@ -74,6 +75,9 @@ export interface UserPreferences {
   colorMode: ColorMode;
   volume: number; // 0 to 1
   madhab: Madhab;
+  /** Chime when a round completes, separate from the per-tap bead sound. */
+  completionSoundOn: boolean;
+  hapticStrength: HapticStrength;
 }
 
 export interface DailyLog {

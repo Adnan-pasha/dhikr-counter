@@ -5,6 +5,7 @@ import { UserPreferences, SoundTone, AppTheme, DhikrReminder, Dhikr, Madhab } fr
 import { AppIcon } from '../icons';
 import { playBeadSound, playCompletionSound } from '../audio';
 import { THIRD_PARTY_NOTICES } from '../licenses';
+import { getHapticPattern } from '../counter';
 
 interface SettingsScreenProps {
   preferences: UserPreferences;
@@ -341,7 +342,7 @@ export default function SettingsScreen({
               <button
                 id="btn_test_celebration"
                 onClick={testCompletion}
-                className="w-full py-1.5 text-xs font-bold bg-slate-950 border border-slate-800 text-brand-450 rounded-xl hover:bg-slate-900 transition-colors cursor-pointer"
+                className="w-full py-2 flex items-center justify-center gap-2 text-xs font-bold bg-slate-950 border border-slate-800 text-brand-400 rounded-xl hover:bg-slate-900 transition-colors cursor-pointer"
               >
                 <AppIcon name="volume" className="w-4 h-4" /> Play Goal Complete Chime Trial
               </button>
@@ -370,6 +371,47 @@ export default function SettingsScreen({
                   window.navigator.vibrate(60);
                 }
               }}
+            />
+          </div>
+
+          {preferences.vibrateOn && (
+            <div className="pt-1" role="group" aria-label="Haptic strength">
+              <p className="text-xs font-bold text-slate-200 mb-1.5">Haptic strength</p>
+              <div className="flex gap-2">
+                {(['light', 'medium', 'strong'] as const).map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    aria-pressed={preferences.hapticStrength === level}
+                    onClick={() => {
+                      onChangePreferences({ hapticStrength: level });
+                      if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(getHapticPattern('tap', level));
+                    }}
+                    className={`tap-target flex-1 rounded-xl border text-xs font-bold capitalize cursor-pointer transition-colors ${
+                      preferences.hapticStrength === level
+                        ? 'border-brand-500 bg-brand-500/15 text-brand-400'
+                        : 'border-slate-700 bg-slate-800 text-slate-300'
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Round-complete chime, separate from the per-tap bead sound */}
+          <div className="flex justify-between items-center pt-2 bg-transparent">
+            <div>
+              <p className="text-xs font-bold text-slate-200">Round-complete chime</p>
+              <p className="text-xs text-slate-400 font-medium">
+                {preferences.soundOn ? 'Play a chime when a round finishes' : 'Turn on sound feedback to hear it'}
+              </p>
+            </div>
+            <Switch
+              id="switch_completion_chime"
+              checked={preferences.completionSoundOn && preferences.soundOn}
+              onChange={(val) => onChangePreferences({ completionSoundOn: val })}
             />
           </div>
 

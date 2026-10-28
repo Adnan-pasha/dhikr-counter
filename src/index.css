@@ -523,6 +523,13 @@ body {
    Status colours (emerald/rose/indigo) keep sufficient contrast via their
    own /10–/20 opacity backgrounds in both themes, verified manually. */
 
+/* The counting stage fills the screen, so its focus ring is inset and softer than the default. */
+#tap_bead_clicker:focus-visible {
+  outline: 2px solid var(--color-brand-border) !important;
+  outline-offset: -6px !important;
+  border-radius: 20px;
+}
+
 /* ─── Accessibility ───────────────────────────────────────────────────────── */
 /* Keyboard focus must always be visible; overrides per-component focus:outline-none. */
 :focus-visible {

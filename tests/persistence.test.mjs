@@ -39,7 +39,7 @@ const useHarness = () => {
     { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreak, setFavouriteIds, setRoutines, setSalahLogs },
     { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs },
   );
-  return { routines, favouriteIds, setRoutines, setFavouriteIds, streak };
+  return { routines, favouriteIds, setRoutines, setFavouriteIds, streak, currentCount, setCurrentCount };
 };
 
 const strictWrapper = ({ children }) => React.createElement(React.StrictMode, null, children);
@@ -92,4 +92,33 @@ test('changes made after hydration are persisted', async () => {
   await act(async () => {});
   await act(async () => { result.current.setFavouriteIds(['z']); });
   assert.deepEqual(JSON.parse(localStorage.getItem('tasbih_favourites')), ['z']);
+});
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+test('rapid count changes are written once, shortly after the last tap', async () => {
+  const { result } = renderHook(useHarness, { wrapper: strictWrapper });
+  await act(async () => {});
+  const writes = [];
+  const original = dom.window.Storage.prototype.setItem;
+  dom.window.Storage.prototype.setItem = function (key, value) {
+    if (key === 'tasbih_current_count') writes.push(value);
+    return original.call(this, key, value);
+  };
+  try {
+    await act(async () => { for (let n = 1; n <= 20; n += 1) result.current.setCurrentCount(n); });
+    assert.equal(writes.length, 0, 'nothing is written while tapping');
+    await act(async () => { await sleep(450); });
+    assert.deepEqual(writes, ['20'], 'one write with the final count');
+  } finally {
+    dom.window.Storage.prototype.setItem = original;
+  }
+});
+
+test('the pending count is flushed immediately when the page is hidden', async () => {
+  const { result } = renderHook(useHarness, { wrapper: strictWrapper });
+  await act(async () => {});
+  await act(async () => { result.current.setCurrentCount(7); });
+  dom.window.dispatchEvent(new dom.window.Event('pagehide'));
+  assert.equal(localStorage.getItem('tasbih_current_count'), '7');
 });

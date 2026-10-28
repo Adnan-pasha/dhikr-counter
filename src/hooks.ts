@@ -5,6 +5,7 @@ import { DEFAULT_ROUTINES } from './adhkaar-data';
 import { normalizeRoutine } from './icons';
 import { findDueReminders, shouldTriggerReminderOccurrence, findCatchUpReminderCandidates, findMissedReminderCandidates, parseStoredArray } from './domain';
 import { playBeadSound, playCompletionSound } from './audio';
+import { tapCount, undoCount, findNextDhikrId, getUpcoming, getHapticPattern } from './counter';
 import { trackEvent } from './telemetry';
 
 export const useConnectivityStatus = (setIsOnline: (value: boolean) => void) => {
@@ -104,6 +105,9 @@ interface PersistenceSetters {
   setSalahLogs: (value: SalahLog[]) => void;
 }
 
+/** How long after the last tap the running count is written to storage. */
+const COUNT_PERSIST_DELAY_MS = 300;
+
 export const usePersistentAppState = (
   defaults: PersistenceDefaults,
   setters: PersistenceSetters,
@@ -157,7 +161,26 @@ export const usePersistentAppState = (
     if (hydrated && state.dhikrs.length > 0) localStorage.setItem('tasbih_dhikrs', JSON.stringify(state.dhikrs));
   }, [hydrated, state.dhikrs]);
   useEffect(() => { if (hydrated) localStorage.setItem('tasbih_current_id', state.currentDhikrId); }, [hydrated, state.currentDhikrId]);
-  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_current_count', String(state.currentCount)); }, [hydrated, state.currentCount]);
+  // The count changes on every tap, so it is written once shortly after the last tap rather than
+  // on each one, and flushed straight away when the page is hidden or closed.
+  const latestCountRef = React.useRef(state.currentCount);
+  latestCountRef.current = state.currentCount;
+  useEffect(() => {
+    if (!hydrated) return undefined;
+    const timer = setTimeout(() => localStorage.setItem('tasbih_current_count', String(state.currentCount)), COUNT_PERSIST_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [hydrated, state.currentCount]);
+  useEffect(() => {
+    if (!hydrated) return undefined;
+    const flush = () => localStorage.setItem('tasbih_current_count', String(latestCountRef.current));
+    const onVisibility = () => { if (document.visibilityState === 'hidden') flush(); };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [hydrated]);
   useEffect(() => {
     if (!hydrated) return;
     localStorage.setItem('tasbih_history', JSON.stringify(state.history));
@@ -258,75 +281,129 @@ interface CounterFlowDeps {
   setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState | null>>;
 }
 
+/** Pause after a round completes before the counter moves on; undo or a tap inside it. */
+export const ADVANCE_DELAY_MS = 1100;
+
+interface PendingAdvance {
+  timer: ReturnType<typeof setTimeout>;
+  from: string;
+  to: Dhikr;
+}
+
 export const useCounterFlow = (deps: CounterFlowDeps) => {
+  // Refs mirror the latest props and counts so rapid taps inside one render batch all count,
+  // and timers read current values instead of stale closures.
+  const depsRef = React.useRef(deps);
+  depsRef.current = deps;
+  const countRef = React.useRef(deps.currentCount);
+  countRef.current = deps.currentCount;
+  const dhikrRef = React.useRef(deps.activeDhikr);
+  dhikrRef.current = deps.activeDhikr;
+  const pendingRef = React.useRef<PendingAdvance | null>(null);
+  const lastLogRef = React.useRef<{ id: string; dhikrId: string } | null>(null);
+  // The dhikr the counter is about to move to, for the "next" hint during the pause.
+  const [pendingNext, setPendingNext] = React.useState<Dhikr | null>(null);
+
+  const clearPending = () => {
+    if (pendingRef.current) {
+      clearTimeout(pendingRef.current.timer);
+      pendingRef.current = null;
+    }
+    setPendingNext(null);
+  };
+
+  /** Move to the pending next dhikr now. Returns it, or null if the advance no longer applies. */
+  const advanceNow = (): Dhikr | null => {
+    const pending = pendingRef.current;
+    if (!pending) return null;
+    clearTimeout(pending.timer);
+    pendingRef.current = null;
+    setPendingNext(null);
+    if (dhikrRef.current.id !== pending.from) return null;
+    depsRef.current.setCurrentDhikrId(pending.to.id);
+    depsRef.current.setCurrentCount(0);
+    countRef.current = 0;
+    dhikrRef.current = pending.to;
+    return pending.to;
+  };
+
+  // Choosing a different dhikr by hand, or leaving the screen tree, cancels a pending advance.
+  React.useEffect(() => {
+    const pending = pendingRef.current;
+    if (pending && deps.currentDhikrId !== pending.from && deps.currentDhikrId !== pending.to.id) clearPending();
+  }, [deps.currentDhikrId]);
+  React.useEffect(() => clearPending, []);
+
+  const sequence = deps.activeRoutine ?? deps.dhikrs;
+  const mode = deps.activeRoutine ? 'routine' : 'free';
+  const completedTodayIds = React.useMemo(
+    () => new Set<string>(deps.history.filter((h) => isTimestampOnLocalDay(h.timestamp)).map((h) => h.dhikrId)),
+    [deps.history],
+  );
+  const upcoming = React.useMemo(
+    () => getUpcoming(sequence, deps.currentDhikrId, completedTodayIds, mode, 2),
+    [sequence, deps.currentDhikrId, completedTodayIds, mode],
+  );
+
   const handleIncrement = () => {
-    const nextCount = deps.currentCount + 1;
-    deps.setCurrentCount(nextCount);
+    // A tap during the pause moves on immediately and counts for the next dhikr.
+    if (pendingRef.current) advanceNow();
 
-    if (deps.preferences.soundOn) {
-      playBeadSound(deps.preferences.soundTone, deps.preferences.volume);
+    const d = depsRef.current;
+    const dhikr = dhikrRef.current;
+    const prefs = d.preferences;
+    const result = tapCount(countRef.current, dhikr.targetCount);
+    countRef.current = result.count;
+    d.setCurrentCount(result.count);
+
+    if (prefs.soundOn) playBeadSound(prefs.soundTone, prefs.volume);
+    if (result.roundCompleted && prefs.soundOn && prefs.completionSoundOn) playCompletionSound(prefs.volume);
+    if (prefs.vibrateOn && typeof navigator !== 'undefined' && navigator.vibrate) {
+      const kind = result.roundCompleted ? 'complete' : result.milestone ? 'milestone' : 'tap';
+      navigator.vibrate(getHapticPattern(kind, prefs.hapticStrength));
     }
 
-    if (deps.preferences.vibrateOn && window.navigator && window.navigator.vibrate) {
-      window.navigator.vibrate(40);
-    }
+    if (!result.roundCompleted) return;
 
-    const goal = deps.activeDhikr.targetCount;
+    const newLog: DhikrHistory = {
+      id: Math.random().toString(36).substring(2, 9),
+      dhikrId: dhikr.id,
+      dhikrName: dhikr.nameEn,
+      count: dhikr.targetCount,
+      timestamp: new Date().toISOString(),
+    };
+    lastLogRef.current = { id: newLog.id, dhikrId: dhikr.id };
+    d.setHistory((prev) => [...prev, newLog]);
 
-    if (goal > 0 && nextCount === goal) {
-      if (deps.preferences.vibrateOn && window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate([100, 60, 100]);
-      }
+    if (!prefs.autoAdvance) return;
+    const completedIds = new Set<string>(completedTodayIds);
+    completedIds.add(dhikr.id);
+    const seq = d.activeRoutine ?? d.dhikrs;
+    const nextId = findNextDhikrId(seq, dhikr.id, completedIds, d.activeRoutine ? 'routine' : 'free');
+    const next = nextId ? seq.find((x) => x.id === nextId) : undefined;
+    if (!next) return;
 
-      playCompletionSound(deps.preferences.volume);
+    clearPending();
+    pendingRef.current = {
+      from: dhikr.id,
+      to: next,
+      timer: setTimeout(() => { advanceNow(); }, ADVANCE_DELAY_MS),
+    };
+    setPendingNext(next);
+  };
 
-      const newLog: DhikrHistory = {
-        id: Math.random().toString(36).substring(2, 9),
-        dhikrId: deps.activeDhikr.id,
-        dhikrName: deps.activeDhikr.nameEn,
-        count: goal,
-        timestamp: new Date().toISOString(),
-      };
-      deps.setHistory((prev) => [...prev, newLog]);
-
-      if (deps.preferences.autoAdvance) {
-        const sequence = deps.activeRoutine ?? deps.dhikrs;
-        const currentIndex = sequence.findIndex((d) => d.id === deps.currentDhikrId);
-
-        if (currentIndex !== -1) {
-          // Build today's completed set BEFORE this completion (newLog not yet in state)
-          const completedTodayIds = new Set(
-            deps.history
-              .filter(h => isTimestampOnLocalDay(h.timestamp))
-              .map(h => h.dhikrId)
-          );
-          // Current dhikr just completed — add it to the set
-          completedTodayIds.add(deps.currentDhikrId);
-
-          if (deps.activeRoutine) {
-            // Find the next PENDING dhikr after the current position
-            const nextPending = sequence
-              .slice(currentIndex + 1)
-              .find(d => !completedTodayIds.has(d.id));
-
-            if (nextPending) {
-              setTimeout(() => {
-                deps.setCurrentDhikrId(nextPending.id);
-                deps.setCurrentCount(0);
-              }, 1200);
-            }
-            // All done in routine — stay on last, don't loop
-          } else {
-            // Free counter mode — just advance to next in library
-            const nextIndex = (currentIndex + 1) % sequence.length;
-            const nextDhikr = sequence[nextIndex];
-            setTimeout(() => {
-              deps.setCurrentDhikrId(nextDhikr.id);
-              deps.setCurrentCount(0);
-            }, 1200);
-          }
-        }
-      }
+  const handleUndo = () => {
+    const d = depsRef.current;
+    const dhikr = dhikrRef.current;
+    clearPending();
+    const result = undoCount(countRef.current, dhikr.targetCount);
+    if (result.count === countRef.current) return;
+    countRef.current = result.count;
+    d.setCurrentCount(result.count);
+    const log = lastLogRef.current;
+    if (result.undidCompletion && log && log.dhikrId === dhikr.id) {
+      d.setHistory((prev) => prev.filter((entry) => entry.id !== log.id));
+      lastLogRef.current = null;
     }
   };
 
@@ -335,13 +412,15 @@ export const useCounterFlow = (deps: CounterFlowDeps) => {
       title: 'Reset Counter',
       message: 'Reset this prayer counter back to zero? This will clear active progress, but keeps your history logs.',
       onConfirm: () => {
+        clearPending();
+        countRef.current = 0;
         deps.setCurrentCount(0);
         deps.setConfirmModal(null);
-      }
+      },
     });
   };
 
-  return { handleIncrement, handleReset };
+  return { handleIncrement, handleUndo, handleReset, canUndo: deps.currentCount > 0, upcoming, pendingNext };
 };
 
 
