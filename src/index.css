@@ -112,6 +112,12 @@ html {
   font-size: 16px; /* base for rem */
 }
 
+/* data-theme is on the app root, not <body>, so body's colour would be inherited in the dark palette
+   even in light mode. The themed root sets its own, so icons and bare text follow the theme. */
+[data-theme] {
+  color: var(--color-text-primary);
+}
+
 html, body {
   height: 100%;
   overflow: hidden; /* the app shell sizes itself to the dynamic viewport and scrolls inside */

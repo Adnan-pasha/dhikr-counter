@@ -213,3 +213,16 @@ test('icon-only action buttons meet the 44px touch target', () => {
     assert.doesNotMatch(src, /className=(\{`|")p-1\.5 rounded-(xl|lg) /, `${file} has an undersized icon button`);
   }
 });
+
+test('the themed root sets its own text colour so icons and bare text follow the theme', () => {
+  // data-theme sits on the app root, not on <body>, so text colour set on body would otherwise be
+  // inherited in the dark palette even in light mode (white icons on light cards).
+  const css = fs.readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
+  const rule = css.split('[data-theme] {')[1]?.split('}')[0] ?? '';
+  assert.ok(rule.includes('color: var(--color-text-primary)'), 'a [data-theme] rule sets color');
+});
+
+test('Salah stat cards have breathing room above the prayer list', () => {
+  const src = fs.readFileSync(new URL('../src/components/SalahTracker.tsx', import.meta.url), 'utf8');
+  assert.ok(src.includes('className="flex gap-3 mt-4 pb-4"'));
+});
