@@ -69,7 +69,26 @@ export const getBeadState = (count: number, target: number, cap: number = MAX_BE
   const { inRound } = roundInfo(count, target);
   if (target <= cap) return { total: target, filled: inRound };
   if (inRound === 0) return { total: cap, filled: 0 };
-  return { total: cap, filled: Math.max(1, Math.round((inRound / target) * cap)) };
+  // A target too big for one string runs it in laps of `cap`, so every tap moves a bead
+  // (scaling the whole target onto the string would sit on one bead for hundreds of taps).
+  // The final tap of a round always shows a full string.
+  if (inRound === target) return { total: cap, filled: cap };
+  return { total: cap, filled: ((inRound - 1) % cap) + 1 };
+};
+
+export interface CountDisplay {
+  /** The target goes on its own line under the count instead of beside it. */
+  stacked: boolean;
+  countSize: number;
+  targetSize: number;
+}
+
+/** Sizes for the number inside the ring, so long counts and targets never overflow it. */
+export const countDisplay = (count: number, target: number): CountDisplay => {
+  const digits = String(count).length;
+  const countSize = digits <= 3 ? 70 : digits === 4 ? 56 : digits === 5 ? 46 : digits === 6 ? 38 : 32;
+  const stacked = target > 0 && String(target).length + digits > 5;
+  return { stacked, countSize, targetSize: stacked ? 24 : 30 };
 };
 
 interface HasId {

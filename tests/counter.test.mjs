@@ -82,12 +82,29 @@ test('small targets use that many beads', () => {
   assert.deepEqual(getBeadState(1, 1), { total: 1, filled: 1 });
 });
 
-test('large targets scale progress onto the capped string', () => {
-  const half = getBeadState(50, 100);
-  assert.equal(half.total, 33);
-  assert.equal(half.filled, 17, 'rounded to the nearest bead');
+test('large targets run the string in laps of 33 so every tap moves a bead', () => {
+  assert.deepEqual(getBeadState(0, 100), { total: 33, filled: 0 });
+  assert.deepEqual(getBeadState(1, 100), { total: 33, filled: 1 });
+  assert.deepEqual(getBeadState(33, 100), { total: 33, filled: 33 }, 'a lap ends on a full string');
+  assert.deepEqual(getBeadState(34, 100), { total: 33, filled: 1 }, 'the next lap starts again');
+  assert.deepEqual(getBeadState(50, 100), { total: 33, filled: 17 });
+});
+
+test('a finished large round shows a full string', () => {
   assert.equal(getBeadState(100, 100).filled, 33);
-  assert.equal(getBeadState(1, 100).filled, 1, 'a started round always shows at least one bead');
+  assert.equal(getBeadState(200, 100).filled, 33, 'second round also ends full');
+  assert.equal(getBeadState(101, 100).filled, 1, 'and the round after starts at one bead');
+});
+
+test('a very large target still moves a bead on every tap', () => {
+  // 62,500 taps: the string must not sit on one bead for ~1,900 taps.
+  for (let count = 1; count <= 70; count += 1) {
+    const now = getBeadState(count, 62500).filled;
+    const before = getBeadState(count - 1, 62500).filled;
+    assert.notEqual(now, before, `tap ${count} changes the string`);
+  }
+  assert.equal(getBeadState(24, 62500).filled, 24);
+  assert.equal(getBeadState(62500, 62500).filled, 33);
 });
 
 test('free counters cycle the string every 33', () => {
@@ -216,4 +233,42 @@ test('heroFontSize counts letters, not combining marks', () => {
   const vowelled = 'سُبْحَانَ ٱللَّهِ';
   assert.equal(heroFontSize(plain), heroFontSize(vowelled));
   assert.equal(heroFontSize(''), heroFontSize('x'));
+});
+
+// ── countDisplay ─────────────────────────────────────────────────────────────
+
+import { countDisplay } from '../src/counter.ts';
+
+test('a short count with a short target sits on one line at full size', () => {
+  const d = countDisplay(12, 33);
+  assert.equal(d.stacked, false);
+  assert.equal(d.countSize, 70);
+});
+
+test('a long target stacks under the count so it cannot overflow the ring', () => {
+  const d = countDisplay(24, 62500);
+  assert.equal(d.stacked, true, 'target moves to its own line');
+  assert.ok(d.countSize >= 40, 'the count itself stays large');
+});
+
+test('the count shrinks as digits are added and never grows with a longer target', () => {
+  const sizes = [1, 10, 100, 1000, 10000, 100000].map((n) => countDisplay(n, 0).countSize);
+  for (let i = 1; i < sizes.length; i += 1) assert.ok(sizes[i] <= sizes[i - 1], `size ${sizes[i]} <= ${sizes[i - 1]}`);
+  assert.ok(sizes[sizes.length - 1] >= 30, 'still legible with six digits');
+  assert.equal(countDisplay(5, 10).countSize, countDisplay(5, 99999).countSize, 'target length does not change the count size');
+});
+
+test('free counters have nothing to stack', () => {
+  assert.equal(countDisplay(1234567, 0).stacked, false);
+});
+
+test('the widest display fits inside the ring (approximate text width)', () => {
+  // Ring inner width is about 150px. Digit width ~0.62em for the display face.
+  for (const [count, target] of [[24, 62500], [62499, 62500], [999, 1000], [12, 33], [8, 99]]) {
+    const d = countDisplay(count, target);
+    const countWidth = String(count).length * d.countSize * 0.62;
+    const lineWidth = d.stacked ? countWidth : countWidth + (String(target).length + 1) * d.targetSize * 0.62;
+    assert.ok(lineWidth <= 150, `${count}/${target} is ${Math.round(lineWidth)}px wide`);
+    if (d.stacked) assert.ok(String(target).length * d.targetSize * 0.62 <= 150, 'stacked target fits too');
+  }
 });
