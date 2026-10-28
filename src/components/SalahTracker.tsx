@@ -177,7 +177,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, afterSalah, on
         </div>
       </div>
 
-      <div className="px-4 py-4 space-y-5">
+      <div className="scroll-area space-y-5">
 
         {/* ── Today's Prayers ────────────────────────────────────────── */}
         <section>
