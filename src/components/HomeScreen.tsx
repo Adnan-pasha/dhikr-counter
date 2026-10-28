@@ -8,7 +8,7 @@ import {
 import { Dhikr, DhikrHistory, Routine, UserPreferences } from '../types';
 import { AppIcon, IconKey } from '../icons';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
-import { isTimestampOnLocalDay } from '../domain';
+import { isTimestampOnLocalDay, dhikrReadingLines } from '../domain';
 import type { DailyProgress, StreakInfo } from '../habits';
 import DailyGoalCard from './DailyGoalCard';
 
@@ -119,6 +119,11 @@ export default function HomeScreen({
   const hijriDate = useMemo(() => getHijriDate(), []);
   const allDhikrs = [...ADHKAAR_LIBRARY, ...customDhikrs];
   const currentDhikr = allDhikrs.find(d => d.id === currentDhikrId) ?? ADHKAAR_LIBRARY[0];
+  const currentReading = dhikrReadingLines(currentDhikr, preferences);
+  const favouriteLine = (d: Dhikr): string | null => {
+    const r = dhikrReadingLines(d, preferences);
+    return r.transliteration ?? r.translation;
+  };
 
   // Live clock
   useEffect(() => {
@@ -225,10 +230,12 @@ export default function HomeScreen({
             </div>
             <div className="flex-1 text-left min-w-0">
               <p className="font-display font-black text-sm truncate" style={{ color: 'var(--color-text-primary)' }}>{currentDhikr.nameEn}</p>
-              {currentDhikr.transliteration && (
-                <p className="text-xs italic mt-0.5 truncate" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>{currentDhikr.transliteration}</p>
+              {currentReading.transliteration && (
+                <p className="text-xs italic mt-0.5 truncate" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>{currentReading.transliteration}</p>
               )}
-              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{currentDhikr.meaning}</p>
+              {currentReading.translation && (
+                <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{currentReading.translation}</p>
+              )}
             </div>
             <div className="shrink-0 flex flex-col items-center gap-1">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #34D3A0, #14B88A)', boxShadow: '0 4px 16px rgba(52,211,160,0.3)' }}>
@@ -346,9 +353,11 @@ export default function HomeScreen({
                     }}
                   >
                     <p className="text-xs font-black truncate" style={{ color: 'var(--color-text-primary)' }}>{dhikr.nameEn}</p>
-                    <p className="text-xs italic mt-0.5 truncate" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>
-                      {dhikr.transliteration ?? dhikr.meaning}
-                    </p>
+                    {favouriteLine(dhikr) && (
+                      <p className="text-xs italic mt-0.5 truncate" style={{ color: 'var(--color-text-brand)', opacity: 0.7 }}>
+                        {favouriteLine(dhikr)}
+                      </p>
+                    )}
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs font-bold" style={{ color: 'var(--color-text-muted)' }}>{dhikr.targetCount}×</span>
                       {done && <Check className="w-3 h-3" style={{ color: '#10B981' }} />}

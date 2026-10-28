@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import ActivityChart from './ActivityChart';
 import { 
-  BarChart2, 
   Flame, 
   Trophy, 
   Calendar, 
@@ -19,9 +19,9 @@ import {
   Lock,
   Compass
 } from 'lucide-react';
-import { DhikrHistory, DailyLog, Dhikr } from '../types';
+import { DhikrHistory, Dhikr } from '../types';
 import { AppIcon } from '../icons';
-import { getMotivationalMessage, computeAchievements, getLocalDateString, isTimestampOnLocalDay } from '../domain';
+import { getMotivationalMessage, computeAchievements, getLocalDateString } from '../domain';
 
 interface StatsScreenProps {
   history: DhikrHistory[];
@@ -134,32 +134,6 @@ export default function StatsScreen({
     total: number;
   } | null>(null);
 
-  // Core aggregated counts for custom bar chart
-  const getLast7DaysData = (): DailyLog[] => {
-    const data: DailyLog[] = [];
-    const today = new Date();
-    
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const dateStr = getLocalDateString(d);
-      
-      const daysHistory = history.filter(item => isTimestampOnLocalDay(item.timestamp, d));
-      
-      const dayTotal = daysHistory.reduce((acc, curr) => acc + curr.count, 0);
-      
-      data.push({
-        date: d.toLocaleDateString('en-US', { weekday: 'short' }),
-        count: dayTotal
-      });
-    }
-    return data;
-  };
-
-  const chartData = getLast7DaysData();
-  const maxCount = Math.max(...chartData.map(d => d.count), 1);
-
-  // Level Progression Math
   const getCurrentLevel = () => {
     let result = LEVELS[0];
     for (const lvl of LEVELS) {
@@ -487,50 +461,7 @@ export default function StatsScreen({
                 )}
               </div>
 
-              {/* 7-DAY BAR GRAPH */}
-              <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                    <BarChart2 className="w-4 h-4 text-brand-400" />
-                    Weekly Activity
-                  </h3>
-                  <span className="text-xs font-bold text-slate-450 uppercase">7 Days view</span>
-                </div>
-
-                {/* Custom SVG Bar Chart */}
-                <div className="relative h-28 w-full flex items-end justify-between px-1 pt-3">
-                  {chartData.map((d, index) => {
-                    const rectHeight = (d.count / maxCount) * 85; 
-                    return (
-                      <div key={d.date} className="flex flex-col items-center flex-1 h-full justify-end group">
-                        
-                        {/* Tooltip on hovering */}
-                        <div className="absolute top-0 font-mono text-xs font-black text-brand-400 bg-slate-900 border border-slate-800 px-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                          {d.count}
-                        </div>
-
-                        {/* Chart bar */}
-                        <div className="w-6 bg-slate-950 rounded-md relative h-[70px] flex items-end overflow-hidden border border-slate-850">
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: `${rectHeight}%` }}
-                            transition={{ type: 'spring', stiffness: 60, damping: 11, delay: index * 0.05 }}
-                            className={`w-full rounded-t-sm ${
-                              d.count > 0 
-                                ? 'bg-gradient-to-t from-brand-500 to-brand-400' 
-                                : 'bg-transparent'
-                            }`}
-                          />
-                        </div>
-                        
-                        <span className="text-xs font-bold text-slate-400 mt-2 block tracking-tight">
-                          {d.date}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <ActivityChart history={history} today={getLocalDateString(new Date())} />
 
               {/* LATEST 3 LOGS PREVIEW */}
               <div className="space-y-3">

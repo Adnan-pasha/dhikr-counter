@@ -219,7 +219,7 @@ export default function RoutineManager({
                             >
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-black truncate">{d.nameEn}</p>
-                                <p className="text-xs text-slate-500 truncate">{d.meaning}</p>
+                                {d.meaning && (<p className="text-xs text-slate-500 truncate">{d.meaning}</p>)}
                               </div>
                               <span className="text-xs text-slate-500 shrink-0">{d.targetCount}×</span>
                               {added && <Check className="w-3.5 h-3.5 text-brand-400 shrink-0" />}
@@ -473,7 +473,7 @@ function RoutineDetail({
                             >
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-black truncate">{d.nameEn}</p>
-                                <p className="text-xs text-slate-500 truncate">{d.meaning}</p>
+                                {d.meaning && (<p className="text-xs text-slate-500 truncate">{d.meaning}</p>)}
                               </div>
                               <span className="text-xs text-slate-500 shrink-0">{d.targetCount}×</span>
                               {added && <Check className="w-3 h-3 text-brand-400 shrink-0" />}

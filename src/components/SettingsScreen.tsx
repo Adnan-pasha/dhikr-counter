@@ -18,6 +18,38 @@ interface SettingsScreenProps {
   onGoBack: () => void;
 }
 
+// Custom switch component wrapper
+const Switch = ({ 
+  id,
+  label,
+  checked, 
+  onChange 
+}: { 
+  id: string; 
+  label: string;
+  checked: boolean; 
+  onChange: (val: boolean) => void 
+}) => (
+  <button
+    type="button"
+    id={id}
+    role="switch"
+    aria-checked={checked}
+    aria-label={label}
+    onClick={() => onChange(!checked)}
+    className={`w-11 h-6 rounded-full p-0.5 transition-colors focus:outline-none cursor-pointer ${
+      checked ? 'bg-brand-500' : 'bg-slate-800'
+    }`}
+  >
+    <motion.div
+      layout
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      className="w-5 h-5 rounded-full bg-slate-100 shadow-sm"
+      style={{ x: checked ? 20 : 0 }}
+    />
+  </button>
+);
+
 export default function SettingsScreen({
   preferences,
   onChangePreferences,
@@ -117,30 +149,6 @@ export default function SettingsScreen({
     setNewReminderDays(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
   };
   
-  // Custom switch component wrapper
-  const Switch = ({ 
-    checked, 
-    onChange 
-  }: { 
-    id: string; 
-    checked: boolean; 
-    onChange: (val: boolean) => void 
-  }) => (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className={`w-11 h-6 rounded-full p-0.5 transition-colors focus:outline-none cursor-pointer ${
-        checked ? 'bg-brand-500' : 'bg-slate-800'
-      }`}
-    >
-      <motion.div
-        layout
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-        className="w-5 h-5 rounded-full bg-slate-100 shadow-sm"
-        style={{ x: checked ? 20 : 0 }}
-      />
-    </button>
-  );
 
   const testSound = (tone: SoundTone) => {
     playBeadSound(tone, preferences.volume);
@@ -292,6 +300,7 @@ export default function SettingsScreen({
             </div>
             <Switch
               id="switch_sound_feedback"
+              label="Sound feedback"
               checked={preferences.soundOn}
               onChange={(val) => onChangePreferences({ soundOn: val })}
             />
@@ -365,6 +374,7 @@ export default function SettingsScreen({
             </div>
             <Switch
               id="switch_haptics"
+              label="Haptic vibration"
               checked={preferences.vibrateOn}
               onChange={(val) => {
                 onChangePreferences({ vibrateOn: val });
@@ -411,8 +421,35 @@ export default function SettingsScreen({
             </div>
             <Switch
               id="switch_completion_chime"
+              label="Round-complete chime"
               checked={preferences.completionSoundOn && preferences.soundOn}
               onChange={(val) => onChangePreferences({ completionSoundOn: val })}
+            />
+          </div>
+
+          {/* Reading lines under the Arabic */}
+          <div className="flex justify-between items-center pt-2 bg-transparent">
+            <div>
+              <p className="text-xs font-bold text-slate-200">Show transliteration</p>
+              <p className="text-xs text-slate-400 font-medium">Latin letters to help you read the Arabic</p>
+            </div>
+            <Switch
+              id="switch_show_transliteration"
+              label="Show transliteration"
+              checked={preferences.showTransliteration}
+              onChange={(val) => onChangePreferences({ showTransliteration: val })}
+            />
+          </div>
+          <div className="flex justify-between items-center pt-2 bg-transparent">
+            <div>
+              <p className="text-xs font-bold text-slate-200">Show translation</p>
+              <p className="text-xs text-slate-400 font-medium">The meaning in English under each dhikr</p>
+            </div>
+            <Switch
+              id="switch_show_translation"
+              label="Show translation"
+              checked={preferences.showTranslation}
+              onChange={(val) => onChangePreferences({ showTranslation: val })}
             />
           </div>
 
@@ -449,6 +486,7 @@ export default function SettingsScreen({
             </div>
             <Switch
               id="switch_auto_advance"
+              label="Auto-advance to the next dhikr"
               checked={preferences.autoAdvance}
               onChange={(val) => onChangePreferences({ autoAdvance: val })}
             />
@@ -552,7 +590,7 @@ export default function SettingsScreen({
                   >
                     {dhikrs.map((d) => (
   <option key={d.id} value={d.id} className="bg-slate-950 text-slate-200">
-    {d.nameEn} — {d.meaning}
+    {d.meaning ? `${d.nameEn} — ${d.meaning}` : d.nameEn}
   </option>
 ))}
                   </select>
@@ -798,6 +836,7 @@ export default function SettingsScreen({
                     <div className="flex items-center gap-2.5 shrink-0 bg-transparent">
                       <Switch
                         id={`switch_rem_${rem.id}`}
+                        label={`Reminder: ${rem.label}`}
                         checked={rem.isEnabled}
                         onChange={(checked) => handleToggleReminder(rem.id, checked)}
                       />

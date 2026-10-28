@@ -5,7 +5,7 @@ import {
   Tag, Sparkles, Play, Heart, Search, X, Plus, Trash2, Check,
   Shield, Edit3
 } from 'lucide-react';
-import { Dhikr, AdhkaarCategory, CATEGORY_META } from '../types';
+import { Dhikr, AdhkaarCategory, CATEGORY_META, EditableDhikrFields } from '../types';
 import { AppIcon } from '../icons';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
 import { isTimestampOnLocalDay } from '../domain';
@@ -21,7 +21,7 @@ interface AdhkaarLibraryProps {
   onToggleFavourite: (id: string) => void;
   onSelectDhikr: (id: string) => void;
   onAddCustomDhikr: (dhikr: Omit<Dhikr, 'id' | 'isSystem'>) => void;
-  onEditCustomDhikr: (id: string, nameEn: string, nameAr: string, meaning: string, targetCount: number) => void;
+  onEditCustomDhikr: (id: string, fields: EditableDhikrFields) => void;
   onDeleteCustomDhikr: (id: string) => void;
   onToggleCompleteToday: (id: string) => void;
   onNavigateToRoutine: () => void;
@@ -71,12 +71,14 @@ export default function AdhkaarLibrary({
   // Add form state
   const [newEn, setNewEn] = useState('');
   const [newAr, setNewAr] = useState('');
+  const [newTransliteration, setNewTransliteration] = useState('');
   const [newMeaning, setNewMeaning] = useState('');
   const [newCount, setNewCount] = useState('33');
 
   // Edit form state
   const [editName, setEditName] = useState('');
   const [editNameAr, setEditNameAr] = useState('');
+  const [editTransliteration, setEditTransliteration] = useState('');
   const [editMeaning, setEditMeaning] = useState('');
   const [editCount, setEditCount] = useState('33');
 
@@ -107,10 +109,11 @@ export default function AdhkaarLibrary({
     onAddCustomDhikr({
       nameEn: newEn.trim(),
       nameAr: newAr.trim() || 'بِسْمِ ٱللَّٰهِ',
-      meaning: newMeaning.trim() || 'In the name of Allah',
+      transliteration: newTransliteration.trim() || undefined,
+      meaning: newMeaning.trim(),
       targetCount: Math.max(1, parseInt(newCount) || 33),
     });
-    setNewEn(''); setNewAr(''); setNewMeaning(''); setNewCount('33');
+    setNewEn(''); setNewAr(''); setNewTransliteration(''); setNewMeaning(''); setNewCount('33');
     setShowAddForm(false);
   };
 
@@ -229,6 +232,7 @@ export default function AdhkaarLibrary({
               <p className="text-xs font-black uppercase tracking-widest text-brand-500 mb-2 flex items-center gap-1.5"><AppIcon name="plus" className="w-3.5 h-3.5" /> New Custom Dhikr</p>
               <input value={newEn} onChange={(e) => setNewEn(e.target.value)} placeholder="English name *" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <input value={newAr} onChange={(e) => setNewAr(e.target.value)} placeholder="Arabic text (optional)" dir="rtl" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 text-right" />
+              <input value={newTransliteration} onChange={(e) => setNewTransliteration(e.target.value)} placeholder="Transliteration (optional)" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <input value={newMeaning} onChange={(e) => setNewMeaning(e.target.value)} placeholder="Meaning / description" className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <div className="flex gap-2 items-center">
                 <input type="number" value={newCount} onChange={(e) => setNewCount(e.target.value)} placeholder="Count" min="1" className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
@@ -267,10 +271,12 @@ export default function AdhkaarLibrary({
                 isExpanded={expandedId === dhikr.id}
                 editName={editName}
                 editNameAr={editNameAr}
+                editTransliteration={editTransliteration}
                 editMeaning={editMeaning}
                 editCount={editCount}
                 onEditNameChange={setEditName}
                 onEditNameArChange={setEditNameAr}
+                onEditTransliterationChange={setEditTransliteration}
                 onEditMeaningChange={setEditMeaning}
                 onEditCountChange={setEditCount}
                 onToggleExpand={() => setExpandedId(prev => prev === dhikr.id ? null : dhikr.id)}
@@ -282,6 +288,7 @@ export default function AdhkaarLibrary({
                   setEditingDhikr(dhikr);
                   setEditName(dhikr.nameEn);
                   setEditNameAr(dhikr.nameAr);
+                  setEditTransliteration(dhikr.transliteration ?? '');
                   setEditMeaning(dhikr.meaning);
                   setEditCount(String(dhikr.targetCount));
                   setShowAddForm(false);
@@ -289,7 +296,13 @@ export default function AdhkaarLibrary({
                 onCancelEdit={() => setEditingDhikr(null)}
                 onSaveEdit={() => {
                   if (!editName.trim()) return;
-                  onEditCustomDhikr(dhikr.id, editName.trim(), editNameAr.trim(), editMeaning.trim(), Math.max(1, parseInt(editCount) || 33));
+                  onEditCustomDhikr(dhikr.id, {
+                    nameEn: editName.trim(),
+                    nameAr: editNameAr.trim(),
+                    transliteration: editTransliteration.trim(),
+                    meaning: editMeaning.trim(),
+                    targetCount: Math.max(1, parseInt(editCount) || 33),
+                  });
                   setEditingDhikr(null);
                 }}
                 onDelete={() => onDeleteCustomDhikr(dhikr.id)}
@@ -316,10 +329,12 @@ interface AdhkaarCardProps {
   isExpanded: boolean;
   editName: string;
   editNameAr: string;
+  editTransliteration: string;
   editMeaning: string;
   editCount: string;
   onEditNameChange: (v: string) => void;
   onEditNameArChange: (v: string) => void;
+  onEditTransliterationChange: (v: string) => void;
   onEditMeaningChange: (v: string) => void;
   onEditCountChange: (v: string) => void;
   onToggleExpand: () => void;
@@ -335,8 +350,8 @@ interface AdhkaarCardProps {
 
 function AdhkaarCard({
   dhikr, idx, isActive, isFavourite, isCompleted, isEditing, isExpanded,
-  editName, editNameAr, editMeaning, editCount,
-  onEditNameChange, onEditNameArChange, onEditMeaningChange, onEditCountChange,
+  editName, editNameAr, editTransliteration, editMeaning, editCount,
+  onEditNameChange, onEditNameArChange, onEditTransliterationChange, onEditMeaningChange, onEditCountChange,
   onToggleExpand, onToggleFavourite, onToggleComplete,
   onSelect, onAddToRoutine, onStartEdit, onCancelEdit, onSaveEdit, onDelete,
 }: AdhkaarCardProps) {
@@ -397,7 +412,9 @@ function AdhkaarCard({
             {dhikr.transliteration && (
               <p className="text-xs text-brand-400/80 font-medium italic mt-0.5 leading-tight">{dhikr.transliteration}</p>
             )}
-            <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">{dhikr.meaning}</p>
+            {dhikr.meaning && (
+              <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">{dhikr.meaning}</p>
+            )}
             <div className="flex items-center gap-3 mt-2">
               <span className="flex items-center gap-1 text-xs text-slate-500 font-semibold">
                 <Clock className="w-2.5 h-2.5 text-brand-500/60" />
@@ -516,6 +533,7 @@ function AdhkaarCard({
               <p className="text-xs font-black uppercase tracking-widest text-brand-500">Editing — {dhikr.nameEn}</p>
               <input value={editName} onChange={e => onEditNameChange(e.target.value)} placeholder="English name" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <input value={editNameAr} onChange={e => onEditNameArChange(e.target.value)} placeholder="Arabic text" dir="rtl" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 text-right" />
+              <input value={editTransliteration} onChange={e => onEditTransliterationChange(e.target.value)} placeholder="Transliteration (optional)" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <input value={editMeaning} onChange={e => onEditMeaningChange(e.target.value)} placeholder="Meaning" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <input type="number" value={editCount} onChange={e => onEditCountChange(e.target.value)} placeholder="Count" min="1" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <div className="flex gap-2">

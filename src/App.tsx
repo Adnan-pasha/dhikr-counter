@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { WifiOff } from 'lucide-react';
-import { Dhikr, DhikrHistory, UserPreferences, DhikrReminder, Routine, SalahLog, SalahName, Madhab, ConfirmModalState } from './types';
+import { Dhikr, DhikrHistory, UserPreferences, DhikrReminder, Routine, SalahLog, SalahName, Madhab, ConfirmModalState, EditableDhikrFields } from './types';
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
 import HomeScreen from './components/HomeScreen';
@@ -38,6 +38,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   completionSoundOn: true,
   hapticStrength: 'medium',
   dailyGoal: 100,
+  showTransliteration: true,
+  showTranslation: true,
 };
 
 // Default Dhikr Reminders Preset
@@ -187,10 +189,10 @@ export default function App() {
     },
   });
 
-  const handleEditDhikr = (id: string, nameEn: string, nameAr: string, meaning: string, targetCount: number) => {
+  const handleEditDhikr = (id: string, fields: EditableDhikrFields) => {
     setDhikrs((prev) =>
       prev.map((d) =>
-        d.id === id ? { ...d, nameEn, nameAr, meaning, targetCount } : d
+        d.id === id ? { ...d, ...fields, transliteration: fields.transliteration || undefined } : d
       )
     );
   };

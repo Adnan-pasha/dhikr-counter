@@ -80,6 +80,19 @@ export interface UserPreferences {
   hapticStrength: HapticStrength;
   /** Beads per day that fill the Home ring. */
   dailyGoal: number;
+  /** Show the transliteration line under the Arabic. */
+  showTransliteration: boolean;
+  /** Show the translation (meaning) line under the Arabic. */
+  showTranslation: boolean;
+}
+
+/** The fields a user can change on a custom dhikr. */
+export interface EditableDhikrFields {
+  nameEn: string;
+  nameAr: string;
+  transliteration: string;
+  meaning: string;
+  targetCount: number;
 }
 
 export interface DailyLog {
