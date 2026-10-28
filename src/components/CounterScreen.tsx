@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { RotateCcw, Undo2, Volume2, VolumeX, Maximize2, Minimize2, Check, ChevronLeft } from 'lucide-react';
 import { Dhikr, DhikrHistory, UserPreferences } from '../types';
 import { isTimestampOnLocalDay, shouldCountOnKey, getCounterLiveMessage } from '../domain';
-import { roundInfo, getBeadState, heroFontSize } from '../counter';
+import { roundInfo, getBeadState, heroFontSize, countDisplay } from '../counter';
 import { warmTone } from '../audio';
 import BeadString from './BeadString';
 
@@ -99,6 +99,7 @@ export default function CounterScreen({
   const { inRound, rounds, remaining } = roundInfo(currentCount, target);
   const beads = getBeadState(currentCount, target);
   const progress = target > 0 ? inRound / target : (currentCount % 100) / 100;
+  const display = countDisplay(target > 0 ? inRound : currentCount, target);
   const isCompletedToday = history.some(log => log.dhikrId === currentDhikr.id && isTimestampOnLocalDay(log.timestamp));
 
   // Pre-render this tone so the first taps are as cheap as the rest.
@@ -340,12 +341,20 @@ export default function CounterScreen({
                 initial={{ scale: 0.88, opacity: 0.7 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', stiffness: 380, damping: 20 }}
-                className="flex items-baseline justify-center font-display font-black tabular-nums leading-none"
+                className={`flex justify-center font-display font-black tabular-nums leading-none ${display.stacked ? 'flex-col items-center' : 'items-baseline'}`}
                 style={{ color: 'var(--color-text-primary)' }}
               >
-                <span style={{ fontSize: inRound >= 1000 ? 'clamp(36px, 6vh, 48px)' : 'clamp(50px, 8.4vh, 70px)' }}>{target > 0 ? inRound : currentCount}</span>
+                <span style={{ fontSize: `min(${display.countSize}px, 8.4vh)` }}>{target > 0 ? inRound : currentCount}</span>
                 {target > 0 && (
-                  <span className="font-bold" style={{ fontSize: 'clamp(22px, 3.6vh, 30px)', color: 'var(--color-text-muted)', marginInlineStart: 4 }}>
+                  <span
+                    className="font-bold"
+                    style={{
+                      fontSize: `min(${display.targetSize}px, 3.6vh)`,
+                      color: 'var(--color-text-muted)',
+                      marginInlineStart: display.stacked ? 0 : 4,
+                      marginTop: display.stacked ? 4 : 0,
+                    }}
+                  >
                     /{target}
                   </span>
                 )}
@@ -379,11 +388,11 @@ export default function CounterScreen({
         aria-hidden={isFocusMode}
       >
         <div
-          className="px-3 py-2 rounded-xl flex items-center gap-2 text-sm font-bold"
+          className="min-w-0 px-3 py-2 rounded-xl flex items-center gap-2 text-sm font-bold"
           style={{ background: 'var(--color-brand-dim)', border: '1px solid var(--color-brand-border)', color: 'var(--color-text-brand)' }}
         >
-          <span className="section-label" style={{ color: 'var(--color-text-brand)' }}>Target</span>
-          <span className="font-display font-black">{target > 0 ? `${target}×` : '∞'}</span>
+          <span className="section-label max-[400px]:hidden" style={{ color: 'var(--color-text-brand)' }}>Target</span>
+          <span className="font-display font-black truncate">{target > 0 ? `${target}×` : '∞'}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -392,7 +401,7 @@ export default function CounterScreen({
             onClick={onUndo}
             disabled={!canUndo}
             aria-label="Undo last count"
-            className="tap-target gap-1.5 px-4 rounded-xl font-bold text-sm cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="tap-target gap-1.5 px-4 max-[400px]:px-3 rounded-xl font-bold text-sm cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
             tabIndex={isFocusMode ? -1 : 0}
           >
@@ -402,7 +411,7 @@ export default function CounterScreen({
             id="btn_reset_counter"
             onClick={onReset}
             aria-label="Reset counter"
-            className="tap-target gap-1.5 px-4 rounded-xl font-bold text-sm cursor-pointer transition-all"
+            className="tap-target gap-1.5 px-4 max-[400px]:px-3 rounded-xl font-bold text-sm cursor-pointer transition-all"
             style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
             tabIndex={isFocusMode ? -1 : 0}
           >

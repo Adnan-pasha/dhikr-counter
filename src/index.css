@@ -112,6 +112,11 @@ html {
   font-size: 16px; /* base for rem */
 }
 
+html, body {
+  height: 100%;
+  overflow: hidden; /* the app shell sizes itself to the dynamic viewport and scrolls inside */
+}
+
 body {
   font-family: var(--font-sans);
   background: var(--color-bg-deep);

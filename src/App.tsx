@@ -231,13 +231,13 @@ export default function App() {
     <div
       id="app_root_viewport"
       data-theme={preferences.colorMode}
-      className="min-h-screen w-screen flex items-center justify-center overflow-y-auto py-0 md:py-8 md:px-4"
+      className="h-dvh w-full flex items-center justify-center overflow-hidden md:overflow-y-auto py-0 md:py-8 md:px-4"
       style={{ background: 'var(--color-bg-deep)' }}
     >
       {/* Phone simulator frame (desktop only) */}
       <div
         id="phone_simulator_frame"
-        className="w-full max-w-[390px] h-screen md:h-[820px] md:rounded-[48px] overflow-hidden flex flex-col relative"
+        className="w-full max-w-[390px] h-dvh md:h-[820px] md:rounded-[48px] overflow-hidden flex flex-col relative"
         style={{
           background: 'var(--color-bg-base)',
           boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 32px 80px -12px rgba(0,0,0,0.8), 0 0 120px rgba(52,211,160,0.05)',
