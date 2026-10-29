@@ -28,6 +28,9 @@ interface Ayah {
 interface QuranReaderProps {
   bookmarkedAyahs: string[];   // "surahNum:ayahNum"
   lastReadSurah: number;
+  /** Surah number to open straight away (e.g. Al-Kahf from the Friday card), once the list has loaded. */
+  openSurah?: number | null;
+  onOpenSurahHandled?: () => void;
   onBookmarkToggle: (key: string) => void;
   onUpdateLastRead: (surahNum: number) => void;
   onGoBack: () => void;
@@ -63,6 +66,8 @@ export default function QuranReader({
   lastReadSurah,
   onBookmarkToggle,
   onUpdateLastRead,
+  openSurah,
+  onOpenSurahHandled,
   onGoBack,
 }: QuranReaderProps) {
   const [view, setView] = useState<'list' | 'reader'>('list');
@@ -117,6 +122,13 @@ export default function QuranReader({
       .catch(() => setAyahError(true))
       .finally(() => setLoadingAyahs(false));
   }, [onUpdateLastRead]);
+
+  useEffect(() => {
+    if (!openSurah || surahs.length === 0) return;
+    const target = surahs.find((s) => s.number === openSurah);
+    if (target) loadSurah(target);
+    onOpenSurahHandled?.();
+  }, [openSurah, surahs, loadSurah, onOpenSurahHandled]);
 
   // Navigate to prev/next surah
   const goToSurah = (dir: -1 | 1) => {

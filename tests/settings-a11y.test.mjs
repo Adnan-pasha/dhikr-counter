@@ -18,3 +18,10 @@ test('every switch is given a label', () => {
   assert.ok(uses.length >= 7);
   for (const use of uses) assert.ok(use.includes('label='), `unlabelled switch: ${use.slice(0, 60).trim()}`);
 });
+
+test('each daily goal button stacks its number above its name instead of running them together', () => {
+  const start = src.indexOf('GOAL_TEMPLATES.map(');
+  const button = src.slice(start, src.indexOf('</button>', start));
+  assert.ok(button.includes('flex-col'), '.tap-target is a flex row, so the two spans need flex-col');
+  assert.ok(button.includes('min-w-0'));
+});

@@ -50,6 +50,10 @@ export const useReminderScheduler = (
       setActiveReminderTriggered((current) => current ?? reminderQueueRef.current.shift() ?? null);
 
       trackEvent('reminder_triggered', { count: newlyTriggered.length, reason, reminderId: newlyTriggered[0].id });
+      // The in-app banner cannot be seen when the app is in the background, so raise a system notification.
+      if (document.visibilityState === 'hidden') {
+        for (const rem of newlyTriggered) void showReminderNotification(rem);
+      }
       if (preferences.soundOn) {
         playCompletionSound(preferences.volume);
       }
@@ -86,6 +90,7 @@ export const useReminderScheduler = (
 import { Dhikr, DhikrHistory } from './types';
 import { migrateAndHydrateStorage, isTimestampOnLocalDay } from './domain';
 import { sanitizePauses, sanitizeActiveDays, type StreakPause } from './habits';
+import { showReminderNotification } from './notifications';
 
 interface PersistenceDefaults {
   defaultDhikrs: Dhikr[];
@@ -102,6 +107,7 @@ interface PersistenceSetters {
   setReminders: (value: DhikrReminder[]) => void;
   setStreakPauses: (value: StreakPause[]) => void;
   setActiveDays: (value: string[]) => void;
+  setFridayKahf: (value: string[]) => void;
   setFavouriteIds: (value: string[]) => void;
   setRoutines: (value: Routine[]) => void;
   setSalahLogs: (value: SalahLog[]) => void;
@@ -125,6 +131,7 @@ export const usePersistentAppState = (
     salahLogs: SalahLog[];
     streakPauses: StreakPause[];
     activeDays: string[];
+    fridayKahf: string[];
   },
 ) => {
   const [hydrated, setHydrated] = React.useState(false);
@@ -157,6 +164,7 @@ export const usePersistentAppState = (
     );
     setters.setStreakPauses(sanitizePauses(parseStoredArray(localStorage.getItem('tasbih_streak_pauses'), [], isRecord)));
     setters.setActiveDays(sanitizeActiveDays(parseStoredArray(localStorage.getItem('tasbih_active_days'), [], (v): v is string => typeof v === 'string')));
+    setters.setFridayKahf(sanitizeActiveDays(parseStoredArray(localStorage.getItem('tasbih_friday_kahf'), [], (v): v is string => typeof v === 'string')));
     setHydrated(true);
   }, []);
 
@@ -198,6 +206,7 @@ export const usePersistentAppState = (
   useEffect(() => { if (hydrated) localStorage.setItem('tasbih_salah_logs', JSON.stringify(state.salahLogs)); }, [hydrated, state.salahLogs]);
   useEffect(() => { if (hydrated) localStorage.setItem('tasbih_streak_pauses', JSON.stringify(state.streakPauses)); }, [hydrated, state.streakPauses]);
   useEffect(() => { if (hydrated) localStorage.setItem('tasbih_active_days', JSON.stringify(state.activeDays)); }, [hydrated, state.activeDays]);
+  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_friday_kahf', JSON.stringify(state.fridayKahf)); }, [hydrated, state.fridayKahf]);
 };
 
 
@@ -438,6 +447,7 @@ interface HistoryFlowDeps {
   setHistory: React.Dispatch<React.SetStateAction<DhikrHistory[]>>;
   setStreakPauses: React.Dispatch<React.SetStateAction<StreakPause[]>>;
   setActiveDays: React.Dispatch<React.SetStateAction<string[]>>;
+  setFridayKahf: React.Dispatch<React.SetStateAction<string[]>>;
   setDhikrs: React.Dispatch<React.SetStateAction<Dhikr[]>>;
   setCurrentDhikrId: React.Dispatch<React.SetStateAction<string>>;
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
@@ -464,6 +474,7 @@ export const useHistoryActions = (deps: HistoryFlowDeps) => {
         deps.setHistory([]);
         deps.setStreakPauses([]);
         deps.setActiveDays([]);
+        deps.setFridayKahf([]);
         deps.setConfirmModal(null);
       }
     });
@@ -483,6 +494,7 @@ export const useHistoryActions = (deps: HistoryFlowDeps) => {
         deps.setReminders(deps.defaultReminders);
         deps.setStreakPauses([]);
         deps.setActiveDays([]);
+        deps.setFridayKahf([]);
         deps.setFavouriteIds([]);
         deps.setRoutines(DEFAULT_ROUTINES);
         deps.setSalahLogs([]);

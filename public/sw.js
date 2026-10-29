@@ -170,3 +170,19 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// A tap on a reminder notification brings the app forward and starts that dhikr.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const dhikrId = event.notification.data && event.notification.data.dhikrId;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const open = windows[0];
+    if (open) {
+      try { await open.focus(); } catch (e) { /* still tell the page which dhikr was tapped */ }
+      if (dhikrId) open.postMessage({ type: 'OPEN_DHIKR', dhikrId });
+      return;
+    }
+    await self.clients.openWindow(dhikrId ? './?dhikr=' + encodeURIComponent(dhikrId) : './');
+  })());
+});

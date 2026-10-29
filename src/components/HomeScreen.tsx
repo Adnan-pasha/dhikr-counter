@@ -11,6 +11,8 @@ import { ADHKAAR_LIBRARY } from '../adhkaar-data';
 import { isTimestampOnLocalDay, dhikrReadingLines } from '../domain';
 import type { DailyProgress, StreakInfo } from '../habits';
 import DailyGoalCard from './DailyGoalCard';
+import FridayCard from './FridayCard';
+import { FRIDAY_SALAWAT_ID, type FridayChecklist } from '../friday';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,6 +21,9 @@ interface HomeScreenProps {
   progress: DailyProgress;
   onStartPause: (days: number) => void;
   onEndPause: () => void;
+  friday: FridayChecklist;
+  onOpenKahf: () => void;
+  onToggleKahf: () => void;
   history: DhikrHistory[];
   routines: Routine[];
   currentDhikrId: string;
@@ -101,6 +106,9 @@ export default function HomeScreen({
   progress,
   onStartPause,
   onEndPause,
+  friday,
+  onOpenKahf,
+  onToggleKahf,
   history,
   routines,
   currentDhikrId,
@@ -209,6 +217,8 @@ export default function HomeScreen({
       </div>
 
       <div className="scroll-area space-y-5">
+
+        <FridayCard checklist={friday} onOpenKahf={onOpenKahf} onToggleKahf={onToggleKahf} onStartSalawat={() => onStartDhikr(FRIDAY_SALAWAT_ID)} />
 
         <DailyGoalCard progress={progress} streakInfo={streakInfo} onStartPause={onStartPause} onEndPause={onEndPause} />
 

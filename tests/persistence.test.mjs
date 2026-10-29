@@ -31,16 +31,17 @@ const useHarness = () => {
   const [reminders, setReminders] = React.useState([]);
   const [streakPauses, setStreakPauses] = React.useState([]);
   const [activeDays, setActiveDays] = React.useState([]);
+  const [fridayKahf, setFridayKahf] = React.useState([]);
   const [favouriteIds, setFavouriteIds] = React.useState([]);
   const [routines, setRoutines] = React.useState([]);
   const [salahLogs, setSalahLogs] = React.useState([]);
 
   usePersistentAppState(
     { defaultDhikrs: [{ id: 'subhanallah', nameAr: 'x', nameEn: 'SubhanAllah', meaning: 'm', targetCount: 33 }], defaultPreferences: DEFAULT_PREFS, defaultReminders: [] },
-    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreakPauses, setActiveDays, setFavouriteIds, setRoutines, setSalahLogs },
-    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs, streakPauses, activeDays },
+    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreakPauses, setActiveDays, setFridayKahf, setFavouriteIds, setRoutines, setSalahLogs },
+    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs, streakPauses, activeDays, fridayKahf },
   );
-  return { routines, favouriteIds, setRoutines, setFavouriteIds, streakPauses, setStreakPauses, activeDays, setActiveDays, currentCount, setCurrentCount };
+  return { routines, favouriteIds, setRoutines, setFavouriteIds, streakPauses, setStreakPauses, activeDays, setActiveDays, fridayKahf, setFridayKahf, currentCount, setCurrentCount };
 };
 
 const strictWrapper = ({ children }) => React.createElement(React.StrictMode, null, children);
@@ -141,4 +142,13 @@ test('active days are restored (invalid dropped) and persisted when changed', as
   assert.deepEqual(result.current.activeDays, ['2026-03-02']);
   await act(async () => { result.current.setActiveDays(['2026-03-02', '2026-03-03']); });
   assert.deepEqual(JSON.parse(localStorage.getItem('tasbih_active_days')), ['2026-03-02', '2026-03-03']);
+});
+
+test('friday Al-Kahf marks are restored (invalid dropped) and persisted when changed', async () => {
+  localStorage.setItem('tasbih_friday_kahf', JSON.stringify(['2026-03-20', 'nope', 3]));
+  const { result } = renderHook(useHarness, { wrapper: strictWrapper });
+  await act(async () => {});
+  assert.deepEqual(result.current.fridayKahf, ['2026-03-20']);
+  await act(async () => { result.current.setFridayKahf(['2026-03-20', '2026-03-27']); });
+  assert.deepEqual(JSON.parse(localStorage.getItem('tasbih_friday_kahf')), ['2026-03-20', '2026-03-27']);
 });
