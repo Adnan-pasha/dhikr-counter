@@ -448,6 +448,8 @@ interface HistoryFlowDeps {
   setStreakPauses: React.Dispatch<React.SetStateAction<StreakPause[]>>;
   setActiveDays: React.Dispatch<React.SetStateAction<string[]>>;
   setFridayKahf: React.Dispatch<React.SetStateAction<string[]>>;
+  /** Clears Quran reading progress when all data is erased. */
+  resetQuranProgress?: () => void;
   setDhikrs: React.Dispatch<React.SetStateAction<Dhikr[]>>;
   setCurrentDhikrId: React.Dispatch<React.SetStateAction<string>>;
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
@@ -495,6 +497,7 @@ export const useHistoryActions = (deps: HistoryFlowDeps) => {
         deps.setStreakPauses([]);
         deps.setActiveDays([]);
         deps.setFridayKahf([]);
+        deps.resetQuranProgress?.();
         deps.setFavouriteIds([]);
         deps.setRoutines(DEFAULT_ROUTINES);
         deps.setSalahLogs([]);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, ChevronLeft, ChevronRight, ListOrdered, Loader2, RefreshCw, Settings2 } from 'lucide-react';
+import { AlertCircle, Check, ChevronLeft, ChevronRight, ListOrdered, Loader2, RefreshCw, Settings2 } from 'lucide-react';
 import AyahCard from './AyahCard';
 import ReaderSettingsSheet from './ReaderSettingsSheet';
 import type { ReaderAyah } from '../quran/editions';
@@ -18,6 +18,8 @@ interface ReaderViewProps {
   /** Receives "surah:ayah". Must be a stable function so memoised cards are not redrawn. */
   onBookmarkToggle: (key: string) => void;
   onBack: () => void;
+  /** Where Back leads, for the button's name: "Surahs" or "My Progress". */
+  backTo: 'surahs' | 'progress';
   onRetry: () => void;
   onOpenSurah: (surahNumber: number) => void;
   onCopy: (text: string) => void;
@@ -25,18 +27,99 @@ interface ReaderViewProps {
   notice: string;
   /** Changes with every notice so a repeated message is announced again. */
   noticeId: number;
+  /** Today's reading against the daily goal, or null when no goal is set. */
+  goal: { minutes: number; goalMinutes: number } | null;
+  /** An ayah to bring to the top once the surah has loaded (continuing where reading stopped). */
+  scrollToAyah: number | null;
+  onScrolledToAyah: () => void;
+  /** Where the reader is, reported a moment after scrolling settles: the surah, the top ayah and the span on screen. */
+  onPosition: (surah: number, ayah: ReaderAyah, seen: { from: number; to: number }) => void;
 }
+
+/** How long scrolling must pause before the reading position is saved. */
+const POSITION_DEBOUNCE_MS = 800;
 
 const barButton = { background: 'var(--reader-surface)', border: '1px solid var(--reader-border)', color: 'var(--reader-ink)' } as const;
 
 /** The reading page: header, Bismillah, one card per ayah, previous and next, and the settings sheet. */
 export default function ReaderView({
-  surah, ayahs, loading, error, settings, onChangeSettings, bookmarkedAyahs, onBookmarkToggle, onBack, onRetry, onOpenSurah, onCopy, notice, noticeId,
+  surah, ayahs, loading, error, settings, onChangeSettings, bookmarkedAyahs, onBookmarkToggle, onBack, backTo, onRetry, onOpenSurah, onCopy, notice, noticeId,
+  goal, scrollToAyah, onScrolledToAyah, onPosition,
 }: ReaderViewProps) {
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [juzOpen, setJuzOpen] = React.useState(false);
   const gearRef = React.useRef<HTMLButtonElement>(null);
   const bookmarked = React.useMemo(() => new Set(bookmarkedAyahs), [bookmarkedAyahs]);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const positionRef = React.useRef(onPosition);
+  positionRef.current = onPosition;
+  /** True once the reader has scrolled. Until then the page only reports where it opened, which is not reading. */
+  const scrolled = React.useRef(false);
+
+  React.useEffect(() => { scrolled.current = false; }, [surah.number]);
+
+  // Only real scrolling counts: a wheel, a touch drag or a key press. Opening a surah to look at it
+  // must not replace the place the reader wants to continue from.
+  React.useEffect(() => {
+    const mark = () => { scrolled.current = true; };
+    const types = ['wheel', 'touchmove', 'keydown'] as const;
+    for (const type of types) document.addEventListener(type, mark, { capture: true, passive: true });
+    return () => { for (const type of types) document.removeEventListener(type, mark, { capture: true }); };
+  }, []);
+
+  // Report where the reader is a moment after scrolling settles: the top ayah becomes the bookmark, and
+  // every ayah on screen, down to the last one, counts as read.
+  React.useEffect(() => {
+    const root = scrollRef.current;
+    if (!root || ayahs.length === 0 || typeof IntersectionObserver === 'undefined') return;
+    const visible = new Set<number>();
+    const surahNumber = surah.number;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let dirty = false;
+
+    const flush = () => {
+      clearTimeout(timer);
+      if (!dirty) return;
+      dirty = false;
+      if (!scrolled.current || visible.size === 0) return;
+      const top = ayahs.find((a) => a.numberInSurah === Math.min(...visible));
+      const bottom = ayahs.find((a) => a.numberInSurah === Math.max(...visible));
+      if (top && bottom) positionRef.current(surahNumber, top, { from: top.number, to: bottom.number });
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const n = Number((entry.target as HTMLElement).dataset.ayah);
+        if (entry.isIntersecting) visible.add(n);
+        else visible.delete(n);
+      }
+      dirty = true;
+      clearTimeout(timer);
+      timer = setTimeout(flush, POSITION_DEBOUNCE_MS);
+    }, { root });
+    root.querySelectorAll('[data-ayah]').forEach((el: Element) => observer.observe(el));
+
+    // Leaving, hiding or locking within the pause must not lose the last stretch.
+    const onHide = () => { if (document.visibilityState === 'hidden') flush(); };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      flush();
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flush);
+    };
+  }, [ayahs, surah.number]);
+
+  // Continue reading: bring the saved ayah to the top. The ayah must actually be on the page, which
+  // also means the ayahs belong to this surah and not the one that was open a moment ago.
+  React.useEffect(() => {
+    if (scrollToAyah === null || loading || ayahs.length === 0) return;
+    const target = document.getElementById(`ayah-${surah.number}-${scrollToAyah}`);
+    if (!target) return;
+    target.scrollIntoView({ block: 'start' });
+    onScrolledToAyah();
+  }, [scrollToAyah, loading, ayahs, surah.number, onScrolledToAyah]);
 
   const closeSettings = () => {
     setSettingsOpen(false);
@@ -51,9 +134,9 @@ export default function ReaderView({
     >
       <header className="shrink-0 px-4 pt-3 pb-3" style={{ borderBottom: '1px solid var(--reader-border)' }}>
         <div className="flex items-center gap-2">
-          <button onClick={onBack} aria-label="Back to Surah list" className="tap-target flex items-center gap-1 rounded-xl px-2 text-sm font-bold cursor-pointer" style={{ color: 'var(--reader-accent)' }}>
+          <button onClick={onBack} aria-label={backTo === 'progress' ? 'Back to My Progress' : 'Back to Surah list'} className="tap-target flex items-center gap-1 rounded-xl px-2 text-sm font-bold cursor-pointer" style={{ color: 'var(--reader-accent)' }}>
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-            <span>Surahs</span>
+            <span>{backTo === 'progress' ? 'Progress' : 'Surahs'}</span>
           </button>
 
           <div className="min-w-0 flex-1 text-center">
@@ -104,7 +187,23 @@ export default function ReaderView({
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto" aria-busy={loading}>
+      {goal && (
+        <div className="shrink-0" style={{ background: 'var(--reader-surface)', borderBottom: '1px solid var(--reader-border)' }}>
+          <div className="flex items-center justify-between gap-3 px-4 py-2 text-xs font-bold" style={{ color: 'var(--reader-muted)' }}>
+            <span>Reading goal: {Math.min(goal.minutes, goal.goalMinutes)}/{goal.goalMinutes} mins</span>
+            {goal.minutes >= goal.goalMinutes && (
+              <span className="flex items-center gap-1" style={{ color: 'var(--reader-accent)' }}>
+                <Check className="h-3.5 w-3.5" aria-hidden="true" /> Done for today
+              </span>
+            )}
+          </div>
+          <div className="h-0.5" style={{ background: 'var(--reader-border)' }} aria-hidden="true">
+            <div className="h-full" style={{ width: `${Math.min(100, (goal.minutes / goal.goalMinutes) * 100)}%`, background: 'var(--reader-accent)' }} />
+          </div>
+        </div>
+      )}
+
+      <div ref={scrollRef} className="flex-1 overflow-y-auto" aria-busy={loading}>
         {loading && ayahs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20" role="status">
             <Loader2 className="mb-3 h-8 w-8 animate-spin" aria-hidden="true" style={{ color: 'var(--reader-accent)' }} />
@@ -133,19 +232,16 @@ export default function ReaderView({
             )}
 
             {ayahs.map((ayah) => (
-              // The Fragment carries the key: this project has no React type package, so a typed
-              // component cannot accept `key` directly.
-              <React.Fragment key={ayah.number}>
-                <AyahCard
-                  ayah={ayah}
-                  surahName={surah.englishName}
-                  surahNumber={surah.number}
-                  settings={settings}
-                  bookmarked={bookmarked.has(`${surah.number}:${ayah.numberInSurah}`)}
-                  onToggleBookmark={onBookmarkToggle}
-                  onCopy={onCopy}
-                />
-              </React.Fragment>
+              <AyahCard
+                key={ayah.number}
+                ayah={ayah}
+                surahName={surah.englishName}
+                surahNumber={surah.number}
+                settings={settings}
+                bookmarked={bookmarked.has(`${surah.number}:${ayah.numberInSurah}`)}
+                onToggleBookmark={onBookmarkToggle}
+                onCopy={onCopy}
+              />
             ))}
 
             <nav className="mt-6 mb-4 flex gap-3" aria-label="Surah navigation">

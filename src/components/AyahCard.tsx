@@ -26,6 +26,8 @@ function AyahCard({ ayah, surahName, surahNumber, settings, bookmarked, onToggle
 
   return (
     <article
+      id={`ayah-${surahNumber}-${ayah.numberInSurah}`}
+      data-ayah={ayah.numberInSurah}
       className="rounded-2xl px-3 py-4"
       style={{
         background: bookmarked ? 'var(--reader-surface)' : 'transparent',

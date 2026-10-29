@@ -19,6 +19,9 @@ import { ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 import { isTimestampOnLocalDay, parseStoredArray, getLocalDateString } from './domain';
 import { fridayChecklist, toggleDate, FRIDAY_KAHF_SURAH } from './friday';
+import { useQuranProgress } from './quran/useQuranProgress';
+import { practisedDay } from './quran/progress';
+import type { QuranIntent } from './components/QuranReader';
 import { dhikrIdFromSearch } from './notifications';
 import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer } from './routines';
 import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
@@ -91,6 +94,8 @@ export default function App() {
   const [activeDays, setActiveDays] = useState<string[]>([]);
   const [fridayKahf, setFridayKahf] = useState<string[]>([]);
   const [openSurah, setOpenSurah] = useState<number | null>(null);
+  const { progress: quranProgress, actions: quranActions } = useQuranProgress();
+  const [quranIntent, setQuranIntent] = useState<QuranIntent | null>(null);
   /** Routine the user started, so shared dhikr (SubhanAllah) continue the right one. */
   const [startedRoutineId, setStartedRoutineId] = useState<string | null>(null);
   const [afterSalahPrayer, setAfterSalahPrayer] = useState<SalahName | null>(null);
@@ -100,6 +105,8 @@ export default function App() {
   useEffect(() => { if (activeTab !== 'salah') setAfterSalahPrayer(null); }, [activeTab]);
   // A requested surah is only for the visit that asked for it.
   useEffect(() => { if (activeTab !== 'quran') setOpenSurah(null); }, [activeTab]);
+  useEffect(() => { if (activeTab !== 'quran') setQuranIntent(null); }, [activeTab]);
+
 
   // A notification tap opens its dhikr: from the launch URL (app was closed) or a service worker message.
   const [launchDhikrId, setLaunchDhikrId] = useState<string | null>(() => dhikrIdFromSearch(window.location.search));
@@ -142,6 +149,11 @@ export default function App() {
       clearTimeout(timer);
     };
   }, [today]);
+
+  // A day of Quran reading counts as a practised day for the streak, same as a round of dhikr.
+  useEffect(() => {
+    if (practisedDay(quranProgress, today)) setActiveDays((prev) => addActiveDay(prev, today));
+  }, [quranProgress, today]);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -258,6 +270,7 @@ export default function App() {
     setStreakPauses,
     setActiveDays,
     setFridayKahf,
+    resetQuranProgress: quranActions.reset,
     setDhikrs,
     setCurrentDhikrId: setCurrentDhikrIdAndForgetRoutine,
     setCurrentCount,
@@ -391,6 +404,10 @@ export default function App() {
                 onStartPause={(days) => setStreakPauses((prev) => startPause(prev, today, days))}
                 onEndPause={() => setStreakPauses((prev) => endPause(prev, today))}
                 friday={friday}
+                quranProgress={quranProgress}
+                today={today}
+                onOpenQuranProgress={() => { setQuranIntent('progress'); setActiveTab('quran'); }}
+                onContinueQuran={() => { setQuranIntent('continue'); setActiveTab('quran'); }}
                 onOpenKahf={() => { setOpenSurah(FRIDAY_KAHF_SURAH); setActiveTab('quran'); }}
                 onToggleKahf={() => setFridayKahf((prev) => toggleDate(prev, today))}
                 history={history}
@@ -530,6 +547,11 @@ export default function App() {
                 onUpdateLastRead={setLastReadSurah}
                 openSurah={openSurah}
                 onOpenSurahHandled={() => setOpenSurah(null)}
+                progress={quranProgress}
+                progressActions={quranActions}
+                today={today}
+                intent={quranIntent}
+                onIntentHandled={() => setQuranIntent(null)}
                 onGoBack={() => setActiveTab('home')}
               />
             )}

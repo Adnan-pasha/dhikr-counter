@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import ToggleSwitch from './ToggleSwitch';
+import { useModalDialog } from './useModalDialog';
 import { SCRIPTS, TRANSLATIONS, DEFAULT_TRANSLATION, TRANSLITERATION_EDITION } from '../quran/editions';
 import { READER_THEMES, TEXT_SIZES, arabicFontSize, type ReaderSettings } from '../quran/settings';
 import { BASMALA } from '../quran/text';
@@ -24,39 +25,7 @@ const chipStyle = (active: boolean) => ({
 /** Display and text options for the reader, as a bottom sheet over the page. */
 export default function ReaderSettingsSheet({ open, onClose, settings, onChange }: ReaderSettingsSheetProps) {
   const [section, setSection] = React.useState<Section>('display');
-  const closeRef = React.useRef<HTMLButtonElement>(null);
-
-  const dialogRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (open) closeRef.current?.focus();
-  }, [open]);
-
-  // Escape closes the sheet from anywhere, not only while a control inside it has focus.
-  React.useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
-
-  // The sheet is modal, so Tab must not wander into the page behind it.
-  const trapTab = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== 'Tab' || !dialogRef.current) return;
-    const found = dialogRef.current.querySelectorAll('button, input, a[href]') as NodeListOf<HTMLElement>;
-    const items = Array.from(found).filter((el: HTMLElement) => !el.hasAttribute('disabled'));
-    if (items.length === 0) return;
-    const first = items[0];
-    const last = items[items.length - 1];
-    const active = document.activeElement;
-    if (e.shiftKey && active === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && active === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
+  const { dialogRef, initialFocusRef: closeRef, onKeyDown } = useModalDialog(open, onClose);
 
   if (!open) return null;
   const translation = TRANSLATIONS.find((t) => t.id === DEFAULT_TRANSLATION);
@@ -69,7 +38,7 @@ export default function ReaderSettingsSheet({ open, onClose, settings, onChange 
         role="dialog"
         aria-modal="true"
         aria-label="Reader settings"
-        onKeyDown={trapTab}
+        onKeyDown={onKeyDown}
         className="relative max-h-[85%] overflow-y-auto rounded-t-3xl p-5 space-y-5"
         style={{ background: 'var(--reader-bg)', color: 'var(--reader-ink)', borderTop: '1px solid var(--reader-border)' }}
       >

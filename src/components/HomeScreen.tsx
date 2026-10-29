@@ -12,6 +12,8 @@ import { isTimestampOnLocalDay, dhikrReadingLines } from '../domain';
 import type { DailyProgress, StreakInfo } from '../habits';
 import DailyGoalCard from './DailyGoalCard';
 import FridayCard from './FridayCard';
+import QuranGoalCard from './QuranGoalCard';
+import type { QuranProgress } from '../quran/progress';
 import { FRIDAY_SALAWAT_ID, type FridayChecklist } from '../friday';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -22,6 +24,10 @@ interface HomeScreenProps {
   onStartPause: (days: number) => void;
   onEndPause: () => void;
   friday: FridayChecklist;
+  quranProgress: QuranProgress;
+  today: string;
+  onOpenQuranProgress: () => void;
+  onContinueQuran: () => void;
   onOpenKahf: () => void;
   onToggleKahf: () => void;
   history: DhikrHistory[];
@@ -107,6 +113,10 @@ export default function HomeScreen({
   onStartPause,
   onEndPause,
   friday,
+  quranProgress,
+  today,
+  onOpenQuranProgress,
+  onContinueQuran,
   onOpenKahf,
   onToggleKahf,
   history,
@@ -221,6 +231,8 @@ export default function HomeScreen({
         <FridayCard checklist={friday} onOpenKahf={onOpenKahf} onToggleKahf={onToggleKahf} onStartSalawat={() => onStartDhikr(FRIDAY_SALAWAT_ID)} />
 
         <DailyGoalCard progress={progress} streakInfo={streakInfo} onStartPause={onStartPause} onEndPause={onEndPause} />
+
+        <QuranGoalCard progress={quranProgress} today={today} onOpenProgress={onOpenQuranProgress} onContinue={onContinueQuran} />
 
         {/* ── Quick Tasbih ─────────────────────────────────────────────────── */}
         <section>
