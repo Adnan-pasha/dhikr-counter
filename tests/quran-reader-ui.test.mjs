@@ -17,6 +17,8 @@ const { default: AyahCard } = await import('../src/components/AyahCard.tsx');
 const { default: QuranReader } = await import('../src/components/QuranReader.tsx');
 const { DEFAULT_READER_SETTINGS } = await import('../src/quran/settings.ts');
 
+const { EMPTY_PROGRESS } = await import('../src/quran/progress.ts');
+const NO_ACTIONS = { addSeconds() {}, setGoal() {}, recordPosition() {}, startKhatam() {}, endKhatam() {}, reset() {} };
 const BISMILLAH = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
 
 test.afterEach(() => { cleanup(); localStorage.clear(); });
@@ -136,7 +138,7 @@ const mountReader = async () => {
     return { ok: true, json: async () => body };
   };
   render(React.createElement(QuranReader, {
-    bookmarkedAyahs: [], lastReadSurah: 0, onBookmarkToggle: () => {}, onUpdateLastRead: () => {}, onGoBack: () => {},
+    bookmarkedAyahs: [], lastReadSurah: 0, onBookmarkToggle: () => {}, onUpdateLastRead: () => {}, onGoBack: () => {}, progress: EMPTY_PROGRESS, progressActions: NO_ACTIONS, today: '2026-03-20',
   }));
   await screen.findByText('Al-Baqarah');
   fireEvent.click(screen.getByText('Al-Baqarah'));
@@ -182,7 +184,7 @@ test('a failed request shows a retry instead of an empty page', async () => {
     throw new Error('offline');
   };
   render(React.createElement(QuranReader, {
-    bookmarkedAyahs: [], lastReadSurah: 0, onBookmarkToggle: () => {}, onUpdateLastRead: () => {}, onGoBack: () => {},
+    bookmarkedAyahs: [], lastReadSurah: 0, onBookmarkToggle: () => {}, onUpdateLastRead: () => {}, onGoBack: () => {}, progress: EMPTY_PROGRESS, progressActions: NO_ACTIONS, today: '2026-03-20',
   }));
   await screen.findByText('Al-Baqarah');
   fireEvent.click(screen.getByText('Al-Baqarah'));

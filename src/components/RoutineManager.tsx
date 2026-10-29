@@ -301,7 +301,7 @@ interface RoutineDetailProps {
   showEditPicker: boolean;
   editPickedDhikrs: Dhikr[];
   onEditNameChange: (v: string) => void;
-  onEditIconChange: (v: string) => void;
+  onEditIconChange: (v: IconKey) => void;
   onEditDhikrIdsChange: (ids: string[]) => void;
   onEditPickerSearchChange: (v: string) => void;
   onToggleEditPicker: () => void;

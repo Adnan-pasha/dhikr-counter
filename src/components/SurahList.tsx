@@ -12,10 +12,12 @@ interface SurahListProps {
   bookmarkedAyahs: string[];
   onSelect: (surah: Surah) => void;
   onGoBack: () => void;
+  /** Section switcher (Read / My Progress) shown under the title. */
+  tabs?: React.ReactNode;
 }
 
 /** The 114 surahs, searchable, with the last-read surah and bookmarked surahs marked. */
-export default function SurahList({ surahs, loading, error, onRetry, lastReadSurah, bookmarkedAyahs, onSelect, onGoBack }: SurahListProps) {
+export default function SurahList({ surahs, loading, error, onRetry, lastReadSurah, bookmarkedAyahs, onSelect, onGoBack, tabs }: SurahListProps) {
   const [query, setQuery] = React.useState('');
   const q = query.trim().toLowerCase();
   const visible = surahs.filter((s) =>
@@ -47,6 +49,7 @@ export default function SurahList({ surahs, loading, error, onRetry, lastReadSur
           ) : <div className="w-10" />}
         </div>
         <p className="caption">114 Surahs · Read with translation</p>
+        {tabs}
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" aria-hidden="true" />

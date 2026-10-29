@@ -1,11 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import SurahList from './SurahList';
 import ReaderView from './ReaderView';
+import QuranProgressView from './QuranProgressView';
+import QuranTabs, { type QuranTab } from './QuranTabs';
 import { API_BASE, buildReaderAyahs, editionsFor, surahUrl, type ReaderAyah } from '../quran/editions';
+import { minutesOn, type QuranProgress, type ReadingPosition } from '../quran/progress';
 import { useReaderSettings } from '../quran/useReaderSettings';
 import { useWakeLock } from '../quran/useWakeLock';
+import { useReadingClock } from '../quran/useReadingClock';
+import type { useQuranProgress } from '../quran/useQuranProgress';
 import { copyText } from '../quran/clipboard';
 import type { Surah } from '../quran/types';
+
+type ProgressActions = ReturnType<typeof useQuranProgress>['actions'];
+
+/** What another screen is asking the Quran screen to do on arrival. */
+export type QuranIntent = 'continue' | 'progress';
 
 interface QuranReaderProps {
   bookmarkedAyahs: string[];   // "surahNum:ayahNum"
@@ -16,11 +26,18 @@ interface QuranReaderProps {
   onBookmarkToggle: (key: string) => void;
   onUpdateLastRead: (surahNum: number) => void;
   onGoBack: () => void;
+  progress: QuranProgress;
+  progressActions: ProgressActions;
+  /** Today's local date, which changes at midnight. */
+  today: string;
+  intent?: QuranIntent | null;
+  onIntentHandled?: () => void;
 }
 
 const NOTICE_MS = 2500;
+const NO_AYAHS: ReaderAyah[] = [];
 
-/** Surah list and reading page. Data loading and preferences live here; the two views only draw. */
+/** Surah list, My Progress and the reading page. Data loading and preferences live here; the views only draw. */
 export default function QuranReader({
   bookmarkedAyahs,
   lastReadSurah,
@@ -29,14 +46,25 @@ export default function QuranReader({
   openSurah,
   onOpenSurahHandled,
   onGoBack,
+  progress,
+  progressActions,
+  today,
+  intent,
+  onIntentHandled,
 }: QuranReaderProps) {
   const [settings, updateSettings] = useReaderSettings();
   const [view, setView] = useState<'list' | 'reader'>('list');
+  const [tab, setTab] = useState<QuranTab>('read');
+  /** Where the open surah was entered from, so Back returns there. */
+  const [cameFrom, setCameFrom] = useState<QuranTab>('read');
   const [surahs, setSurahs] = useState<Surah[]>([]);
   const [loadingSurahs, setLoadingSurahs] = useState(true);
   const [surahError, setSurahError] = useState(false);
   const [activeSurah, setActiveSurah] = useState<Surah | null>(null);
+  const [scrollToAyah, setScrollToAyah] = useState<number | null>(null);
   const [ayahs, setAyahs] = useState<ReaderAyah[]>([]);
+  /** Which surah the ayahs in state belong to, so a new surah never briefly shows the old one's text. */
+  const [ayahsFor, setAyahsFor] = useState<number | null>(null);
   const [loadingAyahs, setLoadingAyahs] = useState(false);
   const [ayahError, setAyahError] = useState(false);
   const [notice, setNotice] = useState({ message: '', id: 0 });
@@ -50,7 +78,12 @@ export default function QuranReader({
   toggleRef.current = onBookmarkToggle;
   const toggleBookmark = useCallback((key: string) => toggleRef.current(key), []);
 
-  useWakeLock(view === 'reader' && settings.keepScreenOn);
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+
+  const reading = view === 'reader' && activeSurah !== null;
+  useWakeLock(reading && settings.keepScreenOn);
+  useReadingClock({ active: reading, onCredit: (seconds, date) => progressActions.addSeconds(date, seconds) });
 
   const loadSurahList = useCallback(() => {
     setLoadingSurahs(true);
@@ -77,7 +110,10 @@ export default function QuranReader({
     setAyahError(false);
     // Another surah starts empty. The same surah (a script change) keeps its text on screen until the
     // new text arrives, so the reader does not lose their place.
-    if (shownSurah.current !== surah.number) setAyahs([]);
+    if (shownSurah.current !== surah.number) {
+      setAyahs([]);
+      setAyahsFor(null);
+    }
     fetch(surahUrl(API_BASE, surah.number, editionKey.split(',')))
       .then((r) => r.json())
       .then((body) => {
@@ -85,6 +121,7 @@ export default function QuranReader({
         const built = buildReaderAyahs(surah.number, body, settings.script, true, settings.showTransliteration);
         if (built) {
           shownSurah.current = surah.number;
+          setAyahsFor(surah.number);
           setAyahs(built);
         } else {
           shownSurah.current = null;
@@ -103,22 +140,42 @@ export default function QuranReader({
     if (view === 'reader' && activeSurah) loadAyahs(activeSurah);
   }, [view, activeSurah, loadAyahs]);
 
-  const openSurahView = useCallback((surah: Surah) => {
+  const openSurahView = useCallback((surah: Surah, ayah: number | null = null) => {
+    setScrollToAyah(ayah);
+    setCameFrom(tabRef.current);
     setActiveSurah(surah);
     setView('reader');
     onUpdateLastRead(surah.number);
   }, [onUpdateLastRead]);
 
-  const openByNumber = useCallback((n: number) => {
+  const openByNumber = useCallback((n: number, ayah: number | null = null) => {
     const target = surahs.find((s) => s.number === n);
-    if (target) openSurahView(target);
+    if (target) openSurahView(target, ayah);
   }, [surahs, openSurahView]);
+
+  const continueFrom = useCallback((position: ReadingPosition | null) => {
+    if (position) openByNumber(position.surah, position.ayah);
+    else openByNumber(1);
+  }, [openByNumber]);
 
   useEffect(() => {
     if (!openSurah || surahs.length === 0) return;
     openByNumber(openSurah);
     onOpenSurahHandled?.();
   }, [openSurah, surahs, openByNumber, onOpenSurahHandled]);
+
+  // Another screen (Home) can ask to land on My Progress or to continue reading.
+  useEffect(() => {
+    if (!intent) return;
+    if (intent === 'progress' || !progress.position) {
+      setTab('progress');
+      onIntentHandled?.();
+      return;
+    }
+    if (surahs.length === 0) return;
+    continueFrom(progress.position);
+    onIntentHandled?.();
+  }, [intent, surahs, progress.position, continueFrom, onIntentHandled]);
 
   const copy = useCallback((text: string) => {
     void copyText(text).then((ok) => {
@@ -130,7 +187,31 @@ export default function QuranReader({
 
   useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
 
+  const surahName = useCallback((n: number) => surahs.find((s) => s.number === n)?.englishName ?? `Surah ${n}`, [surahs]);
+
+  const savePosition = useCallback((surah: number, ayah: ReaderAyah, seen: { from: number; to: number }) => {
+    progressActions.recordPosition({ surah, ayah: ayah.numberInSurah, global: ayah.number }, seen);
+  }, [progressActions]);
+
+  const clearScrollTarget = useCallback(() => setScrollToAyah(null), []);
+
   if (view === 'list' || !activeSurah) {
+    if (tab === 'progress') {
+      return (
+        <QuranProgressView
+          onGoBack={onGoBack}
+          tabs={<QuranTabs tab={tab} onChange={setTab} />}
+          progress={progress}
+          today={today}
+          surahName={surahName}
+          onSetGoal={progressActions.setGoal}
+          onContinue={continueFrom}
+          onStartKhatam={(days) => progressActions.startKhatam(today, days)}
+          onEndKhatam={progressActions.endKhatam}
+        />
+      );
+    }
+
     return (
       <SurahList
         surahs={surahs}
@@ -139,8 +220,9 @@ export default function QuranReader({
         onRetry={loadSurahList}
         lastReadSurah={lastReadSurah}
         bookmarkedAyahs={bookmarkedAyahs}
-        onSelect={openSurahView}
+        onSelect={(s) => openSurahView(s)}
         onGoBack={onGoBack}
+        tabs={<QuranTabs tab={tab} onChange={setTab} />}
       />
     );
   }
@@ -148,19 +230,24 @@ export default function QuranReader({
   return (
     <ReaderView
       surah={activeSurah}
-      ayahs={ayahs}
+      ayahs={ayahsFor === activeSurah.number ? ayahs : NO_AYAHS}
       loading={loadingAyahs}
       error={ayahError}
       settings={settings}
       onChangeSettings={updateSettings}
       bookmarkedAyahs={bookmarkedAyahs}
       onBookmarkToggle={toggleBookmark}
-      onBack={() => setView('list')}
+      onBack={() => { setTab(cameFrom); setView('list'); }}
+      backTo={cameFrom === 'progress' ? 'progress' : 'surahs'}
       onRetry={() => loadAyahs(activeSurah)}
-      onOpenSurah={openByNumber}
+      onOpenSurah={(n) => openByNumber(n)}
       onCopy={copy}
       notice={notice.message}
       noticeId={notice.id}
+      goal={progress.goalMinutes ? { minutes: minutesOn(progress, today), goalMinutes: progress.goalMinutes } : null}
+      scrollToAyah={scrollToAyah}
+      onScrolledToAyah={clearScrollTarget}
+      onPosition={savePosition}
     />
   );
 }
