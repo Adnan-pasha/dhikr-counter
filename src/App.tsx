@@ -18,6 +18,8 @@ import OnboardingFlow from './components/OnboardingFlow';
 import { ADHKAAR_LIBRARY } from './adhkaar-data';
 import { useConnectivityStatus, useReminderScheduler, usePersistentAppState, useDhikrActions, useCounterFlow, useHistoryActions } from './hooks';
 import { isTimestampOnLocalDay, parseStoredArray, getLocalDateString } from './domain';
+import { fridayChecklist, toggleDate, FRIDAY_KAHF_SURAH } from './friday';
+import { dhikrIdFromSearch } from './notifications';
 import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer } from './routines';
 import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
 
@@ -87,6 +89,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla'>('home');
   const [streakPauses, setStreakPauses] = useState<StreakPause[]>([]);
   const [activeDays, setActiveDays] = useState<string[]>([]);
+  const [fridayKahf, setFridayKahf] = useState<string[]>([]);
+  const [openSurah, setOpenSurah] = useState<number | null>(null);
   /** Routine the user started, so shared dhikr (SubhanAllah) continue the right one. */
   const [startedRoutineId, setStartedRoutineId] = useState<string | null>(null);
   const [afterSalahPrayer, setAfterSalahPrayer] = useState<SalahName | null>(null);
@@ -94,6 +98,34 @@ export default function App() {
   const salahLogsRef = React.useRef<SalahLog[]>([]);
   // The after-prayer offer belongs to the Salah screen; do not show it stale when coming back later.
   useEffect(() => { if (activeTab !== 'salah') setAfterSalahPrayer(null); }, [activeTab]);
+  // A requested surah is only for the visit that asked for it.
+  useEffect(() => { if (activeTab !== 'quran') setOpenSurah(null); }, [activeTab]);
+
+  // A notification tap opens its dhikr: from the launch URL (app was closed) or a service worker message.
+  const [launchDhikrId, setLaunchDhikrId] = useState<string | null>(() => dhikrIdFromSearch(window.location.search));
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'OPEN_DHIKR' && typeof event.data.dhikrId === 'string') setLaunchDhikrId(event.data.dhikrId);
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    // Messages queued before a listener existed are only delivered once the queue is started.
+    navigator.serviceWorker.startMessages?.();
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
+  }, []);
+  useEffect(() => {
+    if (!launchDhikrId || dhikrs.length === 0) return;
+    if (dhikrs.some((d) => d.id === launchDhikrId)) {
+      setStartedRoutineId(null);
+      if (launchDhikrId !== currentDhikrId) {
+        setCurrentDhikrId(launchDhikrId);
+        setCurrentCount(0);
+      }
+      setActiveTab('counter');
+    }
+    window.history.replaceState(null, '', window.location.pathname);
+    setLaunchDhikrId(null);
+  }, [launchDhikrId, dhikrs]);
   // Re-read the date when the app returns to the foreground so the streak and ring roll over at midnight.
   const [today, setToday] = useState<string>(() => getLocalDateString(new Date()));
   useEffect(() => {
@@ -123,11 +155,12 @@ export default function App() {
 
   usePersistentAppState(
     { defaultDhikrs: SYSTEM_DHIKRS, defaultPreferences: DEFAULT_PREFERENCES, defaultReminders: DEFAULT_REMINDERS },
-    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreakPauses, setActiveDays, setFavouriteIds, setRoutines, setSalahLogs },
-    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs, streakPauses, activeDays },
+    { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreakPauses, setActiveDays, setFridayKahf, setFavouriteIds, setRoutines, setSalahLogs },
+    { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs, streakPauses, activeDays, fridayKahf },
   );
 
   const streakInfo = React.useMemo(() => computeStreakInfo(history, streakPauses, today, activeDays), [history, streakPauses, today, activeDays]);
+  const friday = React.useMemo(() => fridayChecklist(history, fridayKahf, today), [history, fridayKahf, today]);
   const finishedToday = React.useMemo(() => beadsOnDay(history, today), [history, today]);
   const progress = dailyProgress(finishedToday, currentCount, preferences.dailyGoal);
 
@@ -224,6 +257,7 @@ export default function App() {
     setHistory,
     setStreakPauses,
     setActiveDays,
+    setFridayKahf,
     setDhikrs,
     setCurrentDhikrId: setCurrentDhikrIdAndForgetRoutine,
     setCurrentCount,
@@ -356,6 +390,9 @@ export default function App() {
                 progress={progress}
                 onStartPause={(days) => setStreakPauses((prev) => startPause(prev, today, days))}
                 onEndPause={() => setStreakPauses((prev) => endPause(prev, today))}
+                friday={friday}
+                onOpenKahf={() => { setOpenSurah(FRIDAY_KAHF_SURAH); setActiveTab('quran'); }}
+                onToggleKahf={() => setFridayKahf((prev) => toggleDate(prev, today))}
                 history={history}
                 routines={routines}
                 currentDhikrId={currentDhikrId}
@@ -491,6 +528,8 @@ export default function App() {
                   )
                 }
                 onUpdateLastRead={setLastReadSurah}
+                openSurah={openSurah}
+                onOpenSurahHandled={() => setOpenSurah(null)}
                 onGoBack={() => setActiveTab('home')}
               />
             )}

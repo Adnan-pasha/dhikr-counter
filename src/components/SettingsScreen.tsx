@@ -7,6 +7,7 @@ import { playBeadSound, playCompletionSound } from '../audio';
 import { THIRD_PARTY_NOTICES } from '../licenses';
 import { getHapticPattern } from '../counter';
 import { GOAL_TEMPLATES } from '../habits';
+import NotificationSettings from './NotificationSettings';
 
 interface SettingsScreenProps {
   preferences: UserPreferences;
@@ -465,7 +466,7 @@ export default function SettingsScreen({
                   aria-pressed={preferences.dailyGoal === goal}
                   aria-label={`${name}, ${goal} beads a day. ${blurb}`}
                   onClick={() => onChangePreferences({ dailyGoal: goal })}
-                  className={`tap-target flex-1 rounded-xl border text-xs font-bold cursor-pointer transition-colors ${
+                  className={`tap-target flex-1 min-w-0 flex-col py-1 rounded-xl border text-xs font-bold cursor-pointer transition-colors ${
                     preferences.dailyGoal === goal
                       ? 'border-brand-500 bg-brand-500/15 text-brand-400'
                       : 'border-slate-700 bg-slate-800 text-slate-300'
@@ -492,6 +493,8 @@ export default function SettingsScreen({
             />
           </div>
         </div>
+
+        <NotificationSettings />
 
         {/* Card: Schedules and Gentle Reminders */}
         <div id="reminders_section_card" className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md space-y-4">
