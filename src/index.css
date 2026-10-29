@@ -32,6 +32,7 @@
 @theme {
   --font-sans:    "Inter Variable", "Noto Naskh Arabic", ui-sans-serif, system-ui, sans-serif;
   --font-arabic:  "Lateef Adjusted", "Noto Naskh Arabic", serif;
+  --font-quran:   "Amiri Quran", "Noto Naskh Arabic", serif;
   --font-display: "Space Grotesk Variable", sans-serif;
 
   /* Compact label sizes used by dense screens. Never below 12px for legibility. */
@@ -556,4 +557,38 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ─── Quran reader themes ─────────────────────────────────────────────────
+   Chosen separately from the app theme: reading is long-form, so people want a page they like.
+   Every pair is checked for contrast in tests/quran-theme.test.mjs. */
+[data-reader-theme="dark"] {
+  --reader-bg: #0c1815;
+  --reader-surface: #132420;
+  --reader-ink: #eaf3ef;
+  --reader-muted: #9db8ad;
+  --reader-accent: #52d6a8;
+  --reader-border: #244039;
+}
+
+[data-reader-theme="paper"] {
+  --reader-bg: #f6efd9;
+  --reader-surface: #fbf6e7;
+  --reader-ink: #2b2112;
+  --reader-muted: #66593f;
+  --reader-accent: #1b6b4d;
+  --reader-border: #e0d3ae;
+}
+
+[data-reader-theme="modern"] {
+  --reader-bg: #f3f7f5;
+  --reader-surface: #ffffff;
+  --reader-ink: #0f201b;
+  --reader-muted: #4a5f57;
+  --reader-accent: #0b7255;
+  --reader-border: #d3dfda;
+}
+
+.font-quran {
+  font-family: var(--font-quran);
 }

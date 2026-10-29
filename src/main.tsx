@@ -6,6 +6,8 @@ import '@fontsource-variable/space-grotesk';
 // Lateef Adjusted is declared in index.css (size-adjust); only the fallback loads here.
 // Fallback for glyphs Lateef does not draw (for example the salawat sign).
 import '@fontsource/noto-naskh-arabic/arabic-400.css';
+// The Quran reader's face, with the full set of Quranic annotation marks.
+import '@fontsource/amiri-quran/arabic-400.css';
 import App from './App.tsx';
 import AppErrorBoundary from './components/AppErrorBoundary.tsx';
 import './index.css';
