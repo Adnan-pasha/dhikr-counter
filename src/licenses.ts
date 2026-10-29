@@ -48,6 +48,27 @@ export const THIRD_PARTY_NOTICES: ThirdPartyNotice[] = [
     url: 'https://github.com/notofonts/arabic',
   },
   {
+    name: 'Quran text (Tanzil)',
+    author: 'Tanzil Project',
+    license: 'CC BY 3.0',
+    url: 'https://tanzil.net',
+    note: 'Arabic text, shown unaltered and loaded on demand. The Bismillah is shown once as a header.',
+  },
+  {
+    name: 'Pickthall translation',
+    author: 'Mohammed Marmaduke Pickthall',
+    license: 'Public domain',
+    url: 'https://tanzil.net/trans/',
+    note: 'English translation (1930). More languages will be added from sources with clear terms.',
+  },
+  {
+    name: 'Amiri Quran',
+    author: 'Khaled Hosny',
+    license: 'SIL OFL 1.1',
+    url: 'https://github.com/alif-type/amiri',
+    note: 'Typeface for the Quran reader.',
+  },
+  {
     name: 'Lucide icons',
     author: 'Lucide Contributors',
     license: 'ISC',

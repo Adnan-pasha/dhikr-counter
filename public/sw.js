@@ -5,7 +5,9 @@ const BUILD_MANIFEST = /*__BUILD_MANIFEST__*/ { id: 'dev', assets: [] };
 
 const SHELL_CACHE = `tasbih-shell-${BUILD_MANIFEST.id}`;
 // Quran data is versioned independently so app releases don't evict offline surahs.
-const QURAN_CACHE = 'tasbih-quran-v1';
+// v2: the reader now asks for different editions (public-domain translation), so v1 entries are stale
+// and the old copyrighted translation is not kept on devices.
+const QURAN_CACHE = 'tasbih-quran-v2';
 const KNOWN_CACHES = [SHELL_CACHE, QURAN_CACHE];
 const CACHE_PREFIX = 'tasbih-';
 const QURAN_API_HOST = 'api.alquran.cloud';

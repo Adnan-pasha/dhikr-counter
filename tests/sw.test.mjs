@@ -108,11 +108,11 @@ test('activate removes superseded app caches but keeps Quran and foreign caches'
   const sw = loadSw();
   sw.stores.set('tasbih-shell-old', new Map());
   sw.stores.set('tasbih-cache-v1', new Map());
-  sw.stores.set('tasbih-quran-v1', new Map());
+  sw.stores.set('tasbih-quran-v2', new Map());
   sw.stores.set('tasbih-shell-t1', new Map());
   sw.stores.set('other-app-cache', new Map());
   await sw.dispatchWait('activate');
-  assert.deepEqual([...sw.stores.keys()].sort(), ['other-app-cache', 'tasbih-quran-v1', 'tasbih-shell-t1']);
+  assert.deepEqual([...sw.stores.keys()].sort(), ['other-app-cache', 'tasbih-quran-v2', 'tasbih-shell-t1']);
   assert.equal(sw.state.claimed, true);
 });
 
@@ -152,7 +152,7 @@ test('Quran API responses are cached and served when the network fails', async (
   });
   const url = 'https://api.alquran.cloud/v1/surah/1';
   await sw.request(url);
-  assert.equal(sw.stores.get('tasbih-quran-v1').has(url), true);
+  assert.equal(sw.stores.get('tasbih-quran-v2').has(url), true);
   online = false;
   const res = await sw.request(url);
   assert.equal(await res.text(), '{"data":1}');
