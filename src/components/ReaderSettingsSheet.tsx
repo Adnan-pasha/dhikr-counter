@@ -18,9 +18,11 @@ interface ReaderSettingsSheetProps {
   onChange: (patch: Partial<ReaderSettings>) => void;
   /** The QuranEnc translation list. Optional so the sheet works before it has loaded. */
   catalog?: CatalogState;
+  /** Where the sheet opens. The header chips use this to land on the translation list. */
+  initialSection?: Section;
 }
 
-type Section = 'display' | 'text' | 'translations';
+export type Section = 'display' | 'text' | 'translations';
 
 const NO_CATALOG: CatalogState = { entries: [], status: 'ready', retry: () => {} };
 
@@ -32,13 +34,13 @@ const chipStyle = (active: boolean) => ({
 }) as const;
 
 /** Display and text options for the reader, as a bottom sheet over the page. */
-export default function ReaderSettingsSheet({ open, onClose, settings, onChange, catalog = NO_CATALOG }: ReaderSettingsSheetProps) {
+export default function ReaderSettingsSheet({ open, onClose, settings, onChange, catalog = NO_CATALOG, initialSection = 'display' }: ReaderSettingsSheetProps) {
   const [section, setSection] = React.useState<Section>('display');
   const { dialogRef, initialFocusRef: closeRef, onKeyDown } = useModalDialog(open, onClose);
   const changeRef = React.useRef<HTMLButtonElement>(null);
 
-  // Reopening the sheet starts on the first tab, not inside the picker.
-  React.useEffect(() => { if (!open) setSection('display'); }, [open]);
+  // Each time the sheet opens it starts where it was asked to, never inside a picker left open earlier.
+  React.useEffect(() => { if (open) setSection(initialSection); }, [open, initialSection]);
 
   // Leaving the picker returns focus to the button that opened it.
   const wasPicking = React.useRef(false);

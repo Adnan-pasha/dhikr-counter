@@ -881,6 +881,8 @@ export default function SettingsScreen({
               Your counts, history and settings stay on this device. There are no accounts, ads or trackers.
             </p>
           </div>
+          <details className="group">
+          <summary className="min-h-11 cursor-pointer select-none py-2 text-xs font-bold text-slate-200">Credits &amp; licences ({THIRD_PARTY_NOTICES.length})</summary>
           <ul className="space-y-2.5">
             {THIRD_PARTY_NOTICES.map((notice) => (
               <li key={notice.name} className="text-xs text-slate-400 leading-relaxed">
@@ -897,6 +899,7 @@ export default function SettingsScreen({
               </li>
             ))}
           </ul>
+          </details>
         </div>
 
         {/* Brand Information Footer */}

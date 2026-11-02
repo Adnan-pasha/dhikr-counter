@@ -8,6 +8,9 @@ import type { ReaderAyah } from '../quran/editions';
 import type { ReaderSettings } from '../quran/settings';
 import { BASMALA, hasBasmalaHeader } from '../quran/text';
 import TajweedLegend from './TajweedLegend';
+import type { Section } from './ReaderSettingsSheet';
+import { SCRIPTS } from '../quran/editions';
+import { translationLabel } from '../quran/translations';
 import { JUZ_STARTS, type Surah } from '../quran/types';
 
 interface ReaderViewProps {
@@ -67,8 +70,13 @@ export default function ReaderView({
   goal, scrollToAyah, onScrolledToAyah, onPosition, translation = BUILT_IN_VIEW, catalog,
 }: ReaderViewProps) {
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [sheetSection, setSheetSection] = React.useState<Section>('display');
   const [juzOpen, setJuzOpen] = React.useState(false);
   const gearRef = React.useRef<HTMLButtonElement>(null);
+  const currentIndex = Math.max(0, SCRIPTS.findIndex((s) => s.id === settings.script));
+  const currentScript = SCRIPTS[currentIndex];
+  const nextScript = SCRIPTS[(currentIndex + 1) % SCRIPTS.length];
+  const translationName = settings.showTranslation ? translationLabel(settings.translation, catalog?.entries ?? []) : 'Off';
   const bookmarked = React.useMemo(() => new Set(bookmarkedAyahs), [bookmarkedAyahs]);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const positionRef = React.useRef(onPosition);
@@ -180,13 +188,35 @@ export default function ReaderView({
               type="button"
               aria-label="Reader settings"
               aria-haspopup="dialog"
-              onClick={() => setSettingsOpen(true)}
+              onClick={() => { setSheetSection('display'); setSettingsOpen(true); }}
               className="tap-target flex w-11 items-center justify-center rounded-xl cursor-pointer"
               style={barButton}
             >
               <Settings2 className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
+        </div>
+
+        <div className="mt-2 flex gap-2">
+          <button
+            type="button"
+            aria-label={`Script: ${currentScript.label}, tap to change`}
+            onClick={() => onChangeSettings({ script: nextScript.id })}
+            className="min-h-11 min-w-0 flex-1 truncate rounded-xl px-3 text-xs font-bold cursor-pointer"
+            style={barButton}
+          >
+            <span style={{ color: 'var(--reader-muted)' }}>Script </span>{currentScript.label}
+          </button>
+          <button
+            type="button"
+            aria-label={`Translation: ${translationName}, tap to change`}
+            aria-haspopup="dialog"
+            onClick={() => { setSheetSection('translations'); setSettingsOpen(true); }}
+            className="min-h-11 min-w-0 flex-[2] truncate rounded-xl px-3 text-xs font-bold cursor-pointer"
+            style={barButton}
+          >
+            {translationName}
+          </button>
         </div>
 
         {juzOpen && (
@@ -320,7 +350,7 @@ export default function ReaderView({
 
       <p key={noticeId} className="sr-only" role="status" aria-live="polite">{notice}</p>
 
-      <ReaderSettingsSheet open={settingsOpen} onClose={closeSettings} settings={settings} onChange={onChangeSettings} catalog={catalog} />
+      <ReaderSettingsSheet open={settingsOpen} onClose={closeSettings} settings={settings} onChange={onChangeSettings} catalog={catalog} initialSection={sheetSection} />
     </div>
   );
 }
