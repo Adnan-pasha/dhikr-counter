@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useBackLayer } from '../useBackLayer';
 import {
   Home, CircleDot, BookOpen, Compass,
   RefreshCw, Moon, Trophy, Settings,
@@ -30,6 +31,7 @@ const MORE_TABS: { id: Tab; label: string; icon: React.ReactNode; desc: string }
 
 export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const [showMore, setShowMore] = useState(false);
+  useBackLayer(showMore, () => setShowMore(false));
   const isMoreActive = MORE_TABS.some(t => t.id === activeTab);
 
   const handleTabPress = (tab: Tab) => {

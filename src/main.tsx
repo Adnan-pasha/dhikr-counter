@@ -12,6 +12,10 @@ import App from './App.tsx';
 import AppErrorBoundary from './components/AppErrorBoundary.tsx';
 import './index.css';
 import { trackEvent } from './telemetry';
+import { getBackStack } from './backStack';
+
+// Starts the back-button trail before anything renders, so history entries left by a reload are cleared first.
+getBackStack();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

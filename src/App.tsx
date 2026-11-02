@@ -1,4 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { getBackStack } from './backStack';
+import { useBackLayer } from './useBackLayer';
 import { motion, AnimatePresence } from 'motion/react';
 import { WifiOff } from 'lucide-react';
 import { Dhikr, DhikrHistory, UserPreferences, DhikrReminder, Routine, SalahLog, SalahName, Madhab, ConfirmModalState, EditableDhikrFields } from './types';
@@ -162,6 +164,35 @@ export default function App() {
   const [quranBookmarks, setQuranBookmarks] = useState<string[]>([]);
   const [lastReadSurah, setLastReadSurah] = useState<number>(0);
   const [confirmModal, setConfirmModal] = useState<ConfirmModalState | null>(null);
+  useBackLayer(confirmModal !== null, () => setConfirmModal(null));
+
+  // The phone's back button steps back through the tabs the reader came by. Going Home starts the trail afresh.
+  const lastTab = React.useRef(activeTab);
+  const leftByBack = React.useRef(false);
+  // The first-run screens replace the app; the trail behind them must not answer to back.
+  useEffect(() => {
+    if (onboardingCompleted) return;
+    getBackStack().markAllDead();
+    leftByBack.current = false;
+  }, [onboardingCompleted]);
+  useEffect(() => {
+    const from = lastTab.current;
+    if (from === activeTab) return;
+    lastTab.current = activeTab;
+    if (leftByBack.current) {
+      leftByBack.current = false;
+      return;
+    }
+    const stack = getBackStack();
+    if (activeTab === 'home') {
+      stack.markAllDead();
+      return;
+    }
+    stack.push(() => {
+      leftByBack.current = true;
+      setActiveTab(from);
+    });
+  }, [activeTab]);
 
   useConnectivityStatus(setIsOnline);
 

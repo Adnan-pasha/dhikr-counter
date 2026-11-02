@@ -13,6 +13,8 @@ import { copyText } from '../quran/clipboard';
 import { useTranslationCatalog } from '../quran/useTranslationCatalog';
 import { useQuranEncSurah } from '../quran/useQuranEncSurah';
 import { loadIndopak, indopakAyahs } from '../quran/indopak';
+import { useBackLayer } from '../useBackLayer';
+import ReaderSettingsSheet from './ReaderSettingsSheet';
 import { PICKTHALL_ID, applyTranslation, parseTranslationId, translationCredit } from '../quran/translations';
 import type { TranslationView } from './ReaderView';
 import type { Surah } from '../quran/types';
@@ -73,6 +75,7 @@ export default function QuranReader({
   const [loadingAyahs, setLoadingAyahs] = useState(false);
   const [ayahError, setAyahError] = useState(false);
   const [notice, setNotice] = useState({ message: '', id: 0 });
+  const [listSettingsOpen, setListSettingsOpen] = useState(false);
   const requestId = useRef(0);
   const noticeTimer = useRef<number | undefined>(undefined);
   /** The surah whose ayahs are on screen, so a script change can refresh them in place. */
@@ -214,6 +217,10 @@ export default function QuranReader({
 
   // A QuranEnc translation is fetched on its own, so choosing another one never refetches the Arabic.
   const catalog = useTranslationCatalog();
+
+  // The phone's back button: from a surah to the list, and from My Progress to the surah list.
+  useBackLayer(view === 'reader', () => { setTab(cameFrom); setView('list'); });
+  useBackLayer(tab !== 'read', () => setTab('read'));
   const chosen = parseTranslationId(settings.translation);
   const quranEncKey = settings.showTranslation && chosen?.source === 'quranenc' ? chosen.key : null;
   const surahTranslation = useQuranEncSurah(quranEncKey, reading && activeSurah ? activeSurah.number : null);
@@ -253,6 +260,7 @@ export default function QuranReader({
     }
 
     return (
+      <>
       <SurahList
         surahs={surahs}
         loading={loadingSurahs}
@@ -263,7 +271,13 @@ export default function QuranReader({
         onSelect={(s) => openSurahView(s)}
         onGoBack={onGoBack}
         tabs={<QuranTabs tab={tab} onChange={setTab} />}
+        onOpenSettings={() => setListSettingsOpen(true)}
       />
+      {/* The sheet takes its colours from the reading theme, so it carries the theme on its own wrapper. */}
+      <div data-reader-theme={settings.theme}>
+        <ReaderSettingsSheet open={listSettingsOpen} onClose={() => setListSettingsOpen(false)} settings={settings} onChange={updateSettings} catalog={catalog} />
+      </div>
+      </>
     );
   }
 

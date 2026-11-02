@@ -1,10 +1,13 @@
 import React from 'react';
+import { useBackLayer } from '../useBackLayer';
 
 /**
  * What every modal sheet needs: focus moves in when it opens, Tab stays inside while it is open, and
  * Escape closes it from anywhere on the page.
  */
 export const useModalDialog = (open: boolean, onClose: () => void) => {
+  // The phone's back button closes the sheet instead of leaving the screen behind it.
+  useBackLayer(open, onClose);
   const dialogRef = React.useRef<HTMLDivElement>(null);
   const initialFocusRef = React.useRef<HTMLButtonElement>(null);
 
