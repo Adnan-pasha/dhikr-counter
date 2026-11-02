@@ -3,6 +3,7 @@ import { Bookmark, ChevronDown, Copy } from 'lucide-react';
 import { formatAyahForCopy, type ReaderAyah } from '../quran/editions';
 import { arabicFontSize, type ReaderSettings } from '../quran/settings';
 import { toArabicDigits } from '../quran/text';
+import TajweedText from './TajweedText';
 
 interface AyahCardProps {
   ayah: ReaderAyah;
@@ -95,7 +96,7 @@ function AyahCard({ ayah, surahName, surahNumber, settings, bookmarked, onToggle
         className="font-quran text-right"
         style={{ fontSize: arabicFontSize(settings.textSize), lineHeight: 2.2, color: 'var(--reader-ink)', overflowWrap: 'anywhere' }}
       >
-        {ayah.arabic}{' '}
+        {ayah.arabicSegments ? <TajweedText segments={ayah.arabicSegments} /> : ayah.arabic}{' '}
         <span aria-hidden="true" style={{ color: 'var(--reader-accent)' }}>&#xFD3F;{toArabicDigits(ayah.numberInSurah)}&#xFD3E;</span>
       </p>
 

@@ -1,7 +1,8 @@
 import { stripBom, stripLeadingBasmala } from './text';
+import { colourText, type TajweedSegment } from './tajweed';
 import { PICKTHALL_ID, parseTranslationId, type TranslationId } from './translations';
 
-export type ScriptId = 'uthmani' | 'simple';
+export type ScriptId = 'uthmani' | 'simple' | 'tajweed';
 
 export interface ScriptOption {
   id: ScriptId;
@@ -11,15 +12,27 @@ export interface ScriptOption {
   blurb: string;
   /** Shown on the option card as a live preview. */
   sample: string;
+  /** The same sample as the tajweed edition marks it, so the card can show the colours. */
+  sampleMarked?: string;
+  /** A second edition that marks the tajweed rules. It only says which letters to colour; the text shown is always `edition`. */
+  overlay?: string;
 }
 
 /**
- * Arabic scripts we can show today. Both come from the Tanzil text (CC BY 3.0, shown unaltered).
+ * Arabic scripts we can show today. Uthmani and Simple are the Tanzil text (CC BY 3.0, shown unaltered).
+ * Tajweed shows the Uthmani text with its rules coloured: the tajweed edition spells some letters differently,
+ * so it is used only to find which letters to colour.
  * IndoPak is not here: its text has no cleared licence yet (see docs/ROADMAP.md).
  */
 export const SCRIPTS: readonly ScriptOption[] = [
   { id: 'uthmani', label: 'Uthmani', edition: 'quran-uthmani', blurb: 'Full marks, the Madani mushaf style', sample: 'بِسْمِ ٱللَّهِ' },
   { id: 'simple', label: 'Simple', edition: 'quran-simple', blurb: 'Fewer marks, easier on small screens', sample: 'بِسْمِ اللَّهِ' },
+  {
+    id: 'tajweed', label: 'Tajweed', edition: 'quran-uthmani', overlay: 'quran-tajweed',
+    blurb: 'Uthmani with colours for the tajweed rules',
+    sample: 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ',
+    sampleMarked: 'بِسْمِ [h:1[ٱ]للَّهِ [h:2[ٱ][l[ل]رَّحْمَ[n[ـٰ]نِ',
+  },
 ];
 
 export const DEFAULT_SCRIPT: ScriptId = 'uthmani';
@@ -55,11 +68,13 @@ export interface EditionChoices {
 
 const isBuiltIn = (translation: TranslationId = PICKTHALL_ID): boolean => parseTranslationId(translation)?.source === 'builtin';
 
-const scriptEdition = (script: ScriptId): string =>
-  (SCRIPTS.find((s) => s.id === script) ?? SCRIPTS[0]).edition;
+const scriptOption = (script: ScriptId): ScriptOption => SCRIPTS.find((s) => s.id === script) ?? SCRIPTS[0];
+const scriptEdition = (script: ScriptId): string => scriptOption(script).edition;
 
 export const editionsFor = ({ script, showTranslation, showTransliteration, translation }: EditionChoices): string[] => {
   const editions = [scriptEdition(script)];
+  const overlay = scriptOption(script).overlay;
+  if (overlay) editions.push(overlay);
   if (showTranslation && isBuiltIn(translation)) editions.push(DEFAULT_TRANSLATION);
   if (showTransliteration && TRANSLITERATION_EDITION) editions.push(TRANSLITERATION_EDITION);
   return editions;
@@ -72,7 +87,10 @@ export interface ReaderAyah {
   /** Global ayah number. */
   number: number;
   numberInSurah: number;
+  /** Plain text, with no tajweed markers: what is copied and read aloud. */
   arabic: string;
+  /** The same text in pieces with their tajweed rule, for the Tajweed script only. */
+  arabicSegments?: TajweedSegment[] | null;
   translation: string | null;
   /** The publisher's notes for this ayah, shown with the translation. Null when there are none. */
   footnotes: string | null;
@@ -129,12 +147,19 @@ export const buildReaderAyahs = (
   const translationText = byNumber(translation);
   const transliterationText = byNumber(transliteration);
 
+  const overlay = scriptOption(script).overlay;
+  const overlayText = overlay ? new Map((ayahsOf(payload, overlay) ?? []).map((a) => [a.numberInSurah, a.text])) : null;
+
   return arabic.map((a) => {
     const cleaned = stripBom(a.text);
+    const arabicText = a.numberInSurah === 1 ? stripLeadingBasmala(surahNumber, cleaned) : cleaned;
+    const marked = overlayText?.get(a.numberInSurah);
+    const segments = marked ? colourText(marked, arabicText) : null;
     return {
       number: a.number,
       numberInSurah: a.numberInSurah,
-      arabic: a.numberInSurah === 1 ? stripLeadingBasmala(surahNumber, cleaned) : cleaned,
+      arabic: arabicText,
+      arabicSegments: segments,
       translation: translationText.get(a.numberInSurah) ?? null,
       footnotes: null,
       transliteration: transliterationText.get(a.numberInSurah) ?? null,

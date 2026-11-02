@@ -59,7 +59,7 @@ test('display tab: picking a theme and a text size reports the change', () => {
 test('text tab: scripts show a live sample, and choosing one reports it', () => {
   const calls = mountSheet();
   fireEvent.click(screen.getByRole('button', { name: 'Text' }));
-  assert.equal(screen.getByRole('button', { name: /Uthmani/ }).getAttribute('aria-pressed'), 'true');
+  assert.equal(screen.getByRole('button', { name: /Uthmanis*Full marks/ }).getAttribute('aria-pressed'), 'true');
   fireEvent.click(screen.getByRole('button', { name: /Simple/ }));
   assert.deepEqual(calls.patches.at(-1), { script: 'simple' });
   assert.equal(screen.queryByRole('button', { name: /IndoPak/ }), null, 'IndoPak is not offered until its text is cleared');

@@ -7,6 +7,7 @@ import { translationCredit, type Credit } from '../quran/translations';
 import type { ReaderAyah } from '../quran/editions';
 import type { ReaderSettings } from '../quran/settings';
 import { BASMALA, hasBasmalaHeader } from '../quran/text';
+import TajweedLegend from './TajweedLegend';
 import { JUZ_STARTS, type Surah } from '../quran/types';
 
 interface ReaderViewProps {
@@ -249,6 +250,8 @@ export default function ReaderView({
                 {BASMALA}
               </p>
             )}
+
+            {settings.script === 'tajweed' && <div className="mb-3"><TajweedLegend /></div>}
 
             {settings.showTranslation && translation.status === 'loading' && (
               <p role="status" className="mb-3 text-xs" style={{ color: 'var(--reader-muted)' }}>Loading translation…</p>

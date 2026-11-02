@@ -55,6 +55,13 @@ export const THIRD_PARTY_NOTICES: ThirdPartyNotice[] = [
     note: 'Arabic text, shown unaltered and loaded on demand. The Bismillah is shown once as a header.',
   },
   {
+    name: 'Tajweed colour markers',
+    author: 'Islamic Network (Al Quran Cloud), derived from the Tanzil text',
+    license: 'Al Quran Cloud terms of use; text from Tanzil (CC BY 3.0)',
+    url: 'https://alquran.cloud/terms-and-conditions',
+    note: 'The markers say which letters of the Uthmani text to colour, and are loaded on demand. Only the colour of letters changes; the text is shown unaltered. Colour guide: https://alquran.cloud/tajweed-guide.',
+  },
+  {
     name: 'Pickthall translation',
     author: 'Mohammed Marmaduke Pickthall',
     license: 'Public domain',

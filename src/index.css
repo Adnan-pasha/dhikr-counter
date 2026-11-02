@@ -569,6 +569,24 @@ body {
   --reader-muted: #9db8ad;
   --reader-accent: #52d6a8;
   --reader-border: #244039;
+  /* Tajweed rule colours, kept readable on this theme's page and cards (tests/quran-tajweed.test.mjs). */
+  --tj-h: #9aa6a1;
+  --tj-s: #9aa6a1;
+  --tj-l: #9aa6a1;
+  --tj-n: #7fb0ff;
+  --tj-p: #98a6ff;
+  --tj-m: #6f8bff;
+  --tj-o: #8ea0ff;
+  --tj-q: #ff7a80;
+  --tj-c: #f06be0;
+  --tj-f: #d08cff;
+  --tj-w: #7dd957;
+  --tj-i: #4fd6ff;
+  --tj-a: #3fd1a9;
+  --tj-u: #6fd86a;
+  --tj-d: #b4b4b4;
+  --tj-b: #b4b4b4;
+  --tj-g: #ffa04a;
 }
 
 [data-reader-theme="paper"] {
@@ -578,6 +596,23 @@ body {
   --reader-muted: #66593f;
   --reader-accent: #1b6b4d;
   --reader-border: #e0d3ae;
+  --tj-h: #615f58;
+  --tj-s: #615f58;
+  --tj-l: #615f58;
+  --tj-n: #2b5fd9;
+  --tj-p: #3a45d0;
+  --tj-m: #1d2bb0;
+  --tj-o: #2a40b8;
+  --tj-q: #c4000a;
+  --tj-c: #b0009a;
+  --tj-f: #7e0090;
+  --tj-w: #337000;
+  --tj-i: #006f9c;
+  --tj-a: #0d7a5f;
+  --tj-u: #1b7a10;
+  --tj-d: #666666;
+  --tj-b: #666666;
+  --tj-g: #a84e00;
 }
 
 [data-reader-theme="modern"] {
@@ -587,6 +622,23 @@ body {
   --reader-muted: #4a5f57;
   --reader-accent: #0b7255;
   --reader-border: #d3dfda;
+  --tj-h: #615f58;
+  --tj-s: #615f58;
+  --tj-l: #615f58;
+  --tj-n: #2b5fd9;
+  --tj-p: #3a45d0;
+  --tj-m: #1d2bb0;
+  --tj-o: #2a40b8;
+  --tj-q: #c4000a;
+  --tj-c: #b0009a;
+  --tj-f: #7e0090;
+  --tj-w: #337000;
+  --tj-i: #006f9c;
+  --tj-a: #0d7a5f;
+  --tj-u: #1b7a10;
+  --tj-d: #666666;
+  --tj-b: #666666;
+  --tj-g: #a84e00;
 }
 
 .font-quran {
