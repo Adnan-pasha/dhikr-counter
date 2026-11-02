@@ -644,3 +644,16 @@ body {
 .font-quran {
   font-family: var(--font-quran);
 }
+
+/* DigitalKhatt IndoPak, SIL OFL 1.1 (Amine Anane, Tarteel Inc). The IndoPak text only displays correctly with it. */
+@font-face {
+  font-family: "DigitalKhatt IndoPak";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/fonts/DigitalKhattIndoPak.otf") format("opentype");
+}
+
+.font-indopak {
+  font-family: "DigitalKhatt IndoPak", var(--font-quran);
+}

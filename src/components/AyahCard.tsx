@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bookmark, ChevronDown, Copy } from 'lucide-react';
-import { formatAyahForCopy, type ReaderAyah } from '../quran/editions';
+import { formatAyahForCopy, scriptOption, type ReaderAyah } from '../quran/editions';
+import { plainForCopy } from '../quran/indopak';
 import { arabicFontSize, type ReaderSettings } from '../quran/settings';
 import { toArabicDigits } from '../quran/text';
 import TajweedText from './TajweedText';
@@ -23,6 +24,8 @@ interface AyahCardProps {
 /** One ayah: Arabic, then transliteration and translation when switched on, with copy and bookmark under its number. */
 function AyahCard({ ayah, surahName, surahNumber, settings, bookmarked, onToggleBookmark, onCopy, translationDirection = 'ltr', translationLanguage }: AyahCardProps) {
   const [open, setOpen] = React.useState(false);
+  // The font follows the text on screen, which can still be the previous script while a new one loads.
+  const script = scriptOption(ayah.script ?? settings.script);
   const actionsId = `ayah-actions-${surahNumber}-${ayah.numberInSurah}`;
   const showTranslation = settings.showTranslation && ayah.translation;
   const showTransliteration = settings.showTransliteration && ayah.transliteration;
@@ -68,7 +71,7 @@ function AyahCard({ ayah, surahName, surahNumber, settings, bookmarked, onToggle
               surahName,
               surahNumber,
               ayahNumber: ayah.numberInSurah,
-              arabic: ayah.arabic,
+              arabic: script.selfNumbered ? plainForCopy(ayah.arabic) : ayah.arabic,
               translation: showTranslation ? ayah.translation : null,
               footnotes: showTranslation ? ayah.footnotes : null,
             }))}
@@ -93,11 +96,19 @@ function AyahCard({ ayah, surahName, surahNumber, settings, bookmarked, onToggle
       <p
         lang="ar"
         dir="rtl"
-        className="font-quran text-right"
-        style={{ fontSize: arabicFontSize(settings.textSize), lineHeight: 2.2, color: 'var(--reader-ink)', overflowWrap: 'anywhere' }}
+        className={`${script.font === 'indopak' ? 'font-indopak' : 'font-quran'} text-right`}
+        style={{ fontSize: arabicFontSize(settings.textSize), lineHeight: 2.2, color: 'var(--reader-ink)', overflowWrap: 'anywhere', unicodeBidi: 'isolate' }}
       >
-        {ayah.arabicSegments ? <TajweedText segments={ayah.arabicSegments} /> : ayah.arabic}{' '}
-        <span aria-hidden="true" style={{ color: 'var(--reader-accent)' }}>&#xFD3F;{toArabicDigits(ayah.numberInSurah)}&#xFD3E;</span>
+        {script.selfNumbered ? (
+          <>
+            {/* The font draws the ayah ornament and number inside the text, so a screen reader gets the plain words instead. */}
+            <span className="sr-only">{plainForCopy(ayah.arabic)}</span>
+            <span aria-hidden="true">{ayah.arabic}</span>
+          </>
+        ) : ayah.arabicSegments ? <TajweedText segments={ayah.arabicSegments} /> : ayah.arabic}
+        {!script.selfNumbered && (
+          <>{' '}<span aria-hidden="true" style={{ color: 'var(--reader-accent)' }}>&#xFD3F;{toArabicDigits(ayah.numberInSurah)}&#xFD3E;</span></>
+        )}
       </p>
 
       {showTransliteration && (

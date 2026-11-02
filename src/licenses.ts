@@ -62,6 +62,20 @@ export const THIRD_PARTY_NOTICES: ThirdPartyNotice[] = [
     note: 'Colour rules for the Uthmani text. Only colour changes; the text is unaltered.',
   },
   {
+    name: 'IndoPak text (Digital Khatt)',
+    author: 'DigitalKhatt and Tarteel, from the Quranic Universal Library',
+    license: 'No copyright terms published by the library; shown with credit',
+    url: 'https://qul.tarteel.ai/resources/quran-script/566',
+    note: 'Shown exactly as exported, never altered.',
+  },
+  {
+    name: 'DigitalKhatt IndoPak font',
+    author: 'Amine Anane and Tarteel Inc',
+    license: 'SIL OFL 1.1',
+    url: 'https://github.com/DigitalKhatt/indopakfont',
+    note: 'Typeface for the IndoPak script.',
+  },
+  {
     name: 'Pickthall translation',
     author: 'Mohammed Marmaduke Pickthall',
     license: 'Public domain',
