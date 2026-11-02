@@ -1,8 +1,10 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import ToggleSwitch from './ToggleSwitch';
+import TranslationPicker, { type CatalogState } from './TranslationPicker';
 import { useModalDialog } from './useModalDialog';
-import { SCRIPTS, TRANSLATIONS, DEFAULT_TRANSLATION, TRANSLITERATION_EDITION } from '../quran/editions';
+import { translationCredit, translationLabel, parseTranslationId } from '../quran/translations';
+import { SCRIPTS, TRANSLITERATION_EDITION } from '../quran/editions';
 import { READER_THEMES, TEXT_SIZES, arabicFontSize, type ReaderSettings } from '../quran/settings';
 import { BASMALA } from '../quran/text';
 
@@ -11,9 +13,13 @@ interface ReaderSettingsSheetProps {
   onClose: () => void;
   settings: ReaderSettings;
   onChange: (patch: Partial<ReaderSettings>) => void;
+  /** The QuranEnc translation list. Optional so the sheet works before it has loaded. */
+  catalog?: CatalogState;
 }
 
-type Section = 'display' | 'text';
+type Section = 'display' | 'text' | 'translations';
+
+const NO_CATALOG: CatalogState = { entries: [], status: 'ready', retry: () => {} };
 
 const card = { background: 'var(--reader-surface)', border: '1px solid var(--reader-border)', color: 'var(--reader-ink)' } as const;
 const chipStyle = (active: boolean) => ({
@@ -23,12 +29,26 @@ const chipStyle = (active: boolean) => ({
 }) as const;
 
 /** Display and text options for the reader, as a bottom sheet over the page. */
-export default function ReaderSettingsSheet({ open, onClose, settings, onChange }: ReaderSettingsSheetProps) {
+export default function ReaderSettingsSheet({ open, onClose, settings, onChange, catalog = NO_CATALOG }: ReaderSettingsSheetProps) {
   const [section, setSection] = React.useState<Section>('display');
   const { dialogRef, initialFocusRef: closeRef, onKeyDown } = useModalDialog(open, onClose);
+  const changeRef = React.useRef<HTMLButtonElement>(null);
+
+  // Reopening the sheet starts on the first tab, not inside the picker.
+  React.useEffect(() => { if (!open) setSection('display'); }, [open]);
+
+  // Leaving the picker returns focus to the button that opened it.
+  const wasPicking = React.useRef(false);
+  React.useEffect(() => {
+    if (wasPicking.current && section !== 'translations') changeRef.current?.focus();
+    wasPicking.current = section === 'translations';
+  }, [section]);
 
   if (!open) return null;
-  const translation = TRANSLATIONS.find((t) => t.id === DEFAULT_TRANSLATION);
+  const parsed = parseTranslationId(settings.translation);
+  const entry = parsed?.source === 'quranenc' ? catalog.entries.find((e) => e.key === parsed.key) ?? null : null;
+  const currentLabel = translationLabel(settings.translation, catalog.entries);
+  const credit = translationCredit(entry, parsed?.source === 'quranenc' ? parsed.key : undefined);
 
   return (
     <div className="absolute inset-0 z-40 flex flex-col justify-end">
@@ -56,6 +76,15 @@ export default function ReaderSettingsSheet({ open, onClose, settings, onChange 
           </button>
         </div>
 
+        {section === 'translations' ? (
+          <TranslationPicker
+            catalog={catalog}
+            selected={settings.translation}
+            onSelect={(id) => { onChange({ translation: id, showTranslation: true }); setSection('text'); }}
+            onBack={() => setSection('text')}
+          />
+        ) : (
+        <>
         <div className="flex gap-2" role="group" aria-label="Settings section">
           {(['display', 'text'] as const).map((id) => (
             <button
@@ -158,17 +187,29 @@ export default function ReaderSettingsSheet({ open, onClose, settings, onChange 
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-3 rounded-2xl p-4" style={card}>
-              <div className="min-w-0">
-                <p className="text-sm font-bold">Show translation</p>
-                <p className="text-xs" style={{ color: 'var(--reader-muted)' }}>{translation?.label}</p>
+            <div className="space-y-3 rounded-2xl p-4" style={card}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold">Show translation</p>
+                  <p className="text-xs" style={{ color: 'var(--reader-muted)' }}>{currentLabel}</p>
+                </div>
+                <ToggleSwitch
+                  id="switch_reader_translation"
+                  label="Show translation"
+                  checked={settings.showTranslation}
+                  onChange={(value) => onChange({ showTranslation: value })}
+                />
               </div>
-              <ToggleSwitch
-                id="switch_reader_translation"
-                label="Show translation"
-                checked={settings.showTranslation}
-                onChange={(value) => onChange({ showTranslation: value })}
-              />
+              <button
+                ref={changeRef}
+                type="button"
+                aria-label={`Change translation, currently ${currentLabel}`}
+                onClick={() => setSection('translations')}
+                className="min-h-11 w-full rounded-xl px-4 text-sm font-bold cursor-pointer"
+                style={{ background: 'var(--reader-bg)', border: '1px solid var(--reader-border)', color: 'var(--reader-accent)' }}
+              >
+                Change translation
+              </button>
             </div>
 
             {TRANSLITERATION_EDITION && (
@@ -188,9 +229,12 @@ export default function ReaderSettingsSheet({ open, onClose, settings, onChange 
               <a href="https://tanzil.net" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--reader-accent)' }}>
                 Tanzil Project
               </a>{' '}
-              (CC BY 3.0), shown unaltered. Translation: {translation?.credit}.
+              (CC BY 3.0), shown unaltered. Translation:{' '}
+              <a href={credit.url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--reader-accent)' }}>{credit.text}</a>.
             </p>
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

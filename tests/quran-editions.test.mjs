@@ -80,3 +80,22 @@ test('the copy format is Arabic, translation, then a reference', () => {
   assert.equal(text, 'قُلْ هُوَ ٱللَّهُ أَحَدٌ\n\nSay: He is Allah, the One!\n\n— Al-Ikhlas 112:1');
   assert.equal(formatAyahForCopy({ surahName: 'Al-Ikhlas', surahNumber: 112, ayahNumber: 1, arabic: 'قُلْ', translation: null }), 'قُلْ\n\n— Al-Ikhlas 112:1');
 });
+
+// ── choosing a translation ────────────────────────────────────────────────────
+
+test('a QuranEnc translation is not requested from the Arabic service, only the script is', () => {
+  assert.deepEqual(editionsFor({ script: 'uthmani', showTranslation: true, showTransliteration: false, translation: 'quranenc:english_saheeh' }), ['quran-uthmani']);
+  assert.deepEqual(editionsFor({ script: 'uthmani', showTranslation: true, showTransliteration: false, translation: 'pickthall' }), ['quran-uthmani', 'en.pickthall']);
+  assert.deepEqual(editionsFor({ script: 'simple', showTranslation: true, showTransliteration: false }), ['quran-simple', 'en.pickthall'], 'no choice means the built-in one');
+});
+
+test('with a QuranEnc translation chosen, ayahs come back without the built-in text', () => {
+  const body = payload([
+    ed('quran-uthmani', [ayah(1, 'قُلْ')]),
+    ed('en.pickthall', [ayah(1, 'Say')]),
+  ]);
+  const out = buildReaderAyahs(112, body, 'uthmani', true, false, 'quranenc:english_saheeh');
+  assert.equal(out[0].translation, null, 'the QuranEnc text is added later and never mixed with Pickthall');
+  assert.equal(out[0].footnotes, null);
+  assert.equal(buildReaderAyahs(112, body, 'uthmani', true)[0].translation, 'Say');
+});

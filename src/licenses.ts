@@ -62,6 +62,13 @@ export const THIRD_PARTY_NOTICES: ThirdPartyNotice[] = [
     note: 'English translation (1930). More languages will be added from sources with clear terms.',
   },
   {
+    name: 'Quran translations (QuranEnc)',
+    author: 'QuranEnc.com and the publishers of each translation',
+    license: 'Published terms: shown unmodified, credited, with version',
+    url: 'https://quranenc.com',
+    note: 'Loaded live from QuranEnc and shown unmodified with the notes the publisher includes, the publisher credited and the version named. Not copied or hosted by this app.',
+  },
+  {
     name: 'Amiri Quran',
     author: 'Khaled Hosny',
     license: 'SIL OFL 1.1',

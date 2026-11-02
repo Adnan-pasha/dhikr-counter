@@ -11,6 +11,9 @@ const QURAN_CACHE = 'tasbih-quran-v2';
 const KNOWN_CACHES = [SHELL_CACHE, QURAN_CACHE];
 const CACHE_PREFIX = 'tasbih-';
 const QURAN_API_HOST = 'api.alquran.cloud';
+// QuranEnc's translations. Only its API is cached; its website and file downloads are left alone.
+const QURANENC_HOST = 'quranenc.com';
+const QURANENC_API_PATH = '/api/v1/';
 const QURAN_NETWORK_TIMEOUT_MS = 4500;
 
 const SHELL_ASSETS = [
@@ -65,9 +68,14 @@ const isCacheable = (request, response) => {
   return true;
 };
 
+// Translations add up (114 surahs for each one a reader opens), so the Quran cache keeps the newest entries.
+const MAX_QURAN_ENTRIES = 600;
+
+const trimCache = (cache, max) => cache.keys().then((keys) => Promise.all(keys.slice(0, Math.max(0, keys.length - max)).map((k) => cache.delete(k))));
+
 const putInCache = (cacheName, request, response) => {
   const copy = response.clone();
-  return caches.open(cacheName).then((cache) => cache.put(request, copy));
+  return caches.open(cacheName).then((cache) => cache.put(request, copy).then(() => (cacheName === QURAN_CACHE ? trimCache(cache, MAX_QURAN_ENTRIES) : undefined)));
 };
 
 const remember = (event, cacheName, request, response) => {
@@ -146,7 +154,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.host === QURAN_API_HOST) {
+  const isQuranData = url.host === QURAN_API_HOST || (url.host === QURANENC_HOST && url.pathname.startsWith(QURANENC_API_PATH));
+  if (isQuranData) {
     event.respondWith(networkFirst(event, request, QURAN_CACHE, { timeoutMs: QURAN_NETWORK_TIMEOUT_MS }));
     return;
   }

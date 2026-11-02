@@ -18,7 +18,7 @@ test('three reading themes are offered', () => {
 });
 
 test('stored settings are accepted when valid', () => {
-  const stored = { theme: 'paper', textSize: 4, script: 'simple', showTranslation: false, showTransliteration: false, keepScreenOn: true };
+  const stored = { theme: 'paper', textSize: 4, script: 'simple', showTranslation: false, translation: 'quranenc:urdu_junagarhi', showTransliteration: false, keepScreenOn: true };
   assert.deepEqual(sanitizeReaderSettings(stored), stored);
 });
 

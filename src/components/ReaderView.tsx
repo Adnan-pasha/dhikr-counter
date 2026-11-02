@@ -2,6 +2,8 @@ import React from 'react';
 import { AlertCircle, Check, ChevronLeft, ChevronRight, ListOrdered, Loader2, RefreshCw, Settings2 } from 'lucide-react';
 import AyahCard from './AyahCard';
 import ReaderSettingsSheet from './ReaderSettingsSheet';
+import type { CatalogState } from './TranslationPicker';
+import { translationCredit, type Credit } from '../quran/translations';
 import type { ReaderAyah } from '../quran/editions';
 import type { ReaderSettings } from '../quran/settings';
 import { BASMALA, hasBasmalaHeader } from '../quran/text';
@@ -34,7 +36,24 @@ interface ReaderViewProps {
   onScrolledToAyah: () => void;
   /** Where the reader is, reported a moment after scrolling settles: the surah, the top ayah and the span on screen. */
   onPosition: (surah: number, ayah: ReaderAyah, seen: { from: number; to: number }) => void;
+  /** The chosen translation: how to credit and lay it out, and whether it has loaded. */
+  translation?: TranslationView;
+  /** The QuranEnc list, for the picker in settings. */
+  catalog?: CatalogState;
 }
+
+export interface TranslationView {
+  credit: Credit;
+  direction: 'ltr' | 'rtl' | 'auto';
+  language?: string;
+  status: 'ready' | 'loading' | 'error';
+  onRetry: () => void;
+  onUseDefault: () => void;
+}
+
+const BUILT_IN_VIEW: TranslationView = {
+  credit: translationCredit(null), direction: 'ltr', language: 'en', status: 'ready', onRetry: () => {}, onUseDefault: () => {},
+};
 
 /** How long scrolling must pause before the reading position is saved. */
 const POSITION_DEBOUNCE_MS = 800;
@@ -44,7 +63,7 @@ const barButton = { background: 'var(--reader-surface)', border: '1px solid var(
 /** The reading page: header, Bismillah, one card per ayah, previous and next, and the settings sheet. */
 export default function ReaderView({
   surah, ayahs, loading, error, settings, onChangeSettings, bookmarkedAyahs, onBookmarkToggle, onBack, backTo, onRetry, onOpenSurah, onCopy, notice, noticeId,
-  goal, scrollToAyah, onScrolledToAyah, onPosition,
+  goal, scrollToAyah, onScrolledToAyah, onPosition, translation = BUILT_IN_VIEW, catalog,
 }: ReaderViewProps) {
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [juzOpen, setJuzOpen] = React.useState(false);
@@ -231,9 +250,28 @@ export default function ReaderView({
               </p>
             )}
 
+            {settings.showTranslation && translation.status === 'loading' && (
+              <p role="status" className="mb-3 text-xs" style={{ color: 'var(--reader-muted)' }}>Loading translation…</p>
+            )}
+            {settings.showTranslation && translation.status === 'error' && (
+              <div role="alert" className="mb-3 space-y-2 rounded-2xl p-3 text-xs" style={{ background: 'var(--reader-surface)', border: '1px solid var(--reader-border)' }}>
+                <p className="font-bold">Could not load this translation. The Arabic is still here.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={translation.onRetry} className="tap-target flex items-center gap-1.5 rounded-xl px-3 font-bold cursor-pointer" style={{ ...barButton, color: 'var(--reader-accent)' }}>
+                    <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" /> Retry
+                  </button>
+                  <button type="button" onClick={translation.onUseDefault} className="tap-target rounded-xl px-3 font-bold cursor-pointer" style={barButton}>
+                    Use Pickthall instead
+                  </button>
+                </div>
+              </div>
+            )}
+
             {ayahs.map((ayah) => (
               <AyahCard
                 key={ayah.number}
+                translationDirection={translation.direction}
+                translationLanguage={translation.language}
                 ayah={ayah}
                 surahName={surah.englishName}
                 surahNumber={surah.number}
@@ -264,13 +302,22 @@ export default function ReaderView({
                 Next Surah <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </nav>
+
+            {settings.showTranslation && (
+              <p className="mb-6 text-center text-xs leading-relaxed" style={{ color: 'var(--reader-muted)' }}>
+                Translation:{' '}
+                <a href={translation.credit.url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--reader-accent)' }}>
+                  {translation.credit.text}
+                </a>
+              </p>
+            )}
           </div>
         ) : null}
       </div>
 
       <p key={noticeId} className="sr-only" role="status" aria-live="polite">{notice}</p>
 
-      <ReaderSettingsSheet open={settingsOpen} onClose={closeSettings} settings={settings} onChange={onChangeSettings} />
+      <ReaderSettingsSheet open={settingsOpen} onClose={closeSettings} settings={settings} onChange={onChangeSettings} catalog={catalog} />
     </div>
   );
 }

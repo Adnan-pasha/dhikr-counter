@@ -10,6 +10,10 @@ import { useWakeLock } from '../quran/useWakeLock';
 import { useReadingClock } from '../quran/useReadingClock';
 import type { useQuranProgress } from '../quran/useQuranProgress';
 import { copyText } from '../quran/clipboard';
+import { useTranslationCatalog } from '../quran/useTranslationCatalog';
+import { useQuranEncSurah } from '../quran/useQuranEncSurah';
+import { PICKTHALL_ID, applyTranslation, parseTranslationId, translationCredit } from '../quran/translations';
+import type { TranslationView } from './ReaderView';
 import type { Surah } from '../quran/types';
 
 type ProgressActions = ReturnType<typeof useQuranProgress>['actions'];
@@ -102,7 +106,11 @@ export default function QuranReader({
 
   // Both the Arabic and the translation arrive in one request, so switching the translation on or off
   // is display-only. Changing the script is the only thing that fetches again.
-  const editionKey = editionsFor({ script: settings.script, showTranslation: true, showTransliteration: settings.showTransliteration }).join(',');
+  const editionKey = editionsFor({
+    script: settings.script, showTranslation: true, showTransliteration: settings.showTransliteration, translation: settings.translation,
+  }).join(',');
+
+  const builtIn = parseTranslationId(settings.translation)?.source !== 'quranenc';
 
   const loadAyahs = useCallback((surah: Surah) => {
     const id = ++requestId.current;
@@ -118,7 +126,7 @@ export default function QuranReader({
       .then((r) => r.json())
       .then((body) => {
         if (id !== requestId.current) return;
-        const built = buildReaderAyahs(surah.number, body, settings.script, true, settings.showTransliteration);
+        const built = buildReaderAyahs(surah.number, body, settings.script, true, settings.showTransliteration, builtIn ? PICKTHALL_ID : settings.translation);
         if (built) {
           shownSurah.current = surah.number;
           setAyahsFor(surah.number);
@@ -134,7 +142,9 @@ export default function QuranReader({
         setAyahError(true);
       })
       .finally(() => { if (id === requestId.current) setLoadingAyahs(false); });
-  }, [editionKey, settings.script, settings.showTransliteration]);
+    // Only whether the translation is built in matters here (it rides along in this request), so moving
+    // between QuranEnc translations does not fetch the Arabic again.
+  }, [editionKey, builtIn, settings.script, settings.showTransliteration]);
 
   useEffect(() => {
     if (view === 'reader' && activeSurah) loadAyahs(activeSurah);
@@ -195,6 +205,29 @@ export default function QuranReader({
 
   const clearScrollTarget = useCallback(() => setScrollToAyah(null), []);
 
+  // A QuranEnc translation is fetched on its own, so choosing another one never refetches the Arabic.
+  const catalog = useTranslationCatalog();
+  const chosen = parseTranslationId(settings.translation);
+  const quranEncKey = settings.showTranslation && chosen?.source === 'quranenc' ? chosen.key : null;
+  const surahTranslation = useQuranEncSurah(quranEncKey, reading && activeSurah ? activeSurah.number : null);
+  const entry = chosen?.source === 'quranenc' ? catalog.entries.find((e) => e.key === chosen.key) ?? null : null;
+
+  const shownAyahs = activeSurah && ayahsFor === activeSurah.number ? ayahs : NO_AYAHS;
+  const displayAyahs = React.useMemo(
+    () => (chosen?.source === 'quranenc' ? applyTranslation(shownAyahs, surahTranslation.map) : shownAyahs),
+    [shownAyahs, surahTranslation.map, chosen?.source],
+  );
+
+  const translationView: TranslationView = {
+    credit: translationCredit(entry, chosen?.source === 'quranenc' ? chosen.key : undefined),
+    // Without a catalogue entry the language is unknown: let the browser decide the direction.
+    direction: entry?.direction ?? (chosen?.source === 'quranenc' ? 'auto' : 'ltr'),
+    language: entry?.language ?? (chosen?.source === 'quranenc' ? undefined : 'en'),
+    status: !quranEncKey ? 'ready' : surahTranslation.status === 'ready' ? 'ready' : surahTranslation.status === 'error' ? 'error' : 'loading',
+    onRetry: surahTranslation.retry,
+    onUseDefault: () => updateSettings({ translation: PICKTHALL_ID }),
+  };
+
   if (view === 'list' || !activeSurah) {
     if (tab === 'progress') {
       return (
@@ -230,7 +263,7 @@ export default function QuranReader({
   return (
     <ReaderView
       surah={activeSurah}
-      ayahs={ayahsFor === activeSurah.number ? ayahs : NO_AYAHS}
+      ayahs={displayAyahs}
       loading={loadingAyahs}
       error={ayahError}
       settings={settings}
@@ -248,6 +281,8 @@ export default function QuranReader({
       scrollToAyah={scrollToAyah}
       onScrolledToAyah={clearScrollTarget}
       onPosition={savePosition}
+      translation={translationView}
+      catalog={catalog}
     />
   );
 }

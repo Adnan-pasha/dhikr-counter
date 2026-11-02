@@ -1,4 +1,5 @@
 import { SCRIPTS, DEFAULT_SCRIPT, type ScriptId } from './editions';
+import { PICKTHALL_ID, parseTranslationId, type TranslationId } from './translations';
 
 export type ReaderTheme = 'dark' | 'paper' | 'modern';
 
@@ -17,6 +18,8 @@ export interface ReaderSettings {
   textSize: number;
   script: ScriptId;
   showTranslation: boolean;
+  /** Which translation to show: the built-in one, or a QuranEnc one ("quranenc:<key>"). */
+  translation: TranslationId;
   showTransliteration: boolean;
   keepScreenOn: boolean;
 }
@@ -26,6 +29,7 @@ export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   textSize: 2,
   script: DEFAULT_SCRIPT,
   showTranslation: true,
+  translation: PICKTHALL_ID,
   showTransliteration: false,
   keepScreenOn: false,
 };
@@ -48,6 +52,7 @@ export const sanitizeReaderSettings = (value: unknown): ReaderSettings => {
     textSize: Number.isInteger(v.textSize) && (v.textSize as number) >= 0 && (v.textSize as number) < TEXT_SIZES.length ? (v.textSize as number) : d.textSize,
     script: SCRIPTS.some((s) => s.id === v.script) ? (v.script as ScriptId) : d.script,
     showTranslation: isBool(v.showTranslation) ? v.showTranslation : d.showTranslation,
+    translation: parseTranslationId(v.translation) ? (v.translation as TranslationId) : d.translation,
     showTransliteration: isBool(v.showTransliteration) ? v.showTransliteration : d.showTransliteration,
     keepScreenOn: isBool(v.keepScreenOn) ? v.keepScreenOn : d.keepScreenOn,
   };
