@@ -1,4 +1,5 @@
 import { stripBom, stripLeadingBasmala } from './text';
+import { PICKTHALL_ID, parseTranslationId, type TranslationId } from './translations';
 
 export type ScriptId = 'uthmani' | 'simple';
 
@@ -48,14 +49,18 @@ export interface EditionChoices {
   script: ScriptId;
   showTranslation: boolean;
   showTransliteration: boolean;
+  /** The chosen translation. Only the built-in one comes from this service; QuranEnc ones are fetched separately. */
+  translation?: TranslationId;
 }
+
+const isBuiltIn = (translation: TranslationId = PICKTHALL_ID): boolean => parseTranslationId(translation)?.source === 'builtin';
 
 const scriptEdition = (script: ScriptId): string =>
   (SCRIPTS.find((s) => s.id === script) ?? SCRIPTS[0]).edition;
 
-export const editionsFor = ({ script, showTranslation, showTransliteration }: EditionChoices): string[] => {
+export const editionsFor = ({ script, showTranslation, showTransliteration, translation }: EditionChoices): string[] => {
   const editions = [scriptEdition(script)];
-  if (showTranslation) editions.push(DEFAULT_TRANSLATION);
+  if (showTranslation && isBuiltIn(translation)) editions.push(DEFAULT_TRANSLATION);
   if (showTransliteration && TRANSLITERATION_EDITION) editions.push(TRANSLITERATION_EDITION);
   return editions;
 };
@@ -69,6 +74,8 @@ export interface ReaderAyah {
   numberInSurah: number;
   arabic: string;
   translation: string | null;
+  /** The publisher's notes for this ayah, shown with the translation. Null when there are none. */
+  footnotes: string | null;
   transliteration: string | null;
   juz: number;
   page: number;
@@ -106,6 +113,7 @@ export const buildReaderAyahs = (
   script: ScriptId,
   wantTranslation: boolean,
   wantTransliteration = false,
+  translationChoice: TranslationId = PICKTHALL_ID,
 ): ReaderAyah[] | null => {
   if (typeof body !== 'object' || body === null) return null;
   const response = body as { code?: number; data?: unknown };
@@ -115,7 +123,7 @@ export const buildReaderAyahs = (
   const arabic = ayahsOf(payload, scriptEdition(script));
   if (!arabic || arabic.length === 0) return null;
 
-  const translation = wantTranslation ? ayahsOf(payload, DEFAULT_TRANSLATION) : null;
+  const translation = wantTranslation && isBuiltIn(translationChoice) ? ayahsOf(payload, DEFAULT_TRANSLATION) : null;
   const transliteration = wantTransliteration && TRANSLITERATION_EDITION ? ayahsOf(payload, TRANSLITERATION_EDITION) : null;
   const byNumber = (list: RawAyah[] | null) => new Map((list ?? []).map((a) => [a.numberInSurah, a.text]));
   const translationText = byNumber(translation);
@@ -128,6 +136,7 @@ export const buildReaderAyahs = (
       numberInSurah: a.numberInSurah,
       arabic: a.numberInSurah === 1 ? stripLeadingBasmala(surahNumber, cleaned) : cleaned,
       translation: translationText.get(a.numberInSurah) ?? null,
+      footnotes: null,
       transliteration: transliterationText.get(a.numberInSurah) ?? null,
       juz: a.juz ?? 0,
       page: a.page ?? 0,
@@ -141,8 +150,10 @@ export interface CopyInput {
   ayahNumber: number;
   arabic: string;
   translation: string | null;
+  /** The publisher's notes for the translation, copied with it so none of it is left behind. */
+  footnotes?: string | null;
 }
 
-/** Text placed on the clipboard for one ayah: Arabic, translation if shown, then the reference. */
-export const formatAyahForCopy = ({ surahName, surahNumber, ayahNumber, arabic, translation }: CopyInput): string =>
-  [arabic, ...(translation ? [translation] : []), `— ${surahName} ${surahNumber}:${ayahNumber}`].join('\n\n');
+/** Text placed on the clipboard for one ayah: Arabic, translation and its notes if shown, then the reference. */
+export const formatAyahForCopy = ({ surahName, surahNumber, ayahNumber, arabic, translation, footnotes }: CopyInput): string =>
+  [arabic, ...(translation ? [translation] : []), ...(translation && footnotes ? [footnotes] : []), `— ${surahName} ${surahNumber}:${ayahNumber}`].join('\n\n');

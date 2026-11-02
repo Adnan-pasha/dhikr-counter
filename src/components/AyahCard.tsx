@@ -13,10 +13,14 @@ interface AyahCardProps {
   /** Called with "surah:ayah". One stable function can serve every card. */
   onToggleBookmark: (key: string) => void;
   onCopy: (text: string) => void;
+  /** Direction and language of the translation, so right-to-left languages read correctly. */
+  translationDirection?: 'ltr' | 'rtl' | 'auto';
+  /** Left out when unknown, so a reader is not told the wrong language. */
+  translationLanguage?: string;
 }
 
 /** One ayah: Arabic, then transliteration and translation when switched on, with copy and bookmark under its number. */
-function AyahCard({ ayah, surahName, surahNumber, settings, bookmarked, onToggleBookmark, onCopy }: AyahCardProps) {
+function AyahCard({ ayah, surahName, surahNumber, settings, bookmarked, onToggleBookmark, onCopy, translationDirection = 'ltr', translationLanguage }: AyahCardProps) {
   const [open, setOpen] = React.useState(false);
   const actionsId = `ayah-actions-${surahNumber}-${ayah.numberInSurah}`;
   const showTranslation = settings.showTranslation && ayah.translation;
@@ -65,6 +69,7 @@ function AyahCard({ ayah, surahName, surahNumber, settings, bookmarked, onToggle
               ayahNumber: ayah.numberInSurah,
               arabic: ayah.arabic,
               translation: showTranslation ? ayah.translation : null,
+              footnotes: showTranslation ? ayah.footnotes : null,
             }))}
             className="tap-target flex items-center gap-1.5 rounded-xl px-4 text-xs font-bold cursor-pointer"
             style={buttonStyle}
@@ -98,7 +103,21 @@ function AyahCard({ ayah, surahName, surahNumber, settings, bookmarked, onToggle
         <p className="mt-2 text-sm italic leading-relaxed" style={{ color: 'var(--reader-accent)' }}>{ayah.transliteration}</p>
       )}
       {showTranslation && (
-        <p lang="en" className="mt-2 text-base leading-relaxed" style={{ color: 'var(--reader-muted)' }}>{ayah.translation}</p>
+        <p lang={translationLanguage} dir={translationDirection} className="mt-2 text-base leading-relaxed" style={{ color: 'var(--reader-muted)' }}>{ayah.translation}</p>
+      )}
+      {showTranslation && ayah.footnotes && (
+        <details className="mt-1">
+          <summary className="cursor-pointer py-3 text-xs font-bold" style={{ color: 'var(--reader-accent)' }}>Notes</summary>
+          <p
+            data-notes
+            lang={translationLanguage}
+            dir={translationDirection}
+            className="whitespace-pre-line pb-2 text-sm leading-relaxed"
+            style={{ color: 'var(--reader-muted)' }}
+          >
+            {ayah.footnotes}
+          </p>
+        </details>
       )}
     </article>
   );
