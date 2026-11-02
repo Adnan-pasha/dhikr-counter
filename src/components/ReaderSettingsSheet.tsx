@@ -2,6 +2,9 @@ import React from 'react';
 import { X } from 'lucide-react';
 import ToggleSwitch from './ToggleSwitch';
 import TranslationPicker, { type CatalogState } from './TranslationPicker';
+import TajweedText from './TajweedText';
+import TajweedLegend from './TajweedLegend';
+import { colourText } from '../quran/tajweed';
 import { useModalDialog } from './useModalDialog';
 import { translationCredit, translationLabel, parseTranslationId } from '../quran/translations';
 import { SCRIPTS, TRANSLITERATION_EDITION } from '../quran/editions';
@@ -170,21 +173,24 @@ export default function ReaderSettingsSheet({ open, onClose, settings, onChange,
             <div>
               <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--reader-muted)' }}>Arabic script</p>
               <div className="grid grid-cols-2 gap-2" role="group" aria-label="Arabic script">
-                {SCRIPTS.map((s) => (
+                {SCRIPTS.map((s, i) => (
                   <button
                     key={s.id}
                     type="button"
                     aria-pressed={settings.script === s.id}
                     onClick={() => onChange({ script: s.id })}
-                    className="rounded-2xl p-3 text-center cursor-pointer"
+                    className={`rounded-2xl p-3 text-center cursor-pointer ${i === SCRIPTS.length - 1 && SCRIPTS.length % 2 === 1 ? 'col-span-2' : ''}`}
                     style={{ ...card, border: `2px solid ${settings.script === s.id ? 'var(--reader-accent)' : 'var(--reader-border)'}` }}
                   >
-                    <span lang="ar" dir="rtl" className="font-quran block text-2xl leading-loose">{s.sample}</span>
+                    <span lang="ar" dir="rtl" className="font-quran block text-2xl leading-loose">
+                      {s.sampleMarked ? <TajweedText segments={colourText(s.sampleMarked, s.sample) ?? [{ text: s.sample, rule: null }]} /> : s.sample}
+                    </span>
                     <span className="block text-sm font-bold">{s.label}</span>
                     <span className="block text-xs" style={{ color: 'var(--reader-muted)' }}>{s.blurb}</span>
                   </button>
                 ))}
               </div>
+              {settings.script === 'tajweed' && <div className="mt-3"><TajweedLegend /></div>}
             </div>
 
             <div className="space-y-3 rounded-2xl p-4" style={card}>
