@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { AlertCircle, Bookmark, BookMarked, ChevronLeft, Loader2, RefreshCw, Search, X } from 'lucide-react';
+import { AlertCircle, Bookmark, BookMarked, ChevronLeft, Loader2, RefreshCw, Search, SlidersHorizontal, X } from 'lucide-react';
 import type { Surah } from '../quran/types';
 
 interface SurahListProps {
@@ -12,12 +12,14 @@ interface SurahListProps {
   bookmarkedAyahs: string[];
   onSelect: (surah: Surah) => void;
   onGoBack: () => void;
+  /** Opens the reading settings (script, translation, theme, text size) without opening a surah. */
+  onOpenSettings?: () => void;
   /** Section switcher (Read / My Progress) shown under the title. */
   tabs?: React.ReactNode;
 }
 
 /** The 114 surahs, searchable, with the last-read surah and bookmarked surahs marked. */
-export default function SurahList({ surahs, loading, error, onRetry, lastReadSurah, bookmarkedAyahs, onSelect, onGoBack, tabs }: SurahListProps) {
+export default function SurahList({ surahs, loading, error, onRetry, lastReadSurah, bookmarkedAyahs, onSelect, onGoBack, tabs, onOpenSettings }: SurahListProps) {
   const [query, setQuery] = React.useState('');
   const q = query.trim().toLowerCase();
   const visible = surahs.filter((s) =>
@@ -38,15 +40,28 @@ export default function SurahList({ surahs, loading, error, onRetry, lastReadSur
             <span>Home</span>
           </button>
           <h1 className="screen-title text-center">Quran</h1>
-          {lastRead ? (
-            <button
-              onClick={() => onSelect(lastRead)}
-              aria-label={`Continue reading ${lastRead.englishName}`}
-              className="tap-target flex items-center gap-1.5 px-3 rounded-xl text-sm font-bold bg-brand-500/15 text-brand-400 border border-brand-500/30 cursor-pointer hover:bg-brand-500/25 transition-all"
-            >
-              <BookMarked className="w-4 h-4" aria-hidden="true" />
-            </button>
-          ) : <div className="w-10" />}
+          <div className="flex items-center gap-1.5">
+            {onOpenSettings && (
+              <button
+                type="button"
+                onClick={onOpenSettings}
+                aria-label="Reading settings"
+                aria-haspopup="dialog"
+                className="tap-target flex items-center justify-center px-3 rounded-xl text-sm font-bold bg-brand-500/15 text-brand-400 border border-brand-500/30 cursor-pointer hover:bg-brand-500/25 transition-all"
+              >
+                <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+              </button>
+            )}
+            {lastRead ? (
+              <button
+                onClick={() => onSelect(lastRead)}
+                aria-label={`Continue reading ${lastRead.englishName}`}
+                className="tap-target flex items-center gap-1.5 px-3 rounded-xl text-sm font-bold bg-brand-500/15 text-brand-400 border border-brand-500/30 cursor-pointer hover:bg-brand-500/25 transition-all"
+              >
+                <BookMarked className="w-4 h-4" aria-hidden="true" />
+              </button>
+            ) : !onOpenSettings ? <div className="w-10" /> : null}
+          </div>
         </div>
         <p className="caption">114 Surahs · Read with translation</p>
         {tabs}
