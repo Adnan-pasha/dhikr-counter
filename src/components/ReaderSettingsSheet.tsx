@@ -184,7 +184,7 @@ export default function ReaderSettingsSheet({ open, onClose, settings, onChange,
                     className={`rounded-2xl p-3 text-center cursor-pointer ${i === SCRIPTS.length - 1 && SCRIPTS.length % 2 === 1 ? 'col-span-2' : ''}`}
                     style={{ ...card, border: `2px solid ${settings.script === s.id ? 'var(--reader-accent)' : 'var(--reader-border)'}` }}
                   >
-                    <span lang="ar" dir="rtl" className="font-quran block text-2xl leading-loose">
+                    <span lang="ar" dir="rtl" className={`${s.font === 'indopak' ? 'font-indopak' : 'font-quran'} block text-2xl leading-loose`}>
                       {s.sampleMarked ? <TajweedText segments={colourText(s.sampleMarked, s.sample) ?? [{ text: s.sample, rule: null }]} /> : s.sample}
                     </span>
                     <span className="block text-sm font-bold">{s.label}</span>

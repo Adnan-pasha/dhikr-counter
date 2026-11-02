@@ -3,7 +3,7 @@ import SurahList from './SurahList';
 import ReaderView from './ReaderView';
 import QuranProgressView from './QuranProgressView';
 import QuranTabs, { type QuranTab } from './QuranTabs';
-import { API_BASE, buildReaderAyahs, editionsFor, surahUrl, type ReaderAyah } from '../quran/editions';
+import { API_BASE, buildReaderAyahs, editionsFor, scriptOption, surahUrl, type ReaderAyah } from '../quran/editions';
 import { minutesOn, type QuranProgress, type ReadingPosition } from '../quran/progress';
 import { useReaderSettings } from '../quran/useReaderSettings';
 import { useWakeLock } from '../quran/useWakeLock';
@@ -12,6 +12,7 @@ import type { useQuranProgress } from '../quran/useQuranProgress';
 import { copyText } from '../quran/clipboard';
 import { useTranslationCatalog } from '../quran/useTranslationCatalog';
 import { useQuranEncSurah } from '../quran/useQuranEncSurah';
+import { loadIndopak, indopakAyahs } from '../quran/indopak';
 import { PICKTHALL_ID, applyTranslation, parseTranslationId, translationCredit } from '../quran/translations';
 import type { TranslationView } from './ReaderView';
 import type { Surah } from '../quran/types';
@@ -122,11 +123,17 @@ export default function QuranReader({
       setAyahs([]);
       setAyahsFor(null);
     }
-    fetch(surahUrl(API_BASE, surah.number, editionKey.split(',')))
-      .then((r) => r.json())
-      .then((body) => {
+    // A bundled script (IndoPak) is read from the app's own file, alongside the request for ayah numbers.
+    const bundledArabic = scriptOption(settings.script).bundled
+      ? loadIndopak().then((data) => indopakAyahs(data, surah.number))
+      : Promise.resolve(null);
+    Promise.all([
+      fetch(surahUrl(API_BASE, surah.number, editionKey.split(','))).then((r) => r.json()),
+      bundledArabic,
+    ])
+      .then(([body, bundled]) => {
         if (id !== requestId.current) return;
-        const built = buildReaderAyahs(surah.number, body, settings.script, true, settings.showTransliteration, builtIn ? PICKTHALL_ID : settings.translation);
+        const built = buildReaderAyahs(surah.number, body, settings.script, true, settings.showTransliteration, builtIn ? PICKTHALL_ID : settings.translation, bundled);
         if (built) {
           shownSurah.current = surah.number;
           setAyahsFor(surah.number);

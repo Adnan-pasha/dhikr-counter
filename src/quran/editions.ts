@@ -2,7 +2,7 @@ import { stripBom, stripLeadingBasmala } from './text';
 import { colourText, type TajweedSegment } from './tajweed';
 import { PICKTHALL_ID, parseTranslationId, type TranslationId } from './translations';
 
-export type ScriptId = 'uthmani' | 'simple' | 'tajweed';
+export type ScriptId = 'uthmani' | 'simple' | 'tajweed' | 'indopak';
 
 export interface ScriptOption {
   id: ScriptId;
@@ -14,6 +14,12 @@ export interface ScriptOption {
   sample: string;
   /** The same sample as the tajweed edition marks it, so the card can show the colours. */
   sampleMarked?: string;
+  /** True when the Arabic comes from a file bundled with the app; the service then supplies only ayah numbers, juz and page. */
+  bundled?: boolean;
+  /** The reader font for this script. */
+  font?: 'quran' | 'indopak';
+  /** True when the text already ends each ayah with its own numbered ornament. */
+  selfNumbered?: boolean;
   /** A second edition that marks the tajweed rules. It only says which letters to colour; the text shown is always `edition`. */
   overlay?: string;
 }
@@ -32,6 +38,11 @@ export const SCRIPTS: readonly ScriptOption[] = [
     blurb: 'Uthmani with colours for the tajweed rules',
     sample: 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ',
     sampleMarked: 'بِسْمِ [h:1[ٱ]للَّهِ [h:2[ٱ][l[ل]رَّحْمَ[n[ـٰ]نِ',
+  },
+  {
+    id: 'indopak', label: 'IndoPak', edition: 'quran-uthmani', bundled: true, font: 'indopak', selfNumbered: true,
+    blurb: 'The South Asian mushaf style',
+    sample: 'بِسْمِ اللّٰهِ',
   },
 ];
 
@@ -68,7 +79,7 @@ export interface EditionChoices {
 
 const isBuiltIn = (translation: TranslationId = PICKTHALL_ID): boolean => parseTranslationId(translation)?.source === 'builtin';
 
-const scriptOption = (script: ScriptId): ScriptOption => SCRIPTS.find((s) => s.id === script) ?? SCRIPTS[0];
+export const scriptOption = (script: ScriptId): ScriptOption => SCRIPTS.find((s) => s.id === script) ?? SCRIPTS[0];
 const scriptEdition = (script: ScriptId): string => scriptOption(script).edition;
 
 export const editionsFor = ({ script, showTranslation, showTransliteration, translation }: EditionChoices): string[] => {
@@ -91,6 +102,8 @@ export interface ReaderAyah {
   arabic: string;
   /** The same text in pieces with their tajweed rule, for the Tajweed script only. */
   arabicSegments?: TajweedSegment[] | null;
+  /** The script this text was built in. The reader keeps old text on screen while a new script loads, so the font follows the text, not the setting. */
+  script?: ScriptId;
   translation: string | null;
   /** The publisher's notes for this ayah, shown with the translation. Null when there are none. */
   footnotes: string | null;
@@ -132,6 +145,8 @@ export const buildReaderAyahs = (
   wantTranslation: boolean,
   wantTransliteration = false,
   translationChoice: TranslationId = PICKTHALL_ID,
+  /** The Arabic for a bundled script, by ayah number in the surah. Required for those scripts. */
+  bundledArabic: ReadonlyMap<number, string> | null = null,
 ): ReaderAyah[] | null => {
   if (typeof body !== 'object' || body === null) return null;
   const response = body as { code?: number; data?: unknown };
@@ -140,6 +155,9 @@ export const buildReaderAyahs = (
 
   const arabic = ayahsOf(payload, scriptEdition(script));
   if (!arabic || arabic.length === 0) return null;
+  const bundled = scriptOption(script).bundled === true;
+  // A bundled script never falls back to another script's text, ayah by ayah or as a whole.
+  if (bundled && arabic.some((a) => !bundledArabic?.has(a.numberInSurah))) return null;
 
   const translation = wantTranslation && isBuiltIn(translationChoice) ? ayahsOf(payload, DEFAULT_TRANSLATION) : null;
   const transliteration = wantTransliteration && TRANSLITERATION_EDITION ? ayahsOf(payload, TRANSLITERATION_EDITION) : null;
@@ -152,7 +170,8 @@ export const buildReaderAyahs = (
 
   return arabic.map((a) => {
     const cleaned = stripBom(a.text);
-    const arabicText = a.numberInSurah === 1 ? stripLeadingBasmala(surahNumber, cleaned) : cleaned;
+    const bundledText = bundled ? bundledArabic?.get(a.numberInSurah) : undefined;
+    const arabicText = bundledText ?? (a.numberInSurah === 1 ? stripLeadingBasmala(surahNumber, cleaned) : cleaned);
     const marked = overlayText?.get(a.numberInSurah);
     const segments = marked ? colourText(marked, arabicText) : null;
     return {
@@ -160,6 +179,7 @@ export const buildReaderAyahs = (
       numberInSurah: a.numberInSurah,
       arabic: arabicText,
       arabicSegments: segments,
+      script,
       translation: translationText.get(a.numberInSurah) ?? null,
       footnotes: null,
       transliteration: transliterationText.get(a.numberInSurah) ?? null,

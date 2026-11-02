@@ -7,6 +7,7 @@ import { translationCredit, type Credit } from '../quran/translations';
 import type { ReaderAyah } from '../quran/editions';
 import type { ReaderSettings } from '../quran/settings';
 import { BASMALA, hasBasmalaHeader } from '../quran/text';
+import { BASMALA_INDOPAK } from '../quran/indopak';
 import TajweedLegend from './TajweedLegend';
 import type { Section } from './ReaderSettingsSheet';
 import { SCRIPTS } from '../quran/editions';
@@ -73,6 +74,8 @@ export default function ReaderView({
   const [sheetSection, setSheetSection] = React.useState<Section>('display');
   const [juzOpen, setJuzOpen] = React.useState(false);
   const gearRef = React.useRef<HTMLButtonElement>(null);
+  // The text on screen decides the Bismillah's script: it can lag behind the setting while a new script loads.
+  const shownScript = ayahs[0]?.script ?? settings.script;
   const currentIndex = Math.max(0, SCRIPTS.findIndex((s) => s.id === settings.script));
   const currentScript = SCRIPTS[currentIndex];
   const nextScript = SCRIPTS[(currentIndex + 1) % SCRIPTS.length];
@@ -276,8 +279,8 @@ export default function ReaderView({
         ) : ayahs.length > 0 ? (
           <div className="px-3 py-4">
             {hasBasmalaHeader(surah.number) && (
-              <p lang="ar" dir="rtl" className="font-quran mb-4 py-3 text-center text-2xl" style={{ color: 'var(--reader-accent)', borderBottom: '1px solid var(--reader-border)' }}>
-                {BASMALA}
+              <p lang="ar" dir="rtl" className={`${shownScript === 'indopak' ? 'font-indopak' : 'font-quran'} mb-4 py-3 text-center text-2xl`} style={{ color: 'var(--reader-accent)', borderBottom: '1px solid var(--reader-border)' }}>
+                {shownScript === 'indopak' ? BASMALA_INDOPAK : BASMALA}
               </p>
             )}
 

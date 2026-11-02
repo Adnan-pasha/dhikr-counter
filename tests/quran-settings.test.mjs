@@ -23,10 +23,10 @@ test('stored settings are accepted when valid', () => {
 });
 
 test('anything invalid falls back field by field, never wholesale', () => {
-  const out = sanitizeReaderSettings({ theme: 'neon', textSize: 99, script: 'indopak', showTranslation: 'yes', keepScreenOn: true });
+  const out = sanitizeReaderSettings({ theme: 'neon', textSize: 99, script: 'devanagari', showTranslation: 'yes', keepScreenOn: true });
   assert.equal(out.theme, DEFAULT_READER_SETTINGS.theme);
   assert.equal(out.textSize, DEFAULT_READER_SETTINGS.textSize);
-  assert.equal(out.script, DEFAULT_READER_SETTINGS.script, 'IndoPak is not available yet');
+  assert.equal(out.script, DEFAULT_READER_SETTINGS.script, 'an unknown script falls back to the default');
   assert.equal(out.showTranslation, DEFAULT_READER_SETTINGS.showTranslation);
   assert.equal(out.keepScreenOn, true, 'valid fields survive');
 });

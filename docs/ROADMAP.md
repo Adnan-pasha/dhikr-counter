@@ -191,7 +191,7 @@ streamed recitation with clear reciter credit. Everything else stays behind a wr
 ### What this changes in the plan
 - **Q1** is unaffected (Uthmani and Simple from Tanzil text).
 - **Q2** uses public-domain translations plus QuranEnc, and drops Tanzil-derived translations from the shipped list.
-- **Q3** ships Tajweed colours; IndoPak waits for the text clearance even though the font is ready.
+- **Q3** shipped Tajweed colours. IndoPak (Digital Khatt text and font) ships on the owner's decision to use it with credit: the font is OFL-1.1, but QUL publishes no copyright terms for the text, so a written confirmation from Tarteel is still worth asking for (a GitHub issue on TarteelAI/quranic-universal-library).
 - **Q5** stays last and streamed.
 
 ---

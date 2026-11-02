@@ -7,7 +7,7 @@ import {defineConfig, type Plugin} from 'vite';
 
 const BUILD_MANIFEST_PLACEHOLDER = "/*__BUILD_MANIFEST__*/ { id: 'dev', assets: [] }";
 // `.woff` twins of `.woff2` fonts are only fallbacks for ancient browsers; skip them.
-const PRECACHE_EXTENSIONS = new Set(['.js', '.css', '.woff2', '.png', '.svg', '.wav', '.mp3', '.ogg']);
+const PRECACHE_EXTENSIONS = new Set(['.js', '.css', '.woff2', '.png', '.svg', '.wav', '.mp3', '.ogg', '.otf', '.json']);
 
 const listFiles = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>

@@ -62,7 +62,7 @@ test('text tab: scripts show a live sample, and choosing one reports it', () => 
   assert.equal(screen.getByRole('button', { name: /Uthmanis*Full marks/ }).getAttribute('aria-pressed'), 'true');
   fireEvent.click(screen.getByRole('button', { name: /Simple/ }));
   assert.deepEqual(calls.patches.at(-1), { script: 'simple' });
-  assert.equal(screen.queryByRole('button', { name: /IndoPak/ }), null, 'IndoPak is not offered until its text is cleared');
+  assert.ok(screen.getByRole('button', { name: /IndoPak/ }), 'IndoPak is offered');
 });
 
 test('text tab: translation can be switched, transliteration is not offered, credits are shown', () => {

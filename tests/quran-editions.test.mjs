@@ -9,8 +9,8 @@ const ayah = (n, text, extra = {}) => ({ number: 100 + n, numberInSurah: n, text
 const payload = (surahEds) => ({ code: 200, data: surahEds });
 const ed = (identifier, ayahs) => ({ edition: { identifier }, ayahs });
 
-test('three scripts are offered now: Uthmani, Simple and Tajweed colours', () => {
-  assert.deepEqual(SCRIPTS.map((s) => s.id), ['uthmani', 'simple', 'tajweed']);
+test('four scripts are offered now: Uthmani, Simple, Tajweed colours and IndoPak', () => {
+  assert.deepEqual(SCRIPTS.map((s) => s.id), ['uthmani', 'simple', 'tajweed', 'indopak']);
   assert.equal(SCRIPTS.find((s) => s.id === 'tajweed').overlay, 'quran-tajweed');
   assert.equal(DEFAULT_SCRIPT, 'uthmani');
   for (const s of SCRIPTS) assert.ok(s.edition && s.label && s.sample, s.id);
@@ -72,6 +72,40 @@ test('if the tajweed edition is missing or does not line up, the plain Uthmani t
   const off = buildReaderAyahs(112, payload([ed('quran-uthmani', [ayah(1, 'قُلْ')]), ed('quran-tajweed', [ayah(1, 'جد')])]), 'tajweed', false);
   assert.equal(off[0].arabic, 'قُلْ');
   assert.equal(off[0].arabicSegments, null);
+});
+
+test('IndoPak takes its Arabic from the bundled file and only the ayah details from the service', () => {
+  assert.deepEqual(editionsFor({ script: 'indopak', showTranslation: false, showTransliteration: false }), ['quran-uthmani']);
+  const body = payload([ed('quran-uthmani', [ayah(1, 'قُلْ هُوَ'), ayah(2, 'ٱللَّهُ')])]);
+  const local = new Map([[1, 'IND-1'], [2, 'IND-2']]);
+  const out = buildReaderAyahs(112, body, 'indopak', false, false, undefined, local);
+  assert.deepEqual(out.map((a) => a.arabic), ['IND-1', 'IND-2']);
+  assert.deepEqual(out.map((a) => a.number), [101, 102], 'ayah numbers, juz and page still come from the service');
+  assert.equal(out[0].arabicSegments, null);
+});
+
+test('IndoPak without its text file is an error, never a quiet switch to another script', () => {
+  const body = payload([ed('quran-uthmani', [ayah(1, 'قُلْ')])]);
+  assert.equal(buildReaderAyahs(112, body, 'indopak', false), null);
+  assert.equal(buildReaderAyahs(112, body, 'indopak', false, false, undefined, new Map()), null);
+});
+
+test('each built ayah remembers the script it was built in', () => {
+  const body = payload([ed('quran-uthmani', [ayah(1, 'a')])]);
+  assert.equal(buildReaderAyahs(112, body, 'uthmani', false)[0].script, 'uthmani');
+  assert.equal(buildReaderAyahs(112, body, 'indopak', false, false, undefined, new Map([[1, 'x']]))[0].script, 'indopak');
+});
+
+test('IndoPak with one ayah missing from its file is an error too', () => {
+  const body = payload([ed('quran-uthmani', [ayah(1, 'a'), ayah(2, 'b')])]);
+  assert.equal(buildReaderAyahs(112, body, 'indopak', false, false, undefined, new Map([[1, 'IND-1']])), null);
+});
+
+test('IndoPak is never trimmed of a Bismillah: its first ayahs are used as they are', () => {
+  const body = payload([ed('quran-uthmani', [ayah(1, 'x')])]);
+  const text = 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ الٓمّٓ';
+  const [out] = buildReaderAyahs(2, body, 'indopak', false, false, undefined, new Map([[1, text]]));
+  assert.equal(out.arabic, text);
 });
 
 test('the other scripts carry no coloured pieces', () => {

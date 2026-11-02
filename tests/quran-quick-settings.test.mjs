@@ -57,6 +57,8 @@ test('one tap on the script chip moves to the next script, and it wraps around',
   fireEvent.click(screen.getByRole('button', { name: /Script: Simple/ }));
   assert.ok(await screen.findByRole('button', { name: /Script: Tajweed/ }));
   fireEvent.click(screen.getByRole('button', { name: /Script: Tajweed/ }));
+  assert.ok(await screen.findByRole('button', { name: /Script: IndoPak/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Script: IndoPak/ }));
   assert.ok(await screen.findByRole('button', { name: /Script: Uthmani/ }));
 });
 
