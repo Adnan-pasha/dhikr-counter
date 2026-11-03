@@ -4,7 +4,7 @@ export const AFTER_SALAH_ROUTINE_ID = 'routine-after-salah';
 
 const FARD_PRAYERS: readonly SalahName[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
-/** Sunrise is tracked but is not a prayer with a dhikr to follow it. */
+/** The five obligatory prayers each have a dhikr that follows them. */
 export const isFardPrayer = (prayer: SalahName): boolean => FARD_PRAYERS.includes(prayer);
 
 /**

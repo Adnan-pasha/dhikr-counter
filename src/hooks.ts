@@ -7,6 +7,7 @@ import { findDueReminders, shouldTriggerReminderOccurrence, findCatchUpReminderC
 import { playBeadSound, playCompletionSound } from './audio';
 import { tapCount, undoCount, findNextDhikrId, getUpcoming, getHapticPattern } from './counter';
 import { trackEvent } from './telemetry';
+import { cleanSalahLogs, seedInstallDate, browserStorage } from './salah';
 
 export const useConnectivityStatus = (setIsOnline: (value: boolean) => void) => {
   useEffect(() => {
@@ -88,7 +89,7 @@ export const useReminderScheduler = (
 
 
 import { Dhikr, DhikrHistory } from './types';
-import { migrateAndHydrateStorage, isTimestampOnLocalDay } from './domain';
+import { migrateAndHydrateStorage, isTimestampOnLocalDay, getLocalDateString } from './domain';
 import { sanitizePauses, sanitizeActiveDays, type StreakPause } from './habits';
 import { showReminderNotification } from './notifications';
 
@@ -160,11 +161,19 @@ export const usePersistentAppState = (
     );
     setters.setRoutines(savedRoutines.map(normalizeRoutine));
     setters.setSalahLogs(
-      parseStoredArray<SalahLog>(localStorage.getItem('tasbih_salah_logs'), [], (v): v is SalahLog => isRecord(v)),
+      cleanSalahLogs(parseStoredArray<unknown>(localStorage.getItem('tasbih_salah_logs'), [], isRecord)),
     );
     setters.setStreakPauses(sanitizePauses(parseStoredArray(localStorage.getItem('tasbih_streak_pauses'), [], isRecord)));
     setters.setActiveDays(sanitizeActiveDays(parseStoredArray(localStorage.getItem('tasbih_active_days'), [], (v): v is string => typeof v === 'string')));
     setters.setFridayKahf(sanitizeActiveDays(parseStoredArray(localStorage.getItem('tasbih_friday_kahf'), [], (v): v is string => typeof v === 'string')));
+    seedInstallDate(
+      browserStorage(),
+      getLocalDateString(new Date()),
+      [
+        ...stored.history.map((h) => getLocalDateString(new Date(h.timestamp))),
+        ...cleanSalahLogs(parseStoredArray<unknown>(localStorage.getItem('tasbih_salah_logs'), [], isRecord)).map((l) => l.date),
+      ],
+    );
     setHydrated(true);
   }, []);
 

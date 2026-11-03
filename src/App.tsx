@@ -25,6 +25,7 @@ import { useQuranProgress } from './quran/useQuranProgress';
 import { practisedDay } from './quran/progress';
 import type { QuranIntent } from './components/QuranReader';
 import { dhikrIdFromSearch } from './notifications';
+import { setDay } from './salah';
 import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer } from './routines';
 import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
 
@@ -545,11 +546,19 @@ export default function App() {
             {activeTab === 'salah' && (
               <SalahTracker
                 salahLogs={salahLogs}
+                today={today}
                 onTogglePrayer={(date, prayer) => {
                   const { logs, nowDone } = togglePrayerLog(salahLogsRef.current, date, prayer);
                   salahLogsRef.current = logs;
                   setSalahLogs(logs);
-                  setAfterSalahPrayer(nowDone && isFardPrayer(prayer) && afterSalahRoutine(routines) ? prayer : null);
+                  // The dhikr offer follows today's prayers; catching up on an earlier day does not start it.
+                  setAfterSalahPrayer(date === today && nowDone && isFardPrayer(prayer) && afterSalahRoutine(routines) ? prayer : null);
+                }}
+                onSetDay={(date, done) => {
+                  const logs = setDay(salahLogsRef.current, date, done);
+                  salahLogsRef.current = logs;
+                  setSalahLogs(logs);
+                  setAfterSalahPrayer(null);
                 }}
                 afterSalah={afterSalahPrayer ? { prayer: afterSalahPrayer, routine: afterSalahRoutine(routines) } : null}
                 onStartAfterSalah={() => {
