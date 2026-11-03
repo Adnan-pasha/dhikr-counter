@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type QuranTab = 'read' | 'progress';
+export type QuranTab = 'read' | 'pages' | 'progress';
 
 interface QuranTabsProps {
   tab: QuranTab;
@@ -9,10 +9,11 @@ interface QuranTabsProps {
 
 const TABS: ReadonlyArray<{ id: QuranTab; label: string }> = [
   { id: 'read', label: 'Read' },
+  { id: 'pages', label: 'Pages' },
   { id: 'progress', label: 'My Progress' },
 ];
 
-/** Switches the Quran screen between the surah list and My Progress. */
+/** Switches the Quran screen between the surah list, the 604 mushaf pages and My Progress. */
 export default function QuranTabs({ tab, onChange }: QuranTabsProps) {
   return (
     <div className="flex gap-2" role="group" aria-label="Quran sections">
