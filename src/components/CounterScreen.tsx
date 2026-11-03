@@ -386,15 +386,15 @@ export default function CounterScreen({
       <motion.div
         animate={{ opacity: isFocusMode ? 0 : 1 }}
         transition={{ duration: 0.25 }}
-        className="relative z-20 flex items-center justify-between gap-3 px-5 pb-4 pt-2 shrink-0"
+        className="relative z-20 flex flex-wrap items-center justify-between gap-3 px-5 pb-4 pt-2 shrink-0"
         style={{ pointerEvents: isFocusMode ? 'none' : 'auto' }}
         aria-hidden={isFocusMode}
       >
         <div
-          className="min-w-0 px-3 py-2 rounded-xl flex items-center gap-2 text-sm font-bold"
+          className="shrink-0 px-3 py-2 rounded-xl flex items-center gap-2 text-sm font-bold"
           style={{ background: 'var(--color-brand-dim)', border: '1px solid var(--color-brand-border)', color: 'var(--color-text-brand)' }}
         >
-          <span className="section-label max-[400px]:hidden" style={{ color: 'var(--color-text-brand)' }}>Target</span>
+          <span className="section-label max-[400px]:sr-only" style={{ color: 'var(--color-text-brand)' }}>Target</span>
           <span className="font-display font-black truncate">{target > 0 ? `${target}×` : '∞'}</span>
         </div>
 

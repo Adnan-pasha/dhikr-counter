@@ -26,7 +26,7 @@ export default function QuranTabs({ tab, onChange }: QuranTabsProps) {
           className="tap-target flex-1 rounded-xl text-sm font-bold cursor-pointer"
           style={{
             background: tab === t.id ? 'var(--color-brand-500)' : 'var(--color-bg-raised)',
-            color: tab === t.id ? 'var(--color-bg-base)' : 'var(--color-text-primary)',
+            color: tab === t.id ? '#070E0C' : 'var(--color-text-primary)',
             border: `1px solid ${tab === t.id ? 'var(--color-brand-500)' : 'var(--color-border)'}`,
           }}
         >

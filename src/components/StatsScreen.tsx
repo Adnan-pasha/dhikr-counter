@@ -363,7 +363,7 @@ export default function StatsScreen({
               setActiveSubTab(tab);
               setSelectedDayDetail(null);
             }}
-            className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer relative z-10 ${
+            className={`flex-1 min-h-11 py-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer relative z-10 ${
               activeSubTab === tab 
                 ? 'text-brand-400 font-extrabold' 
                 : 'text-slate-400 hover:text-slate-200'
@@ -434,7 +434,7 @@ export default function StatsScreen({
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-widest text-brand-500">Spiritual Rank</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-brand-400">Spiritual Rank</span>
                     <h4 className="text-sm font-black text-slate-100 group-hover:text-brand-400 transition-colors leading-none mt-0.5">{currentLevelObj.name}</h4>
                   </div>
                   <div className="p-1 bg-brand-500/10 text-brand-400 border border-brand-500/20 rounded-lg">
@@ -847,7 +847,7 @@ export default function StatsScreen({
 
                         {/* Benefits highlight advice */}
                         <div className="p-3 border-l-2 border-brand-500/40 bg-slate-950/40 rounded-r-xl">
-                          <span className="text-xs font-extrabold uppercase tracking-wide text-brand-500 block">Advocacy & Benefit</span>
+                          <span className="text-xs font-extrabold uppercase tracking-wide text-brand-400 block">Advocacy & Benefit</span>
                           <p className="text-xs text-slate-400 font-semibold leading-relaxed mt-1">{h.benefit}</p>
                         </div>
 

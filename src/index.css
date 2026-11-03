@@ -193,6 +193,8 @@ body {
     justify-content: space-between;
     min-height: 44px;
     gap: 0.75rem;
+    /* Large system text wraps the row instead of pushing the title under the buttons. */
+    flex-wrap: wrap;
   }
 
   /* ── Back button — always 44×44 tap target ─────────────────────── */
@@ -222,8 +224,10 @@ body {
     font-weight: 800;
     color: var(--color-text-primary);
     line-height: 1.2;
-    flex: 1;
+    /* A basis of its own so large text drops the title to a new line instead of squeezing it to nothing. */
+    flex: 1 1 6rem;
     min-width: 0;
+    overflow-wrap: break-word;
   }
 
   /* ── Section label — ACCESSIBLE 13px min ──────────────────────── */
@@ -455,7 +459,7 @@ body {
 
   --color-text-primary:   #0F172A;
   --color-text-secondary: #334155;
-  --color-text-muted:     #64748B;
+  --color-text-muted:     #566377;
   --color-text-brand:     #067355;
 
   --color-brand:        #067355;
@@ -530,6 +534,9 @@ body {
   --color-sky-300:     #0369A1;
   --color-sky-400:     #0369A1;
 }
+
+/* The slate badge's text is slate-600, which the remap turns into a surface-light shade; give it text ink. */
+[data-theme="light"] .badge-slate { color: #475569; }
 
 /* Amber/orange gradient buttons stay vivid in both modes — no override needed.
    Status colours (emerald/rose/indigo) keep sufficient contrast via their

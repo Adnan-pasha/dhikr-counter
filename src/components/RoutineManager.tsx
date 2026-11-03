@@ -115,7 +115,7 @@ export default function RoutineManager({
           <button
             aria-label="Create new routine"
             onClick={() => { setShowCreateForm(v => !v); setEditingRoutineId(null); }}
-            className="w-10 h-10 rounded-xl flex items-center justify-center border cursor-pointer transition-all"
+            className="w-11 h-11 rounded-xl flex items-center justify-center border cursor-pointer transition-all"
             style={{
               background: showCreateForm ? 'var(--color-brand)' : 'var(--color-bg-raised)',
               borderColor: showCreateForm ? 'var(--color-brand)' : 'var(--color-border)',
@@ -134,7 +134,7 @@ export default function RoutineManager({
               <button
                 key={r.id}
                 onClick={() => { setActiveRoutineId(r.id); setEditingRoutineId(null); }}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border transition-all cursor-pointer ${
+                className={`shrink-0 flex items-center gap-1.5 min-h-11 px-3 py-1 rounded-full text-xs font-black border transition-all cursor-pointer ${
                   activeRoutineId === r.id
                     ? 'bg-brand-500 text-on-brand border-brand-500'
                     : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
@@ -158,7 +158,7 @@ export default function RoutineManager({
             className="overflow-hidden border-b border-brand-500/20 bg-slate-900/80"
           >
             <div className="px-4 py-4 space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-brand-500 flex items-center gap-1.5"><AppIcon name="plus" className="w-3.5 h-3.5" /> Create New Routine</p>
+              <p className="text-xs font-black uppercase tracking-widest text-brand-400 flex items-center gap-1.5"><AppIcon name="plus" className="w-3.5 h-3.5" /> Create New Routine</p>
 
               {/* Emoji + Name */}
               <div className="flex gap-2">
@@ -400,7 +400,7 @@ function RoutineDetail({
         ) : (
           <button
             onClick={() => firstPending && onStartDhikr(firstPending.id)}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-tr from-brand-500 to-brand-400 text-on-brand font-black text-xs flex items-center justify-center gap-2 cursor-pointer hover:opacity-90 shadow-md shadow-brand-950/20"
+            className="w-full min-h-11 py-2.5 rounded-xl bg-gradient-to-tr from-brand-500 to-brand-400 text-on-brand font-black text-xs flex items-center justify-center gap-2 cursor-pointer hover:opacity-90 shadow-md shadow-brand-950/20"
           >
             <Play className="w-3.5 h-3.5" />
             {completedCount === 0 ? `Begin ${routine.name}` : `Continue — ${firstPending?.nameEn}`}
@@ -418,7 +418,7 @@ function RoutineDetail({
             className="overflow-hidden"
           >
             <div className="rounded-2xl border border-brand-500/30 bg-slate-900 p-4 space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-brand-500 flex items-center gap-1.5"><AppIcon name="edit" className="w-3.5 h-3.5" /> Editing Routine</p>
+              <p className="text-xs font-black uppercase tracking-widest text-brand-400 flex items-center gap-1.5"><AppIcon name="edit" className="w-3.5 h-3.5" /> Editing Routine</p>
 
               {/* Emoji picker */}
               <div className="flex gap-1 flex-wrap">

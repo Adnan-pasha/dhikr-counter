@@ -35,7 +35,7 @@ export default function ReminderBanner({
 
             {/* Text */}
             <div className="flex-1 min-w-0">
-              <span className="text-[8px] font-black text-brand-500 uppercase tracking-widest block leading-none">
+              <span className="text-[8px] font-black text-brand-400 uppercase tracking-widest block leading-none">
                 Gentle Remembrance Alert
               </span>
               <h4 className="text-xs font-black text-slate-50 truncate leading-tight mt-0.5">

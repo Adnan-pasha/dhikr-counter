@@ -209,7 +209,7 @@ export default function HomeScreen({
           {/* Stats row */}
           <div className="flex gap-2.5 mt-4">
             {[
-              { icon: <Flame className="w-3.5 h-3.5" />, label: 'Streak', value: streakInfo.streak, unit: 'days', color: '#FB923C' },
+              { icon: <Flame className="w-3.5 h-3.5" />, label: 'Streak', value: streakInfo.streak, unit: 'days', color: 'var(--color-orange-400)' },
               { icon: <Target className="w-3.5 h-3.5" />, label: 'Adhkaar', value: completedTodayIds.length, unit: 'done today', color: 'var(--color-text-brand)' },
               { icon: <Trophy className="w-3.5 h-3.5" />, label: 'Total', value: allTimeCount >= 1000 ? `${(allTimeCount / 1000).toFixed(1)}k` : allTimeCount, unit: 'beads', color: 'var(--color-text-brand)' },
             ].map(({ icon, label, value, unit, color }) => (
@@ -238,7 +238,7 @@ export default function HomeScreen({
         <section>
           <div className="flex items-center justify-between mb-2.5">
             <h2 className="section-label">Quick Tasbih</h2>
-            <button onClick={() => onNavigateTo('counter')} className="text-xs font-black cursor-pointer flex items-center gap-0.5 transition-colors" style={{ color: 'var(--color-text-brand)' }}>
+            <button onClick={() => onNavigateTo('counter')} className="min-h-11 min-w-11 justify-end text-xs font-black cursor-pointer flex items-center gap-0.5 transition-colors" style={{ color: 'var(--color-text-brand)' }}>
               Open <ChevronRight className="w-3 h-3" />
             </button>
           </div>

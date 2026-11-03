@@ -51,10 +51,11 @@ test('the tone buffers are pre-rendered and used for taps', () => {
   assert.match(audio, /export function warmTone/);
 });
 
-test('the controls row compacts on narrow phones so a long target cannot push Reset off screen', () => {
+test('the controls row compacts and wraps on narrow phones or large text so nothing is pushed off screen', () => {
   const src = read('src/components/CounterScreen.tsx');
   const controls = src.slice(src.indexOf('{/* ── Controls'), src.indexOf('{/* Exit focus mode */}'));
-  assert.match(controls, /max-\[400px\]:hidden/, 'the Target label hides on narrow screens');
+  assert.match(controls, /max-\[400px\]:sr-only/, 'the Target label is hidden on narrow screens but still read by screen readers');
+  assert.doesNotMatch(controls, /max-\[400px\]:hidden/);
   assert.equal((controls.match(/max-\[400px\]:px-3/g) || []).length, 2, 'Undo and Reset tighten their padding');
-  assert.match(controls, /min-w-0/, 'the target chip may shrink');
+  assert.match(controls, /flex-wrap/, 'the row wraps instead of squeezing the target chip');
 });
