@@ -15,6 +15,8 @@ import { useQuranEncSurah } from '../quran/useQuranEncSurah';
 import { loadIndopak, indopakAyahs } from '../quran/indopak';
 import { useBackLayer } from '../useBackLayer';
 import ReaderSettingsSheet from './ReaderSettingsSheet';
+import MushafReader from './MushafReader';
+import { useLastPage } from '../quran/useLastPage';
 import { PICKTHALL_ID, applyTranslation, parseTranslationId, translationCredit } from '../quran/translations';
 import type { TranslationView } from './ReaderView';
 import type { Surah } from '../quran/types';
@@ -76,6 +78,7 @@ export default function QuranReader({
   const [ayahError, setAyahError] = useState(false);
   const [notice, setNotice] = useState({ message: '', id: 0 });
   const [listSettingsOpen, setListSettingsOpen] = useState(false);
+  const [lastPage, saveLastPage] = useLastPage();
   const requestId = useRef(0);
   const noticeTimer = useRef<number | undefined>(undefined);
   /** The surah whose ayahs are on screen, so a script change can refresh them in place. */
@@ -90,8 +93,10 @@ export default function QuranReader({
   tabRef.current = tab;
 
   const reading = view === 'reader' && activeSurah !== null;
-  useWakeLock(reading && settings.keepScreenOn);
-  useReadingClock({ active: reading, onCredit: (seconds, date) => progressActions.addSeconds(date, seconds) });
+  // The mushaf page view is reading too: it keeps the screen on and counts time like a surah does.
+  const readingPages = view === 'list' && tab === 'pages';
+  useWakeLock((reading || readingPages) && settings.keepScreenOn);
+  useReadingClock({ active: reading || readingPages, onCredit: (seconds, date) => progressActions.addSeconds(date, seconds) });
 
   const loadSurahList = useCallback(() => {
     setLoadingSurahs(true);
@@ -243,6 +248,27 @@ export default function QuranReader({
   };
 
   if (view === 'list' || !activeSurah) {
+    if (tab === 'pages') {
+      return (
+        <MushafReader
+          initialPage={lastPage}
+          settings={settings}
+          onChangeSettings={updateSettings}
+          catalog={catalog}
+          bookmarkedAyahs={bookmarkedAyahs}
+          onBookmarkToggle={toggleBookmark}
+          onBack={() => setTab('read')}
+          onOpenSurah={(surah, ayah) => openByNumber(surah, ayah)}
+          onPosition={(position, range) => progressActions.recordPosition(position, range)}
+          onPageChange={saveLastPage}
+          onCopy={copy}
+          notice={notice.message}
+          noticeId={notice.id}
+          canOpenSurah={surahs.length > 0}
+        />
+      );
+    }
+
     if (tab === 'progress') {
       return (
         <QuranProgressView
@@ -292,7 +318,7 @@ export default function QuranReader({
       bookmarkedAyahs={bookmarkedAyahs}
       onBookmarkToggle={toggleBookmark}
       onBack={() => { setTab(cameFrom); setView('list'); }}
-      backTo={cameFrom === 'progress' ? 'progress' : 'surahs'}
+      backTo={cameFrom === 'progress' ? 'progress' : cameFrom === 'pages' ? 'pages' : 'surahs'}
       onRetry={() => loadAyahs(activeSurah)}
       onOpenSurah={(n) => openByNumber(n)}
       onCopy={copy}

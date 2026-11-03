@@ -26,7 +26,7 @@ interface ReaderViewProps {
   onBookmarkToggle: (key: string) => void;
   onBack: () => void;
   /** Where Back leads, for the button's name: "Surahs" or "My Progress". */
-  backTo: 'surahs' | 'progress';
+  backTo: 'surahs' | 'progress' | 'pages';
   onRetry: () => void;
   onOpenSurah: (surahNumber: number) => void;
   onCopy: (text: string) => void;
@@ -165,9 +165,9 @@ export default function ReaderView({
     >
       <header className="shrink-0 px-4 pt-3 pb-3" style={{ borderBottom: '1px solid var(--reader-border)' }}>
         <div className="flex items-center gap-2">
-          <button onClick={onBack} aria-label={backTo === 'progress' ? 'Back to My Progress' : 'Back to Surah list'} className="tap-target flex items-center gap-1 rounded-xl px-2 text-sm font-bold cursor-pointer" style={{ color: 'var(--reader-accent)' }}>
+          <button onClick={onBack} aria-label={backTo === 'progress' ? 'Back to My Progress' : backTo === 'pages' ? 'Back to Pages' : 'Back to Surah list'} className="tap-target flex items-center gap-1 rounded-xl px-2 text-sm font-bold cursor-pointer" style={{ color: 'var(--reader-accent)' }}>
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-            <span>{backTo === 'progress' ? 'Progress' : 'Surahs'}</span>
+            <span>{backTo === 'progress' ? 'Progress' : backTo === 'pages' ? 'Pages' : 'Surahs'}</span>
           </button>
 
           <div className="min-w-0 flex-1 text-center">
