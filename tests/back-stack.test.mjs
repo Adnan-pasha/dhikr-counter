@@ -10,10 +10,13 @@ const makeHistory = () => {
     listener: null,
     exited: false,
     pushState(state) { h.entries = h.entries.slice(0, h.index + 1); h.entries.push(state); h.index += 1; },
+    replaceState(state) { h.entries[h.index] = state; },
     back() {
+      // Like Chrome, the entry to land on is fixed when back() is called, even if a push happens before it runs.
+      const target = h.index - 1;
       queueMicrotask(() => {
-        if (h.index === 0) { h.exited = true; return; }
-        h.index -= 1;
+        if (target < 0) { h.exited = true; return; }
+        h.index = target;
         h.listener?.(h.entries[h.index]);
       });
     },
@@ -179,4 +182,12 @@ test('depth is read from an entry, and entries the app did not push count as the
   assert.equal(depthOf({}), 0);
   assert.equal(depthOf({ backDepth: -1 }), 0);
   assert.equal(depthOf({ backDepth: '2' }), 0);
+});
+
+test('a layer closed with nothing opened after it still takes its entry away', async () => {
+  const { history, stack } = setup();
+  const id = stack.push(() => {});
+  stack.remove(id);
+  await settle();
+  assert.equal(history.index, 0);
 });
