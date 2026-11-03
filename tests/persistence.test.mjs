@@ -41,7 +41,7 @@ const useHarness = () => {
     { setDhikrs, setCurrentDhikrId, setCurrentCount, setHistory, setPreferences, setReminders, setStreakPauses, setActiveDays, setFridayKahf, setFavouriteIds, setRoutines, setSalahLogs },
     { dhikrs, currentDhikrId, currentCount, history, preferences, reminders, favouriteIds, routines, salahLogs, streakPauses, activeDays, fridayKahf },
   );
-  return { routines, favouriteIds, setRoutines, setFavouriteIds, streakPauses, setStreakPauses, activeDays, setActiveDays, fridayKahf, setFridayKahf, currentCount, setCurrentCount };
+  return { salahLogs, routines, favouriteIds, setRoutines, setFavouriteIds, streakPauses, setStreakPauses, activeDays, setActiveDays, fridayKahf, setFridayKahf, currentCount, setCurrentCount };
 };
 
 const strictWrapper = ({ children }) => React.createElement(React.StrictMode, null, children);
@@ -151,4 +151,30 @@ test('friday Al-Kahf marks are restored (invalid dropped) and persisted when cha
   assert.deepEqual(result.current.fridayKahf, ['2026-03-20']);
   await act(async () => { result.current.setFridayKahf(['2026-03-20', '2026-03-27']); });
   assert.deepEqual(JSON.parse(localStorage.getItem('tasbih_friday_kahf')), ['2026-03-20', '2026-03-27']);
+});
+
+test('old Sunrise ticks are removed from saved prayer logs when the app starts, and the cleaned logs are saved back', async () => {
+  localStorage.setItem('tasbih_salah_logs', JSON.stringify([
+    { date: '2026-03-01', prayers: { fajr: true, sunrise: true } },
+    { date: '2026-03-02', prayers: { sunrise: true } },
+  ]));
+  const { result } = renderHook(useHarness, { wrapper: strictWrapper });
+  await act(async () => {});
+  assert.deepEqual(result.current.salahLogs, [{ date: '2026-03-01', prayers: { fajr: true } }]);
+  assert.deepEqual(JSON.parse(localStorage.getItem('tasbih_salah_logs')), [{ date: '2026-03-01', prayers: { fajr: true } }]);
+});
+
+test('the install date is written at start-up from the oldest saved day, so earlier days stay reachable', async () => {
+  localStorage.setItem('tasbih_salah_logs', JSON.stringify([{ date: '2026-02-10', prayers: { fajr: true } }]));
+  renderHook(useHarness, { wrapper: strictWrapper });
+  await act(async () => {});
+  assert.equal(localStorage.getItem('tasbih_installed_on'), '2026-02-10');
+});
+
+test('a brand new install records today as its install date', async () => {
+  renderHook(useHarness, { wrapper: strictWrapper });
+  await act(async () => {});
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  assert.equal(localStorage.getItem('tasbih_installed_on'), today);
 });

@@ -110,7 +110,7 @@ export interface DhikrReminder {
   isEnabled: boolean;
 }
 
-export type SalahName = 'fajr' | 'sunrise' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
+export type SalahName = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 
 export interface SalahLog {
   date: string;       // YYYY-MM-DD
@@ -119,7 +119,6 @@ export interface SalahLog {
 
 export const SALAH_META: Record<SalahName, { label: string; arabicName: string; icon: IconKey; time: string }> = {
   fajr:    { label: 'Fajr',    arabicName: 'الفجر',   icon: 'fajr', time: 'Pre-dawn' },
-  sunrise: { label: 'Sunrise', arabicName: 'الشروق',  icon: 'sunrise', time: 'After sunrise (Ishraq)' },
   dhuhr:   { label: 'Dhuhr',   arabicName: 'الظهر',   icon: 'dhuhr', time: 'Midday' },
   asr:     { label: 'Asr',     arabicName: 'العصر',   icon: 'asr', time: 'Afternoon' },
   maghrib: { label: 'Maghrib', arabicName: 'المغرب',  icon: 'maghrib', time: 'Sunset' },
