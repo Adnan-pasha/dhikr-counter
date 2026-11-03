@@ -15,6 +15,7 @@
 
 export interface HistoryLike {
   pushState(state: unknown, title: string, url?: string | null): void;
+  replaceState(state: unknown, title: string, url?: string | null): void;
   back(): void;
 }
 
@@ -34,6 +35,8 @@ export const depthOf = (state: unknown): number => {
 export class BackStack {
   private layers: Layer[] = [];
   private nextId = 1;
+  /** An entry is waiting to be taken away; a layer opened in the same tick reuses it instead. */
+  private pendingBack = false;
 
   constructor(private readonly history: HistoryLike) {}
 
@@ -42,7 +45,15 @@ export class BackStack {
     const layer: Layer = { id: this.nextId, onBack, dead: false };
     this.nextId += 1;
     this.layers.push(layer);
-    this.history.pushState({ backDepth: this.layers.length }, '');
+    const state = { backDepth: this.layers.length };
+    if (this.pendingBack) {
+      // One screen closed and the next opened in the same render (picking an item from a sheet). The entry
+      // of the first now stands for the second; sending back for it would land after this push and undo it.
+      this.pendingBack = false;
+      this.history.replaceState(state, '');
+    } else {
+      this.history.pushState(state, '');
+    }
     return layer.id;
   }
 
@@ -52,10 +63,20 @@ export class BackStack {
     if (at === -1) return;
     if (at === this.layers.length - 1) {
       this.layers.pop();
-      this.history.back();
+      this.releaseEntry();
     } else {
       this.layers[at].dead = true;
     }
+  }
+
+  /** Takes the newest entry away once the current tick is over, unless a layer opened meanwhile has claimed it. */
+  private releaseEntry(): void {
+    this.pendingBack = true;
+    queueMicrotask(() => {
+      if (!this.pendingBack) return;
+      this.pendingBack = false;
+      this.history.back();
+    });
   }
 
   /** The trail no longer matters (the reader went Home), so every entry is stepped over on the way out. */
@@ -66,6 +87,7 @@ export class BackStack {
   /** Forgets every layer. For tests, which share one browser window between cases. */
   reset(): void {
     this.layers = [];
+    this.pendingBack = false;
   }
 
   /** Call on every popstate, and once at start-up, with the state of the entry the browser is now on. */
@@ -89,7 +111,7 @@ let shared: BackStack | null = null;
 /** The app's one stack, created on first use and tied to the browser's history. */
 export const getBackStack = (): BackStack => {
   if (shared) return shared;
-  const stack = new BackStack(typeof window === 'undefined' ? { pushState() {}, back() {} } : window.history);
+  const stack = new BackStack(typeof window === 'undefined' ? { pushState() {}, replaceState() {}, back() {} } : window.history);
   shared = stack;
   if (typeof window !== 'undefined') {
     window.addEventListener('popstate', (event) => stack.onPop(event.state));
