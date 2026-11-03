@@ -38,16 +38,17 @@ const Switch = ({
     aria-checked={checked}
     aria-label={label}
     onClick={() => onChange(!checked)}
-    className={`w-11 h-6 rounded-full p-0.5 transition-colors focus:outline-none cursor-pointer ${
-      checked ? 'bg-brand-500' : 'bg-slate-800'
-    }`}
+    className="flex h-11 w-14 shrink-0 items-center justify-center focus:outline-none cursor-pointer"
   >
-    <motion.div
-      layout
-      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      className="w-5 h-5 rounded-full bg-slate-100 shadow-sm"
-      style={{ x: checked ? 20 : 0 }}
-    />
+    {/* The button is the 44px target; the track inside it is what is seen. */}
+    <span aria-hidden="true" className={`block w-11 h-6 rounded-full p-0.5 transition-colors ${checked ? 'bg-brand-500' : 'bg-slate-600'}`}>
+      <motion.span
+        layout
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        className="block w-5 h-5 rounded-full bg-slate-100 shadow-sm"
+        style={{ x: checked ? 20 : 0 }}
+      />
+    </span>
   </button>
 );
 
@@ -274,7 +275,7 @@ export default function SettingsScreen({
                   id={`theme_option_${theme.id}`}
                   key={theme.id}
                   onClick={() => onChangePreferences({ theme: theme.id })}
-                  className={`p-3 rounded-2xl border bg-slate-900/40 flex items-center gap-2.5 cursor-pointer text-left transition-all ${
+                  className={`min-h-11 p-3 rounded-2xl border bg-slate-900/40 flex items-center gap-2.5 cursor-pointer text-left transition-all ${
                     matches 
                       ? 'border-brand-500 shadow-md bg-slate-900/80' 
                       : 'border-slate-800 hover:border-slate-700'
@@ -549,7 +550,7 @@ export default function SettingsScreen({
                 <div className="flex justify-between items-center border-b border-slate-900 pb-2.5">
                   <div className="flex items-center gap-1.5 bg-transparent">
                     <AppIcon name="bell" className="w-3.5 h-3.5 shrink-0" />
-                    <span className="text-xs font-black uppercase text-brand-500 tracking-wider">New Auto-Tasbih Duty</span>
+                    <span className="text-xs font-black uppercase text-brand-400 tracking-wider">New Auto-Tasbih Duty</span>
                   </div>
                   <button
                     type="button"
@@ -644,7 +645,7 @@ export default function SettingsScreen({
                       </button>
                     </div>
  
-                    <span className="text-brand-500 font-black text-lg select-none mb-1 animate-pulse">:</span>
+                    <span className="text-brand-400 font-black text-lg select-none mb-1 animate-pulse">:</span>
  
                     {/* Minute control column */}
                     <div className="flex flex-col items-center bg-transparent">

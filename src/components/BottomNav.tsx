@@ -15,11 +15,11 @@ interface BottomNavProps {
 }
 
 const PRIMARY_TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'home',    label: 'Home',    icon: <Home className="w-6 h-6" /> },
-  { id: 'counter', label: 'Tasbih', icon: <CircleDot className="w-6 h-6" /> },
-  { id: 'adhkaar', label: 'Adhkaar', icon: <BookOpen className="w-6 h-6" /> },
-  { id: 'quran',   label: 'Quran',  icon: <BookMarked className="w-6 h-6" /> },
-  { id: 'qibla',   label: 'Qibla',  icon: <Compass className="w-6 h-6" /> },
+  { id: 'home',    label: 'Home',    icon: <Home className="w-6 h-6 max-w-[26px] max-h-[26px]" /> },
+  { id: 'counter', label: 'Tasbih', icon: <CircleDot className="w-6 h-6 max-w-[26px] max-h-[26px]" /> },
+  { id: 'adhkaar', label: 'Adhkaar', icon: <BookOpen className="w-6 h-6 max-w-[26px] max-h-[26px]" /> },
+  { id: 'quran',   label: 'Quran',  icon: <BookMarked className="w-6 h-6 max-w-[26px] max-h-[26px]" /> },
+  { id: 'qibla',   label: 'Qibla',  icon: <Compass className="w-6 h-6 max-w-[26px] max-h-[26px]" /> },
 ];
 
 const MORE_TABS: { id: Tab; label: string; icon: React.ReactNode; desc: string }[] = [
@@ -62,7 +62,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="absolute bottom-[68px] left-0 right-0 z-50 rounded-t-3xl overflow-hidden"
+            className="absolute bottom-[68px] left-0 right-0 z-50 rounded-t-3xl overflow-hidden flex flex-col"
             style={{
               background: 'var(--color-bg-raised)',
               borderTop: '1px solid var(--color-border)',
@@ -88,7 +88,11 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             </div>
 
             {/* More tabs grid */}
-            <div className="grid grid-cols-2 gap-3 px-4 pb-6">
+            {/* Two columns normally, one when large system text makes two too narrow to read. */}
+            <div
+              className="grid gap-3 px-4 pb-6 overflow-y-auto"
+              style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 11rem), 1fr))', maxHeight: 'calc(100dvh - 220px)' }}
+            >
               {MORE_TABS.map(tab => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -145,7 +149,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               aria-label={tab.label}
               whileTap={{ scale: 0.85 }}
               onClick={() => handleTabPress(tab.id)}
-              className="flex flex-col items-center gap-0.5 py-1 px-3 cursor-pointer focus:outline-none relative min-w-[52px]"
+              className="flex flex-col items-center gap-0.5 py-1 px-1 cursor-pointer focus:outline-none relative min-w-0 flex-1"
             >
               {isActive && (
                 <motion.div
@@ -160,9 +164,10 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               </span>
               {/* 12px minimum for tab labels */}
               <span
-                className="relative z-10 transition-colors duration-150 font-semibold"
+                className="relative z-10 transition-colors duration-150 font-semibold max-w-full"
                 style={{
-                  fontSize: '0.75rem', /* 12px — minimum readable label size */
+                  // A fixed 12px: the bar is a fixed height, and larger system text would make the labels collide.
+                  fontSize: '12px',
                   color: isActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)',
                   letterSpacing: '0.02em',
                 }}
@@ -177,7 +182,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         <motion.button
           whileTap={{ scale: 0.85 }}
           onClick={() => setShowMore(v => !v)}
-          className="flex flex-col items-center gap-0.5 py-1 px-3 cursor-pointer focus:outline-none relative min-w-[52px]"
+          className="flex flex-col items-center gap-0.5 py-1 px-1 cursor-pointer focus:outline-none relative min-w-0 flex-1"
           aria-label="More features"
         >
           {(isMoreActive && !showMore) && (
@@ -188,12 +193,12 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             />
           )}
           <span className="relative z-10 transition-colors duration-150" style={{ color: showMore || isMoreActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)' }}>
-            <MoreHorizontal className="w-6 h-6" />
+            <MoreHorizontal className="w-6 h-6 max-w-[26px] max-h-[26px]" />
           </span>
           <span
-            className="relative z-10 font-semibold"
+            className="relative z-10 font-semibold max-w-full"
             style={{
-              fontSize: '0.6875rem',
+              fontSize: '12px',
               color: showMore || isMoreActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)',
             }}
           >

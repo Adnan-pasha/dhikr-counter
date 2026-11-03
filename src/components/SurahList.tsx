@@ -74,10 +74,10 @@ export default function SurahList({ surahs, loading, error, onRetry, lastReadSur
             aria-label="Search surahs"
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name or number..."
-            className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50"
+            className="w-full min-h-11 pl-9 pr-8 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50"
           />
           {query && (
-            <button onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 cursor-pointer">
+            <button onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-0 top-1/2 -translate-y-1/2 min-h-11 min-w-11 flex items-center justify-center text-slate-500 cursor-pointer">
               <X className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           )}
@@ -87,7 +87,7 @@ export default function SurahList({ surahs, loading, error, onRetry, lastReadSur
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-brand-500 animate-spin mb-3" aria-hidden="true" />
+            <Loader2 className="w-8 h-8 text-brand-400 animate-spin mb-3" aria-hidden="true" />
             <p className="text-sm text-slate-400 font-medium">Loading Quran...</p>
           </div>
         ) : error ? (

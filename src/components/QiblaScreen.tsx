@@ -910,7 +910,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
               id="btn_dismiss_azan_alarm_banner"
               onClick={stopAzan}
               type="button"
-              className="px-2 py-1 rounded bg-slate-950 hover:bg-slate-900 text-brand-400 text-2xs uppercase tracking-wider font-extrabold cursor-pointer transition-colors shrink-0"
+              className="min-h-11 min-w-11 px-3 py-1 rounded bg-slate-950 hover:bg-slate-900 text-brand-400 text-2xs uppercase tracking-wider font-extrabold cursor-pointer transition-colors shrink-0"
             >
               Stop
             </button>
@@ -922,7 +922,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
       <div className="px-6 pt-5 pb-3 border-b border-slate-800/80 flex justify-between items-center bg-slate-900/50 backdrop-blur-md shrink-0">
         <div>
           <h1 className="text-xl font-black tracking-tight text-slate-50 flex items-center gap-1.5 leading-none select-none">
-            <Compass className="w-5 h-5 text-brand-500 animate-spin-slow" />
+            <Compass className="w-5 h-5 text-brand-400 animate-spin-slow" />
             Qibla & Namaz
           </h1>
           <p className="text-xs text-slate-400 mt-1 font-medium select-none">Locate sacred direction & prayer timings</p>
@@ -932,9 +932,9 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             <button
               id="btn_request_compass_permission"
               onClick={requestCompassPermission}
-              className="px-2.5 py-1.5 rounded-full cursor-pointer bg-brand-500/15 hover:bg-brand-500/25 border border-brand-500/40 text-2xs font-bold text-brand-400 flex items-center gap-1 transition-all"
+              className="min-h-11 px-3 py-1.5 rounded-full cursor-pointer bg-brand-500/15 hover:bg-brand-500/25 border border-brand-500/40 text-2xs font-bold text-brand-400 flex items-center gap-1 transition-all"
             >
-              <Navigation className="w-3 h-3 text-brand-500" />
+              <Navigation className="w-3 h-3 text-brand-400" />
               Calibrate
             </button>
           )}
@@ -957,7 +957,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             id="btn_subtab_qibla"
             type="button"
             onClick={() => setSubTab('qibla')}
-            className={`flex-1 py-1.5 text-3xs font-black tracking-wider uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`flex-1 min-h-11 py-1.5 text-3xs font-black tracking-wider uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               subTab === 'qibla'
                 ? 'bg-brand-500 text-on-brand font-black shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
@@ -970,7 +970,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             id="btn_subtab_namaz"
             type="button"
             onClick={() => setSubTab('namaz')}
-            className={`flex-1 py-1.5 text-3xs font-black tracking-wider uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`flex-1 min-h-11 py-1.5 text-3xs font-black tracking-wider uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               subTab === 'namaz'
                 ? 'bg-brand-500 text-on-brand font-black shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
@@ -991,14 +991,14 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
               id="city_dropdown_trigger_btn"
               type="button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-full px-3 py-2 bg-slate-950/80 border border-slate-850 text-2xs font-bold text-slate-200 rounded-lg focus:outline-none focus:border-brand-500/60 flex items-center justify-between cursor-pointer transition-all hover:border-slate-800"
+              className="w-full min-h-11 px-3 py-2 bg-slate-950/80 border border-slate-850 text-2xs font-bold text-slate-200 rounded-lg focus:outline-none focus:border-brand-500/60 flex items-center justify-between cursor-pointer transition-all hover:border-slate-800"
             >
               <div className="flex items-center gap-1.5 bg-transparent truncate">
-                <Globe className="w-3 h-3 text-brand-500 shrink-0" />
+                <Globe className="w-3 h-3 text-brand-400 shrink-0" />
                 <span className="truncate">{locationName}</span>
               </div>
               <div className="flex items-center gap-1.5 ml-1 bg-transparent select-none shrink-0">
-                <span className="text-[8px] font-black tracking-wider px-1 rounded-sm bg-slate-900 text-slate-400 border border-slate-800">
+                <span className="text-2xs font-black tracking-wider px-1 rounded-sm bg-slate-900 text-slate-400 border border-slate-800">
                   {qiblaAngle}° QIBLA
                 </span>
                 <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
@@ -1091,7 +1091,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                           >
                             <div className="flex items-center gap-1.5 bg-transparent truncate">
                               {isSelected ? (
-                                <Check className="w-2.5 h-2.5 text-brand-500 shrink-0" />
+                                <Check className="w-2.5 h-2.5 text-brand-400 shrink-0" />
                               ) : (
                                 <MapPin className="w-2.5 h-2.5 text-slate-700 shrink-0" />
                               )}
@@ -1192,7 +1192,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                       <div className="w-full h-0.5 bg-brand-950" style={{ transform: 'translateY(1px)' }} />
                     </div>
                   </div>
-                  <span className="text-[8px] font-bold text-brand-500 mt-1 font-mono uppercase tracking-widest">Qibla</span>
+                  <span className="text-[8px] font-bold text-brand-400 mt-1 font-mono uppercase tracking-widest">Qibla</span>
                 </div>
               </div>
 
@@ -1224,7 +1224,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
           {/* Location metrics readings */}
           <div id="qibla_location_details" className="text-center space-y-1 shrink-0 select-none w-full max-w-xs">
             <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest flex items-center justify-center gap-1 leading-none">
-              <MapPin className="w-2.5 h-2.5 text-brand-500" /> Positioned Location
+              <MapPin className="w-2.5 h-2.5 text-brand-400" /> Positioned Location
             </p>
             <p className="text-sm font-black text-slate-100 leading-none">
               {locationName}
@@ -1272,7 +1272,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             <div className="w-full max-w-xs bg-slate-900/30 border border-slate-850/70 rounded-2xl p-3 flex flex-col gap-2.5 shrink-0 select-none">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
-                  <Sliders className="w-3.5 h-3.5 text-brand-500" /> Align Simulator
+                  <Sliders className="w-3.5 h-3.5 text-brand-400" /> Align Simulator
                 </span>
                 <button
                   type="button"
@@ -1280,7 +1280,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                     // Smoothly auto-spin compass dial to align perfectly to the Kaaba direction
                     targetHeading.current = qiblaAngle;
                   }}
-                  className="px-2.5 py-1 rounded bg-gradient-to-tr from-brand-500 to-brand-600 hover:brightness-110 active:scale-95 transition-all text-on-brand text-4xs font-black uppercase tracking-wider flex items-center gap-1 shadow-sm shadow-brand-950/20 cursor-pointer"
+                  className="min-h-11 px-3 py-1 rounded bg-gradient-to-tr from-brand-500 to-brand-600 hover:brightness-110 active:scale-95 transition-all text-on-brand text-4xs font-black uppercase tracking-wider flex items-center gap-1 shadow-sm shadow-brand-950/20 cursor-pointer"
                 >
                   <Sparkles className="w-2.5 h-2.5" /> Auto-Align
                 </button>
@@ -1386,13 +1386,13 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                 <span className="text-4xs font-black uppercase tracking-widest text-slate-400 leading-none">
                   Selected Region
                 </span>
-                <span className="text-4xs font-black uppercase tracking-widest text-brand-500 leading-none">
+                <span className="text-4xs font-black uppercase tracking-widest text-brand-400 leading-none">
                   Active Interval
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                  <MapPin className="w-3 h-3 text-brand-500 shrink-0" />
+                  <MapPin className="w-3 h-3 text-brand-400 shrink-0" />
                   <h3 className="text-xs font-black text-slate-100 truncate leading-tight">
                     {locationName}
                   </h3>
@@ -1441,7 +1441,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
               <button
                 aria-label="Dismiss azan alert"
                 onClick={() => setAzanAlert(null)}
-                className="text-slate-500 hover:text-slate-300 cursor-pointer p-1"
+                className="min-h-11 min-w-11 flex items-center justify-center text-slate-500 hover:text-slate-300 cursor-pointer"
               >
                 ✕
               </button>
@@ -1505,7 +1505,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                           onClick={() => isPrayerAzanId(p.id) && handleToggleAzanSetting(p.id)}
                           className={`w-6.5 h-6.5 rounded-full flex items-center justify-center transition-colors border select-none cursor-pointer ${
                             isSelectedForSound
-                              ? 'bg-brand-500/15 text-brand-500 border-brand-500/30 hover:bg-brand-500/25'
+                              ? 'bg-brand-500/15 text-brand-400 border-brand-500/30 hover:bg-brand-500/25'
                               : 'bg-slate-900 text-slate-600 border-slate-800 hover:text-slate-400'
                           }`}
                           title={isSelectedForSound ? `Azan for ${p.label} broadcast enabled` : `Azan for ${p.label} broadcast muted`}
@@ -1532,7 +1532,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
           {/* FIQH & CONVENTION CONFIGURATION FORM CARDS */}
           <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-850 flex flex-col gap-3.5 select-none">
             <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 border-b border-slate-900 pb-1.5 shrink-0">
-              <Sliders className="w-3 h-3 text-brand-500" /> Calculation Juristic Deck
+              <Sliders className="w-3 h-3 text-brand-400" /> Calculation Juristic Deck
             </h5>
 
             <div className="flex flex-col gap-4 bg-transparent">
@@ -1599,7 +1599,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
           {/* ADVANCED BROADCAST & TEST SOUND CONSOLE */}
           <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-850 flex flex-col gap-2.5 select-none">
             <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 border-b border-slate-900 pb-1.5 shrink-0">
-              <Volume2 className="w-3.5 h-3.5 text-brand-500" /> Azan Audio Console (Broadcast Test)
+              <Volume2 className="w-3.5 h-3.5 text-brand-400" /> Azan Audio Console (Broadcast Test)
             </h5>
 
             <div className="flex flex-col gap-3.5 pt-1">
