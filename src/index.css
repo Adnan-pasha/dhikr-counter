@@ -135,6 +135,28 @@ body {
   margin: 0;
 }
 
+/* Android draws apps edge to edge, under the status bar and any camera cutout. The frame keeps its content
+   clear of them (the bottom bar handles its own side, see .pb-safe). In a browser these insets are zero. */
+#phone_simulator_frame {
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+}
+
+/* Inside the Android app the screen is the app: no desktop preview frame, whatever the screen's width or
+   orientation. (The frame's 390px column, rounded corners and shadow are for desktop browsers.) */
+#app_root_viewport[data-native] {
+  padding: 0;
+  overflow: hidden;
+}
+#app_root_viewport[data-native] #desktop_status_bar {
+  display: none;
+}
+#app_root_viewport[data-native] #phone_simulator_frame {
+  max-width: none;
+  height: 100dvh;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 /* ─── Arabic text ─────────────────────────────────────────────────────────── */
 .font-arabic {
   font-family: var(--font-arabic);

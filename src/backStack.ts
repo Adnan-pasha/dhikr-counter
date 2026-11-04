@@ -79,6 +79,11 @@ export class BackStack {
     });
   }
 
+  /** True while some screen on the trail would answer to back. False means back has nothing left to close. */
+  hasLiveLayer(): boolean {
+    return this.layers.some((layer) => !layer.dead);
+  }
+
   /** The trail no longer matters (the reader went Home), so every entry is stepped over on the way out. */
   markAllDead(): void {
     for (const layer of this.layers) layer.dead = true;

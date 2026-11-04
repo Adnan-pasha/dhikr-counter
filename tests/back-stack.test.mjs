@@ -191,3 +191,15 @@ test('a layer closed with nothing opened after it still takes its entry away', a
   await settle();
   assert.equal(history.index, 0);
 });
+
+test('hasLiveLayer is true while a screen would answer to back, and false once none does', async () => {
+  const { stack } = setup();
+  assert.equal(stack.hasLiveLayer(), false, 'nothing open');
+  const sheet = stack.push(() => {});
+  assert.equal(stack.hasLiveLayer(), true);
+  stack.push(() => {});
+  stack.markAllDead();
+  assert.equal(stack.hasLiveLayer(), false, 'a trail the reader has left behind does not count');
+  stack.remove(sheet);
+  assert.equal(stack.hasLiveLayer(), false);
+});

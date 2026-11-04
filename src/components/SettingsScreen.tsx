@@ -372,7 +372,7 @@ export default function SettingsScreen({
           <div className="flex justify-between items-center bg-transparent">
             <div>
               <p className="text-xs font-bold text-slate-200">Left-handed layout</p>
-              <p className="text-xs text-slate-400 font-medium">Moves the counter buttons to the left, under your thumb</p>
+              <p className="text-xs text-slate-400 font-medium">Mirrors the bottom bar and the counter buttons, so they sit under your left thumb</p>
             </div>
             <Switch
               id="switch_left_handed"
