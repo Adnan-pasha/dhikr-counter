@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.cognitrixlabs.dhikr',
-  appName: 'Dhikr',
+  appId: 'com.cognitrixlabs.muneeb',
+  appName: 'Muneeb',
   webDir: 'dist'
 };
 
