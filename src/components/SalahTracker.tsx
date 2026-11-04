@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Check, Flame, Calendar, ChevronLeft, CalendarCheck } from 'lucide-react';
+import { Check, Flame, Calendar, ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react';
 import { SalahLog, SalahName, Routine, SALAH_META, HIJRI_MONTHS } from '../types';
 import { AppIcon } from '../icons';
 import SalahCalendar from './SalahCalendar';
@@ -76,18 +76,27 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onSetDay, afte
   const yesterday = addDays(todayStr, -1);
   const showMissedHint = isToday && yesterday >= earliest && countOn(yesterday) < TOTAL;
 
-  const open = (date: string) => {
+  // Tapping a day in the calendar below should visibly do something: the day's prayers are above it, so bring them into view.
+  const daySection = React.useRef<HTMLElement>(null);
+  const [scrollTick, setScrollTick] = useState(0);
+  const open = (date: string, bringIntoView = true) => {
     setSelected(date);
     const d = parse(date);
     setMonth({ year: d.getFullYear(), month: d.getMonth() });
+    if (bringIntoView) setScrollTick((tick) => tick + 1);
   };
+  React.useEffect(() => {
+    if (scrollTick === 0) return;
+    const calm = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    daySection.current?.scrollIntoView?.({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+  }, [scrollTick]);
 
   // Someone looking at today when midnight passes moves on to the new today.
   const shownToday = React.useRef(todayStr);
   React.useEffect(() => {
     const previous = shownToday.current;
     shownToday.current = todayStr;
-    if (previous !== todayStr && selected === previous) open(todayStr);
+    if (previous !== todayStr && selected === previous) open(todayStr, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayStr]);
 
@@ -204,11 +213,33 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onSetDay, afte
         )}
 
         {/* ── The day's prayers ──────────────────────────────────────── */}
-        <section aria-labelledby="salah-day-heading">
-          <div className="flex items-center justify-between mb-3 gap-2">
-            <h2 id="salah-day-heading" className="text-xs font-black uppercase tracking-widest text-slate-400">
+        <section id="salah-day" ref={daySection} aria-labelledby="salah-day-heading">
+          <div className="flex items-center justify-between mb-1 gap-2">
+            <button
+              type="button"
+              aria-label="Previous day"
+              disabled={selected <= earliest}
+              onClick={() => open(addDays(selected, -1), false)}
+              className="min-h-11 min-w-11 flex items-center justify-center rounded-xl cursor-pointer disabled:opacity-30 disabled:cursor-default"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h2 id="salah-day-heading" className="text-xs font-black uppercase tracking-widest text-slate-400 text-center" aria-live="polite">
               {isToday ? "Today's Prayers" : selectedDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
             </h2>
+            <button
+              type="button"
+              aria-label="Next day"
+              disabled={selected >= todayStr}
+              onClick={() => open(addDays(selected, 1), false)}
+              className="min-h-11 min-w-11 flex items-center justify-center rounded-xl cursor-pointer disabled:opacity-30 disabled:cursor-default"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex justify-end gap-1 mb-3">
             <div className="flex gap-1">
               <button
                 type="button"

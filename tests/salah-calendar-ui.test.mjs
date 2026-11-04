@@ -86,24 +86,79 @@ test('yesterday with prayers missing is offered as a shortcut, and opens when ta
   assert.ok(screen.getByRole('button', { name: 'Back to today' }));
 });
 
-test('no shortcut when yesterday is complete or before the app was installed', () => {
+test('no shortcut when yesterday is already complete', () => {
   mount([full(yesterday)]);
   assert.equal(screen.queryByRole('button', { name: /Yesterday:/ }), null);
-  cleanup();
-  mount();
-  assert.equal(screen.queryByRole('button', { name: /Yesterday:/ }), null, 'installed today, so yesterday is out of reach');
 });
 
-test('the calendar goes back to the install month and no further, and never forward past this month', () => {
+test('a brand new install can still fill in yesterday and earlier days', () => {
+  const calls = mount(); // no install date saved: installed today
+  fireEvent.click(screen.getByRole('button', { name: /Yesterday:/ }));
+  fireEvent.click(screen.getAllByRole('checkbox')[0]);
+  assert.deepEqual(calls.toggles, [[yesterday, 'fajr']]);
+  const cells = dayButtons(threeDaysAgo); // the last-7-days strip, plus the calendar when it is in this month
+  assert.ok(cells.length >= 1);
+  for (const cell of cells) assert.equal(cell.disabled, false, 'three days ago is tappable');
+});
+
+test('the calendar goes back 60 days before the install date and no further, and never forward past this month', () => {
   localStorage.setItem('tasbih_installed_on', addDays(today, -40));
   mount();
   assert.equal(screen.getByRole('button', { name: 'Next month' }).disabled, true);
   let guard = 0;
-  while (!screen.getByRole('button', { name: 'Previous month' }).disabled && guard++ < 5) {
+  while (!screen.getByRole('button', { name: 'Previous month' }).disabled && guard++ < 8) {
     fireEvent.click(screen.getByRole('button', { name: 'Previous month' }));
   }
-  assert.ok(guard >= 1 && guard <= 3, `went back ${guard} months`);
+  const now = new Date();
+  const limit = new Date(addDays(today, -100) + 'T00:00:00');
+  const monthsBack = (now.getFullYear() - limit.getFullYear()) * 12 + now.getMonth() - limit.getMonth();
+  assert.equal(guard, monthsBack, `went back ${guard} months, expected ${monthsBack}`);
   assert.equal(screen.getByRole('button', { name: 'Next month' }).disabled, false);
+});
+
+test('days older than the backfill window stay out of reach', () => {
+  const tooOld = addDays(today, -61);
+  localStorage.setItem('tasbih_installed_on', today);
+  mount();
+  let guard = 0;
+  while (!screen.getByRole('button', { name: 'Previous month' }).disabled && guard++ < 4) {
+    fireEvent.click(screen.getByRole('button', { name: 'Previous month' }));
+  }
+  const old = screen.queryAllByRole('button', { name: dayLabel(tooOld, 0) });
+  for (const cell of old) assert.equal(cell.disabled, true, '61 days ago is out of reach');
+});
+
+test('choosing a day brings its prayers into view, so tapping the calendar visibly does something', () => {
+  const scrolled = [];
+  dom.window.Element.prototype.scrollIntoView = function (options) { scrolled.push(this.id || this.tagName); };
+  mount();
+  fireEvent.click(dayButtons(yesterday)[0]);
+  assert.ok(scrolled.length > 0, 'the day section scrolled into view');
+  assert.ok(scrolled.includes('salah-day'), `scrolled ${scrolled.join(',')}`);
+  scrolled.length = 0;
+  fireEvent.click(dayButtons(yesterday)[0]); // tapping the same day again still answers
+  assert.ok(scrolled.length > 0, 'a repeat tap also scrolls');
+});
+
+test('previous and next day arrows step through days without scrolling back to the calendar', () => {
+  mount();
+  const next = () => screen.getByRole('button', { name: 'Next day' });
+  const previous = () => screen.getByRole('button', { name: 'Previous day' });
+  assert.equal(next().disabled, true, 'nothing after today');
+  fireEvent.click(previous());
+  assert.ok(screen.getByRole('button', { name: 'Back to today' }), 'now on yesterday');
+  assert.equal(next().disabled, false);
+  fireEvent.click(next());
+  assert.equal(screen.queryByRole('button', { name: 'Back to today' }), null, 'back on today');
+});
+
+test('the previous-day arrow stops at the oldest reachable day', () => {
+  mount();
+  let guard = 0;
+  while (!screen.getByRole('button', { name: 'Previous day' }).disabled && guard++ < 100) {
+    fireEvent.click(screen.getByRole('button', { name: 'Previous day' }));
+  }
+  assert.equal(guard, 60, 'sixty days back on a fresh install');
 });
 
 test('a completed day shows a tick, not only a colour, and days have spoken labels', () => {
