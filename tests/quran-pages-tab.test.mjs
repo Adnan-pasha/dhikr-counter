@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 process.env.NODE_ENV = 'development';
@@ -45,6 +46,8 @@ const mount = (progressActions = NO_ACTIONS) => {
   globalThis.fetch = async (url) => {
     const u = String(url);
     urls.push(u);
+    if (u.includes('indopak-15-lines')) return { ok: true, json: async () => JSON.parse(fs.readFileSync(new URL('../src/quran/data/indopak-15-lines.json', import.meta.url), 'utf8')) };
+    if (u.includes('indopak-digitalkhatt')) return { ok: true, json: async () => JSON.parse(fs.readFileSync(new URL('../src/quran/data/indopak-digitalkhatt.json', import.meta.url), 'utf8')) };
     const m = u.match(/\/page\/(\d+)\/([^/]+)$/);
     if (m) return { ok: true, json: async () => ({ code: 200, data: { number: Number(m[1]), ayahs: pageAyahs(Number(m[1])), surahs: {}, edition: { identifier: m[2] } } }) };
     if (u.includes('quranenc.com')) return { ok: true, json: async () => ({ translations: [] }) };
@@ -113,4 +116,24 @@ test('opening a surah from a page and going back lands on the page again', async
   await screen.findByRole('button', { name: 'Back to Pages' });
   fireEvent.click(screen.getByRole('button', { name: 'Back to Pages' }));
   await waitFor(() => assert.match(document.body.textContent, /Page 1 of 604/));
+});
+
+test('with the IndoPak script, Pages is the 15-line mushaf with its own 610 pages and its own place', async () => {
+  localStorage.setItem('tasbih_reader_settings', JSON.stringify({ script: 'indopak' }));
+  localStorage.setItem(LAST_PAGE_KEY, '604');
+  mount();
+  await openPages();
+  await waitFor(() => assert.match(document.body.textContent, /15-line IndoPak/));
+  await waitFor(() => assert.match(document.body.textContent, /Page 1 of 610/), { timeout: 4000 });
+  fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+  await waitFor(() => assert.equal(localStorage.getItem('tasbih_quran_last_page_indopak15'), '2'));
+  assert.equal(localStorage.getItem(LAST_PAGE_KEY), '604', 'the 604-page place is left alone');
+});
+
+test('with another script, Pages is still the 604-page mushaf', async () => {
+  localStorage.setItem('tasbih_reader_settings', JSON.stringify({ script: 'simple' }));
+  mount();
+  await openPages();
+  await waitFor(() => assert.match(document.body.textContent, /Page 1 of 604/));
+  assert.doesNotMatch(document.body.textContent, /15-line IndoPak/);
 });

@@ -13,6 +13,7 @@ Kept in sync with `src/licenses.ts`, which the app shows under Settings.
 | Quran text (Tanzil) | Tanzil Project | CC BY 3.0 (verbatim copies only, source credited and linked) | https://tanzil.net |
 | Tajweed colour markers | Islamic Network (Al Quran Cloud), derived from the Tanzil text | Al Quran Cloud terms of use; text from Tanzil (CC BY 3.0) | https://alquran.cloud/terms-and-conditions |
 | IndoPak text (Digital Khatt) | DigitalKhatt and Tarteel, from the Quranic Universal Library | No copyright terms published by the library; shown with credit, never altered | https://qul.tarteel.ai/resources/quran-script/566 |
+| 15-line IndoPak page layout | Arrangement after the Qudratullah Company mushaf, from the Quranic Universal Library | No copyright terms published by the library; shown with credit. Only the line and page arrangement is used, never the library's own words or font | https://qul.tarteel.ai/resources/mushaf-layout/12 |
 | DigitalKhatt IndoPak font | Amine Anane and Tarteel Inc | SIL OFL 1.1 | https://github.com/DigitalKhatt/indopakfont |
 | Pickthall translation | Mohammed Marmaduke Pickthall (1930) | Public domain | https://tanzil.net/trans/ |
 | Quran translations (QuranEnc) | QuranEnc.com and each translation's publisher | Terms published by QuranEnc: no modification, addition or deletion; publisher and QuranEnc credited; version named; kept at the latest version; no inappropriate ads next to the text | https://quranenc.com |

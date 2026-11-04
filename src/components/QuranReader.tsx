@@ -16,7 +16,9 @@ import { loadIndopak, indopakAyahs } from '../quran/indopak';
 import { useBackLayer } from '../useBackLayer';
 import ReaderSettingsSheet from './ReaderSettingsSheet';
 import MushafReader from './MushafReader';
-import { useLastPage } from '../quran/useLastPage';
+import IndopakPagesReader from './IndopakPagesReader';
+import { useLastPage, LAST_LAYOUT_PAGE_KEY } from '../quran/useLastPage';
+import { clampLayoutPage } from '../quran/indopak-layout';
 import { PICKTHALL_ID, applyTranslation, parseTranslationId, translationCredit } from '../quran/translations';
 import type { TranslationView } from './ReaderView';
 import type { Surah } from '../quran/types';
@@ -79,6 +81,7 @@ export default function QuranReader({
   const [notice, setNotice] = useState({ message: '', id: 0 });
   const [listSettingsOpen, setListSettingsOpen] = useState(false);
   const [lastPage, saveLastPage] = useLastPage();
+  const [lastLayoutPage, saveLastLayoutPage] = useLastPage(LAST_LAYOUT_PAGE_KEY, clampLayoutPage);
   const requestId = useRef(0);
   const noticeTimer = useRef<number | undefined>(undefined);
   /** The surah whose ayahs are on screen, so a script change can refresh them in place. */
@@ -248,6 +251,29 @@ export default function QuranReader({
   };
 
   if (view === 'list' || !activeSurah) {
+    if (tab === 'pages' && settings.script === 'indopak') {
+      // IndoPak has its own printed layout: 610 pages of 15 lines, each seen whole.
+      return (
+        <IndopakPagesReader
+          initialPage={lastLayoutPage}
+          settings={settings}
+          onChangeSettings={updateSettings}
+          catalog={catalog}
+          surahs={surahs}
+          bookmarkedAyahs={bookmarkedAyahs}
+          onBookmarkToggle={toggleBookmark}
+          onBack={() => setTab('read')}
+          onOpenSurah={(surah, ayah) => openByNumber(surah, ayah)}
+          onPosition={(position, range) => progressActions.recordPosition(position, range)}
+          onPageChange={saveLastLayoutPage}
+          onCopy={copy}
+          notice={notice.message}
+          noticeId={notice.id}
+          canOpenSurah={surahs.length > 0}
+        />
+      );
+    }
+
     if (tab === 'pages') {
       return (
         <MushafReader
