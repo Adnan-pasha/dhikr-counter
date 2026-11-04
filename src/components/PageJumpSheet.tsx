@@ -1,7 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { useModalDialog } from './useModalDialog';
-import { JUZ_FIRST_PAGE, TOTAL_PAGES, clampPage } from '../quran/pages';
+import { JUZ_FIRST_PAGE, TOTAL_PAGES } from '../quran/pages';
 
 interface PageJumpSheetProps {
   open: boolean;
@@ -9,12 +9,16 @@ interface PageJumpSheetProps {
   /** The page on screen now. */
   page: number;
   onGo: (page: number) => void;
+  /** How many pages there are. The 604-page mushaf unless said otherwise. */
+  total?: number;
+  /** The page each juz begins on, for a mushaf with its own page numbers. */
+  juzFirstPages?: readonly number[];
 }
 
 const card = { background: 'var(--reader-surface)', border: '1px solid var(--reader-border)', color: 'var(--reader-ink)' } as const;
 
 /** Go to a page number, or to the first page of a juz. */
-export default function PageJumpSheet({ open, onClose, page, onGo }: PageJumpSheetProps) {
+export default function PageJumpSheet({ open, onClose, page, onGo, total = TOTAL_PAGES, juzFirstPages = JUZ_FIRST_PAGE }: PageJumpSheetProps) {
   const [value, setValue] = React.useState(String(page));
   const { dialogRef, initialFocusRef, onKeyDown } = useModalDialog(open, onClose);
 
@@ -23,7 +27,7 @@ export default function PageJumpSheet({ open, onClose, page, onGo }: PageJumpShe
   if (!open) return null;
 
   const typed = Number(value);
-  const valid = value.trim() !== '' && Number.isFinite(typed) && typed >= 1 && typed <= TOTAL_PAGES;
+  const valid = value.trim() !== '' && Number.isFinite(typed) && typed >= 1 && typed <= total;
 
   return (
     <div className="absolute inset-0 z-40 flex flex-col justify-end">
@@ -46,7 +50,7 @@ export default function PageJumpSheet({ open, onClose, page, onGo }: PageJumpShe
 
         <form
           className="flex items-end gap-2"
-          onSubmit={(e) => { e.preventDefault(); if (valid) onGo(clampPage(typed)); }}
+          onSubmit={(e) => { e.preventDefault(); if (valid) onGo(Math.min(total, Math.max(1, Math.trunc(typed)))); }}
         >
           <label className="min-w-0 flex-1 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--reader-muted)' }}>
             Page number
@@ -54,7 +58,7 @@ export default function PageJumpSheet({ open, onClose, page, onGo }: PageJumpShe
               type="number"
               inputMode="numeric"
               min={1}
-              max={TOTAL_PAGES}
+              max={total}
               value={value}
               onChange={(e) => setValue(e.target.value)}
               aria-label="Page number"
@@ -66,12 +70,12 @@ export default function PageJumpSheet({ open, onClose, page, onGo }: PageJumpShe
             Go
           </button>
         </form>
-        <p className="text-xs" style={{ color: 'var(--reader-muted)' }}>Pages 1 to {TOTAL_PAGES}.</p>
+        <p className="text-xs" style={{ color: 'var(--reader-muted)' }}>Pages 1 to {total}.</p>
 
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--reader-muted)' }}>Juz</p>
           <div className="grid grid-cols-5 gap-2" role="group" aria-label="Juz">
-            {JUZ_FIRST_PAGE.map((first, i) => (
+            {juzFirstPages.map((first, i) => (
               <button
                 key={first}
                 type="button"

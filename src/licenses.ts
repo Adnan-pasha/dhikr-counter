@@ -69,6 +69,13 @@ export const THIRD_PARTY_NOTICES: ThirdPartyNotice[] = [
     note: 'Shown exactly as exported, never altered.',
   },
   {
+    name: '15-line IndoPak page layout',
+    author: 'Arrangement after the Qudratullah Company mushaf, from the Quranic Universal Library',
+    license: 'No copyright terms published by the library; shown with credit',
+    url: 'https://qul.tarteel.ai/resources/mushaf-layout/12',
+    note: 'Only which words sit on which line is used; the words and font are the ones above.',
+  },
+  {
     name: 'DigitalKhatt IndoPak font',
     author: 'Amine Anane and Tarteel Inc',
     license: 'SIL OFL 1.1',
