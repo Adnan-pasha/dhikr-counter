@@ -33,7 +33,7 @@ const contrast = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-for (const name of ['dark', 'paper', 'modern']) {
+for (const name of ['dark', 'paper', 'modern', 'contrast']) {
   test(`${name} reading theme meets contrast on both its page and its cards`, () => {
     const t = themeBlock(name);
     for (const ground of ['bg', 'surface']) {

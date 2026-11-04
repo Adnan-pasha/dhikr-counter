@@ -7,7 +7,7 @@ import { scriptOption } from '../quran/editions';
 import { formatAyahForCopy } from '../quran/editions';
 import { plainForCopy, BASMALA_INDOPAK } from '../quran/indopak';
 import { clampPage, swipeDirection, TOTAL_PAGES, type PageAyah, type PageSurahStart } from '../quran/pages';
-import { arabicFontSize, type ReaderSettings } from '../quran/settings';
+import { arabicFontSize, lineHeightFor, type ReaderSettings } from '../quran/settings';
 import { BASMALA, toArabicDigits } from '../quran/text';
 import { useMushafPage } from '../quran/useMushafPage';
 import type { CatalogState } from './TranslationPicker';
@@ -242,7 +242,7 @@ export default function MushafReader({
                 lang="ar"
                 dir="rtl"
                 className={`${fontClass} text-justify`}
-                style={{ fontSize: arabicFontSize(settings.textSize), lineHeight: 2.3, unicodeBidi: 'isolate', textAlignLast: 'center' }}
+                style={{ fontSize: arabicFontSize(settings.textSize), lineHeight: lineHeightFor(settings.lineSpacing) + 0.1, unicodeBidi: 'isolate', textAlignLast: 'center' }}
               >
                 {run.map(ayahText)}
               </p>

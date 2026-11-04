@@ -386,7 +386,7 @@ export default function CounterScreen({
       <motion.div
         animate={{ opacity: isFocusMode ? 0 : 1 }}
         transition={{ duration: 0.25 }}
-        className="relative z-20 flex flex-wrap items-center justify-between gap-3 px-5 pb-4 pt-2 shrink-0"
+        className={`relative z-20 flex flex-wrap items-center justify-between gap-3 px-5 pb-4 pt-2 shrink-0 ${preferences.leftHanded ? 'flex-row-reverse' : ''}`}
         style={{ pointerEvents: isFocusMode ? 'none' : 'auto' }}
         aria-hidden={isFocusMode}
       >

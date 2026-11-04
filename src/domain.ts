@@ -141,6 +141,7 @@ export const sanitizePreferences = (value: unknown, fallback: UserPreferences): 
     dailyGoal: value.dailyGoal === undefined ? fallback.dailyGoal : sanitizeDailyGoal(value.dailyGoal),
     showTransliteration: isBool(value.showTransliteration) ? value.showTransliteration : fallback.showTransliteration,
     showTranslation: isBool(value.showTranslation) ? value.showTranslation : fallback.showTranslation,
+    leftHanded: isBool(value.leftHanded) ? value.leftHanded : fallback.leftHanded,
   };
 };
 

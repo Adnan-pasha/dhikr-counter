@@ -48,6 +48,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   dailyGoal: 100,
   showTransliteration: true,
   showTranslation: true,
+  leftHanded: false,
 };
 
 // Default Dhikr Reminders Preset

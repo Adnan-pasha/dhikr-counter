@@ -2,7 +2,7 @@ import React from 'react';
 import { Bookmark, ChevronDown, Copy } from 'lucide-react';
 import { formatAyahForCopy, scriptOption, type ReaderAyah } from '../quran/editions';
 import { plainForCopy } from '../quran/indopak';
-import { arabicFontSize, type ReaderSettings } from '../quran/settings';
+import { arabicFontSize, lineHeightFor, type ReaderSettings } from '../quran/settings';
 import { toArabicDigits } from '../quran/text';
 import TajweedText from './TajweedText';
 
@@ -97,7 +97,7 @@ function AyahCard({ ayah, surahName, surahNumber, settings, bookmarked, onToggle
         lang="ar"
         dir="rtl"
         className={`${script.font === 'indopak' ? 'font-indopak' : 'font-quran'} text-right`}
-        style={{ fontSize: arabicFontSize(settings.textSize), lineHeight: 2.2, color: 'var(--reader-ink)', overflowWrap: 'anywhere', unicodeBidi: 'isolate' }}
+        style={{ fontSize: arabicFontSize(settings.textSize), lineHeight: lineHeightFor(settings.lineSpacing), color: 'var(--reader-ink)', overflowWrap: 'anywhere', unicodeBidi: 'isolate' }}
       >
         {script.selfNumbered ? (
           <>
