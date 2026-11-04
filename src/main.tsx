@@ -13,6 +13,10 @@ import AppErrorBoundary from './components/AppErrorBoundary.tsx';
 import './index.css';
 import { trackEvent } from './telemetry';
 import { getBackStack } from './backStack';
+import { installAndroidBack, isNativeApp } from './native';
+
+// Inside the Android app the system back button needs to be told what to do (see native.ts).
+void installAndroidBack();
 
 // Starts the back-button trail before anything renders, so history entries left by a reload are cleared first.
 getBackStack();
@@ -29,7 +33,8 @@ createRoot(document.getElementById('root')!).render(
 
 // Register PWA Service Worker for offline capabilities
 // Production only: in dev the worker would cache Vite modules and serve stale code.
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// Inside the Android app the files ship with the app, so there is nothing for a worker to cache or update.
+if ('serviceWorker' in navigator && import.meta.env.PROD && !isNativeApp()) {
   // A first install also fires `controllerchange` (clients.claim); only reload on a real update.
   const hadController = !!navigator.serviceWorker.controller;
   let reloading = false;

@@ -12,6 +12,8 @@ type Tab = 'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'sta
 interface BottomNavProps {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
+  /** Mirrors the bar so the first tab is under the left thumb. */
+  leftHanded?: boolean;
 }
 
 const PRIMARY_TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -29,7 +31,7 @@ const MORE_TABS: { id: Tab; label: string; icon: React.ReactNode; desc: string }
   { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" />,   desc: 'Sounds, theme & preferences' },
 ];
 
-export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+export default function BottomNav({ activeTab, onTabChange, leftHanded = false }: BottomNavProps) {
   const [showMore, setShowMore] = useState(false);
   useBackLayer(showMore, () => setShowMore(false));
   const isMoreActive = MORE_TABS.some(t => t.id === activeTab);
@@ -48,7 +50,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm z-[60]"
             onClick={() => setShowMore(false)}
           />
         )}
@@ -62,7 +64,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="absolute bottom-[68px] left-0 right-0 z-50 rounded-t-3xl overflow-hidden flex flex-col"
+            className="absolute bottom-[68px] left-0 right-0 z-[70] rounded-t-3xl overflow-hidden flex flex-col"
             style={{
               background: 'var(--color-bg-raised)',
               borderTop: '1px solid var(--color-border)',
@@ -75,7 +77,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 pb-3">
+            <div className={`flex items-center justify-between px-5 pb-3 ${leftHanded ? 'flex-row-reverse' : ''}`}>
               <p className="section-label">More Features</p>
               <button
                 onClick={() => setShowMore(false)}
@@ -131,7 +133,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
 
       {/* Bottom tab bar — 68px height for comfortable tap targets */}
       <div
-        className="shrink-0 flex items-center justify-around px-1 select-none z-30 relative pb-safe"
+        className={`shrink-0 flex items-center justify-around px-1 select-none z-30 relative pb-safe ${leftHanded ? 'flex-row-reverse' : ''}`}
         style={{
           height: '68px',
           background: 'var(--nav-bg)',

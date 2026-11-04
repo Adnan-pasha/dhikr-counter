@@ -26,6 +26,7 @@ import { practisedDay } from './quran/progress';
 import type { QuranIntent } from './components/QuranReader';
 import { dhikrIdFromSearch } from './notifications';
 import { setDay } from './salah';
+import { isNativeApp } from './native';
 import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer } from './routines';
 import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
 
@@ -358,6 +359,7 @@ export default function App() {
     <div
       id="app_root_viewport"
       data-theme={preferences.colorMode}
+      data-native={isNativeApp() ? 'true' : undefined}
       className="h-dvh w-full flex items-center justify-center overflow-hidden md:overflow-y-auto py-0 md:py-8 md:px-4"
       style={{ background: 'var(--color-bg-deep)' }}
     >
@@ -371,7 +373,7 @@ export default function App() {
         }}
       >
         {/* Status bar (desktop only) */}
-        <div className="hidden md:flex bg-[var(--color-bg-deep)] h-8 shrink-0 items-center justify-between px-7 select-none z-50">
+        <div id="desktop_status_bar" className="hidden md:flex bg-[var(--color-bg-deep)] h-8 shrink-0 items-center justify-between px-7 select-none z-50">
           <span className="text-[11px] font-bold font-mono text-slate-400">9:41</span>
           <div className="absolute left-1/2 -translate-x-1/2 w-28 h-5 bg-[var(--color-bg-deep)] rounded-b-2xl border-x border-b border-slate-800/60 flex items-center justify-center gap-1.5">
             <div className="w-1 h-1 rounded-full bg-slate-700" />
@@ -639,6 +641,7 @@ export default function App() {
           <BottomNav
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            leftHanded={preferences.leftHanded}
           />
 
           {/* CONFIRM MODAL */}
