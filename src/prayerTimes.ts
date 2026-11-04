@@ -54,7 +54,7 @@ export interface PrayerMoment {
 
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
-const deviceZone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone;
+export const deviceTimeZone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const isValidZone = (zone: unknown): zone is string => {
   if (typeof zone !== 'string' || zone.length === 0) return false;
@@ -68,7 +68,7 @@ const isValidZone = (zone: unknown): zone is string => {
 
 /** The calendar date ("2026-03-10") it is in a zone at an instant. A bad zone falls back to the phone's. */
 export const todayKeyIn = (timeZone: string, now: Date = new Date()): string => {
-  const zone = isValidZone(timeZone) ? timeZone : deviceZone();
+  const zone = isValidZone(timeZone) ? timeZone : deviceTimeZone();
   const parts = new Intl.DateTimeFormat('en-US', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
   const part = (type: string): string => parts.find((p) => p.type === type)?.value ?? '';
   return `${part('year')}-${part('month')}-${part('day')}`;
@@ -216,7 +216,7 @@ export const currentEvent = (
 
 /** A clock time in the place's zone ("03:30 PM" or "15:30"). */
 export const formatClock = (date: Date, timeZone: string, hour12 = true): string => {
-  const zone = isValidZone(timeZone) ? timeZone : deviceZone();
+  const zone = isValidZone(timeZone) ? timeZone : deviceTimeZone();
   return new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hourCycle: hour12 ? 'h12' : 'h23', timeZone: zone }).format(date);
 };
 
@@ -236,6 +236,6 @@ export const sanitizeLocation = (value: unknown): PrayerLocation | null => {
   const { lat, lng, timeZone, label } = value as Record<string, unknown>;
   if (typeof lat !== 'number' || typeof lng !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
-  const location: PrayerLocation = { lat, lng, timeZone: isValidZone(timeZone) ? timeZone : deviceZone() };
+  const location: PrayerLocation = { lat, lng, timeZone: isValidZone(timeZone) ? timeZone : deviceTimeZone() };
   return typeof label === 'string' && label.trim() ? { ...location, label: label.trim().slice(0, 80) } : location;
 };

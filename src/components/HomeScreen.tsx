@@ -13,6 +13,7 @@ import type { DailyProgress, StreakInfo } from '../habits';
 import DailyGoalCard from './DailyGoalCard';
 import FridayCard from './FridayCard';
 import QuranGoalCard from './QuranGoalCard';
+import HomeNextPrayer from './prayers/HomeNextPrayer';
 import type { QuranProgress } from '../quran/progress';
 import { FRIDAY_SALAWAT_ID, type FridayChecklist } from '../friday';
 
@@ -36,7 +37,7 @@ interface HomeScreenProps {
   preferences: UserPreferences;
   favouriteIds: string[];
   customDhikrs: Dhikr[];
-  onNavigateTo: (tab: 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'qibla' | 'stats' | 'settings') => void;
+  onNavigateTo: (tab: 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'qibla' | 'prayers' | 'stats' | 'settings') => void;
   onStartDhikr: (id: string) => void;
   onStartRoutine: (routineId: string, firstDhikrId: string) => void;
 }
@@ -228,6 +229,8 @@ export default function HomeScreen({
 
       <div className="scroll-area space-y-5">
 
+        <HomeNextPrayer madhab={preferences.madhab} onOpen={() => onNavigateTo('prayers')} />
+
         <FridayCard checklist={friday} onOpenKahf={onOpenKahf} onToggleKahf={onToggleKahf} onStartSalawat={() => onStartDhikr(FRIDAY_SALAWAT_ID)} />
 
         <DailyGoalCard progress={progress} streakInfo={streakInfo} onStartPause={onStartPause} onEndPause={onEndPause} />
@@ -401,7 +404,7 @@ export default function HomeScreen({
               { icon: 'routines' as const, label: 'Routines', tab: 'routine'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
               { icon: 'mosque' as const, label: 'Salah',    tab: 'salah'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
               { icon: 'book' as const, label: 'Quran',    tab: 'quran'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
-              { icon: 'qibla' as const, label: 'Qibla',    tab: 'qibla'    as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
+              { icon: 'sunrise' as const, label: 'Prayers', tab: 'prayers'  as const, bg: 'var(--color-brand-dim)', border: 'var(--color-brand-border)', text: 'var(--color-text-brand)' },
             ].map(({ icon, label, tab, bg, border, text }) => (
               <motion.button
                 key={tab}
@@ -429,8 +432,8 @@ export default function HomeScreen({
             <Compass className="w-5 h-5" style={{ color: '#22D3EE' }} />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-sm font-black" style={{ color: 'var(--color-text-primary)' }}>Qibla & Namaz</p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Prayer times, compass & Azan</p>
+            <p className="text-sm font-black" style={{ color: 'var(--color-text-primary)' }}>Qibla compass</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>Find the direction of the Kaaba</p>
           </div>
           <ChevronRight className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
         </motion.button>

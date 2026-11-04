@@ -1,4 +1,4 @@
-import { sanitizeLocation, type PrayerLocation } from './prayerTimes';
+import { deviceTimeZone, sanitizeLocation, type PrayerLocation } from './prayerTimes';
 
 export const PRAYER_LOCATION_KEY = 'tasbih_prayer_location';
 
@@ -129,6 +129,13 @@ export const writePrayerLocation = (value: unknown, source: LocationSource): Sav
     return null;
   }
 };
+
+/** A saved GPS place is where the phone was; the zone it is in now is the phone's zone. */
+export const withCurrentZone = (saved: SavedPrayerLocation | null): SavedPrayerLocation | null =>
+  saved && saved.source === 'gps' ? { ...saved, timeZone: deviceTimeZone() } : saved;
+
+/** The place to work prayer times out for, in the zone it is in now. Null until one has been chosen. */
+export const readPrayerPlace = (): SavedPrayerLocation | null => withCurrentZone(readPrayerLocation());
 
 export const clearPrayerLocation = (): void => {
   try {

@@ -31,6 +31,7 @@ import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer 
 import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
+const PrayersScreen = lazy(() => import('./components/PrayersScreen'));
 // Use the full rich ADHKAAR_LIBRARY as system dhikrs
 const SYSTEM_DHIKRS: Dhikr[] = ADHKAAR_LIBRARY;
 
@@ -94,7 +95,7 @@ export default function App() {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [reminders, setReminders] = useState<DhikrReminder[]>([]);
   const [activeReminderTriggered, setActiveReminderTriggered] = useState<DhikrReminder | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla' | 'prayers'>('home');
   const [streakPauses, setStreakPauses] = useState<StreakPause[]>([]);
   const [activeDays, setActiveDays] = useState<string[]>([]);
   const [fridayKahf, setFridayKahf] = useState<string[]>([]);
@@ -342,6 +343,15 @@ export default function App() {
     return 'bg-slate-100';
   };
 
+  /** Logs or un-logs a prayer. The dhikr offer belongs to the Salah screen, so only that screen asks for it. */
+  const togglePrayer = (date: string, prayer: SalahName, offerDhikr: boolean) => {
+    const { logs, nowDone } = togglePrayerLog(salahLogsRef.current, date, prayer);
+    salahLogsRef.current = logs;
+    setSalahLogs(logs);
+    // The offer follows today's prayers; catching up on an earlier day does not start it.
+    setAfterSalahPrayer(offerDhikr && date === today && nowDone && isFardPrayer(prayer) && afterSalahRoutine(routines) ? prayer : null);
+  };
+
   const activeTabClass = (tab: typeof activeTab) => {
     if (activeTab === tab) {
       return preferences.theme === 'emerald'
@@ -550,13 +560,7 @@ export default function App() {
               <SalahTracker
                 salahLogs={salahLogs}
                 today={today}
-                onTogglePrayer={(date, prayer) => {
-                  const { logs, nowDone } = togglePrayerLog(salahLogsRef.current, date, prayer);
-                  salahLogsRef.current = logs;
-                  setSalahLogs(logs);
-                  // The dhikr offer follows today's prayers; catching up on an earlier day does not start it.
-                  setAfterSalahPrayer(date === today && nowDone && isFardPrayer(prayer) && afterSalahRoutine(routines) ? prayer : null);
-                }}
+                onTogglePrayer={(date, prayer) => togglePrayer(date, prayer, true)}
                 onSetDay={(date, done) => {
                   const logs = setDay(salahLogsRef.current, date, done);
                   salahLogsRef.current = logs;
@@ -620,6 +624,23 @@ export default function App() {
                 dhikrs={dhikrs}
                 onGoBack={() => setActiveTab('home')}
               />
+            )}
+
+            {activeTab === 'prayers' && (
+              <Suspense fallback={
+                <div className="flex-1 flex items-center justify-center bg-[var(--color-bg-base)]">
+                  <span className="text-brand-400 text-xs font-bold animate-pulse">Loading prayer times...</span>
+                </div>
+              }>
+                <PrayersScreen
+                  madhab={preferences.madhab}
+                  onMadhabChange={(madhab) => setPreferences(prev => ({ ...prev, madhab }))}
+                  salahLogs={salahLogs}
+                  today={today}
+                  onTogglePrayer={(date, prayer) => togglePrayer(date, prayer, false)}
+                  onOpenQibla={() => setActiveTab('qibla')}
+                />
+              </Suspense>
             )}
 
             {activeTab === 'qibla' && (
