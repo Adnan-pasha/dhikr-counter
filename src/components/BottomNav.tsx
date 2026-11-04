@@ -4,10 +4,10 @@ import { useBackLayer } from '../useBackLayer';
 import {
   Home, CircleDot, BookOpen, Compass,
   RefreshCw, Moon, Trophy, Settings,
-  BookMarked, MoreHorizontal, X
+  BookMarked, MoreHorizontal, MoonStar, X
 } from 'lucide-react';
 
-type Tab = 'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla';
+type Tab = 'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla' | 'prayers';
 
 interface BottomNavProps {
   activeTab: Tab;
@@ -21,12 +21,13 @@ const PRIMARY_TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'counter', label: 'Tasbih', icon: <CircleDot className="w-6 h-6 max-w-[26px] max-h-[26px]" /> },
   { id: 'adhkaar', label: 'Adhkaar', icon: <BookOpen className="w-6 h-6 max-w-[26px] max-h-[26px]" /> },
   { id: 'quran',   label: 'Quran',  icon: <BookMarked className="w-6 h-6 max-w-[26px] max-h-[26px]" /> },
-  { id: 'qibla',   label: 'Qibla',  icon: <Compass className="w-6 h-6 max-w-[26px] max-h-[26px]" /> },
+  { id: 'prayers', label: 'Prayers', icon: <MoonStar className="w-6 h-6 max-w-[26px] max-h-[26px]" /> },
 ];
 
 const MORE_TABS: { id: Tab; label: string; icon: React.ReactNode; desc: string }[] = [
   { id: 'routine',  label: 'Routines',  icon: <RefreshCw className="w-5 h-5" />,  desc: 'Build & track daily routines' },
   { id: 'salah',    label: 'Salah',     icon: <Moon className="w-5 h-5" />,       desc: 'Track your 5 daily prayers' },
+  { id: 'qibla',    label: 'Qibla',     icon: <Compass className="w-5 h-5" />,    desc: 'Compass to the Kaaba' },
   { id: 'stats',    label: 'Stats',     icon: <Trophy className="w-5 h-5" />,     desc: 'Streaks, levels & achievements' },
   { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" />,   desc: 'Sounds, theme & preferences' },
 ];

@@ -228,7 +228,7 @@ interface DhikrActionDeps {
   setDhikrs: React.Dispatch<React.SetStateAction<Dhikr[]>>;
   setCurrentDhikrId: React.Dispatch<React.SetStateAction<string>>;
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
-  setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla'>>;
+  setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla' | 'prayers'>>;
   setHistory: React.Dispatch<React.SetStateAction<DhikrHistory[]>>;
   setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState | null>>;
 }
@@ -467,7 +467,7 @@ interface HistoryFlowDeps {
   setFavouriteIds: React.Dispatch<React.SetStateAction<string[]>>;
   setRoutines: React.Dispatch<React.SetStateAction<Routine[]>>;
   setSalahLogs: React.Dispatch<React.SetStateAction<SalahLog[]>>;
-  setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla'>>;
+  setActiveTab: React.Dispatch<React.SetStateAction<'home' | 'counter' | 'adhkaar' | 'routine' | 'salah' | 'quran' | 'stats' | 'settings' | 'qibla' | 'prayers'>>;
   setConfirmModal: React.Dispatch<React.SetStateAction<ConfirmModalState | null>>;
   systemDhikrs: Dhikr[];
   defaultPreferences: UserPreferences;
