@@ -1,4 +1,4 @@
-package com.cognitrixlabs.dhikr;
+package com.cognitrixlabs.muneeb;
 
 import com.getcapacitor.BridgeActivity;
 

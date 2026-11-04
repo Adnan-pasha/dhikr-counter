@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.cognitrixlabs.dhikr"
+    namespace = "com.cognitrixlabs.muneeb"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.cognitrixlabs.dhikr"
+        applicationId "com.cognitrixlabs.muneeb"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
