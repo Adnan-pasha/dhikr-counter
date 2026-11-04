@@ -13,12 +13,12 @@ test('defaults read comfortably: dark theme, middle size, Uthmani, translation o
   assert.ok(d.textSize > 0 && d.textSize < TEXT_SIZES.length - 1, 'not at either end');
 });
 
-test('three reading themes are offered', () => {
-  assert.deepEqual(READER_THEMES.map((t) => t.id), ['dark', 'paper', 'modern']);
+test('four reading themes are offered, the last one high contrast', () => {
+  assert.deepEqual(READER_THEMES.map((t) => t.id), ['dark', 'paper', 'modern', 'contrast']);
 });
 
 test('stored settings are accepted when valid', () => {
-  const stored = { theme: 'paper', textSize: 4, script: 'simple', showTranslation: false, translation: 'quranenc:urdu_junagarhi', showTransliteration: false, keepScreenOn: true };
+  const stored = { theme: 'paper', textSize: 4, lineSpacing: 2, script: 'simple', showTranslation: false, translation: 'quranenc:urdu_junagarhi', showTransliteration: false, keepScreenOn: true };
   assert.deepEqual(sanitizeReaderSettings(stored), stored);
 });
 

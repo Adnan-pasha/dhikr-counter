@@ -1,12 +1,21 @@
 import { SCRIPTS, DEFAULT_SCRIPT, type ScriptId } from './editions';
 import { PICKTHALL_ID, parseTranslationId, type TranslationId } from './translations';
 
-export type ReaderTheme = 'dark' | 'paper' | 'modern';
+export type ReaderTheme = 'dark' | 'paper' | 'modern' | 'contrast';
 
 export const READER_THEMES: ReadonlyArray<{ id: ReaderTheme; label: string }> = [
   { id: 'dark', label: 'Dark' },
   { id: 'paper', label: 'Paper' },
   { id: 'modern', label: 'Modern' },
+  { id: 'contrast', label: 'Contrast' },
+];
+
+/** Space between lines of Arabic, as a line-height multiple. Taller lines are easier to track for many readers. */
+export const LINE_SPACINGS: ReadonlyArray<{ id: 'compact' | 'normal' | 'relaxed' | 'loose'; label: string; value: number }> = [
+  { id: 'compact', label: 'Compact', value: 1.8 },
+  { id: 'normal', label: 'Normal', value: 2.2 },
+  { id: 'relaxed', label: 'Relaxed', value: 2.6 },
+  { id: 'loose', label: 'Loose', value: 3 },
 ];
 
 /** Arabic text sizes in px, smallest to largest. */
@@ -16,6 +25,8 @@ export interface ReaderSettings {
   theme: ReaderTheme;
   /** Index into TEXT_SIZES. */
   textSize: number;
+  /** Index into LINE_SPACINGS. */
+  lineSpacing: number;
   script: ScriptId;
   showTranslation: boolean;
   /** Which translation to show: the built-in one, or a QuranEnc one ("quranenc:<key>"). */
@@ -27,12 +38,16 @@ export interface ReaderSettings {
 export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   theme: 'dark',
   textSize: 2,
+  lineSpacing: 1,
   script: DEFAULT_SCRIPT,
   showTranslation: true,
   translation: PICKTHALL_ID,
   showTransliteration: false,
   keepScreenOn: false,
 };
+
+/** The line-height for a stored spacing index; anything out of range reads as the default. */
+export const lineHeightFor = (index: number): number => (LINE_SPACINGS[index] ?? LINE_SPACINGS[DEFAULT_READER_SETTINGS.lineSpacing]).value;
 
 const clampSize = (index: number): number => Math.min(TEXT_SIZES.length - 1, Math.max(0, index));
 
@@ -50,6 +65,7 @@ export const sanitizeReaderSettings = (value: unknown): ReaderSettings => {
   return {
     theme: READER_THEMES.some((t) => t.id === v.theme) ? (v.theme as ReaderTheme) : d.theme,
     textSize: Number.isInteger(v.textSize) && (v.textSize as number) >= 0 && (v.textSize as number) < TEXT_SIZES.length ? (v.textSize as number) : d.textSize,
+    lineSpacing: Number.isInteger(v.lineSpacing) && (v.lineSpacing as number) >= 0 && (v.lineSpacing as number) < LINE_SPACINGS.length ? (v.lineSpacing as number) : d.lineSpacing,
     script: SCRIPTS.some((s) => s.id === v.script) ? (v.script as ScriptId) : d.script,
     showTranslation: isBool(v.showTranslation) ? v.showTranslation : d.showTranslation,
     translation: parseTranslationId(v.translation) ? (v.translation as TranslationId) : d.translation,

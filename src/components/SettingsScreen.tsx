@@ -371,6 +371,19 @@ export default function SettingsScreen({
           {/* Haptics Switch */}
           <div className="flex justify-between items-center bg-transparent">
             <div>
+              <p className="text-xs font-bold text-slate-200">Left-handed layout</p>
+              <p className="text-xs text-slate-400 font-medium">Moves the counter buttons to the left, under your thumb</p>
+            </div>
+            <Switch
+              id="switch_left_handed"
+              label="Left-handed layout"
+              checked={preferences.leftHanded}
+              onChange={(val) => onChangePreferences({ leftHanded: val })}
+            />
+          </div>
+
+          <div className="flex justify-between items-center bg-transparent">
+            <div>
               <p className="text-xs font-bold text-slate-200">Physical Haptic Vibration</p>
               <p className="text-xs text-slate-400 font-medium">Pulse device haptics on tap feedback</p>
             </div>

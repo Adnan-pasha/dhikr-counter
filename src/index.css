@@ -596,6 +596,33 @@ body {
   --tj-g: #ffa04a;
 }
 
+/* High contrast: pure black and white with a yellow accent, for low vision and bright sun. */
+[data-reader-theme="contrast"] {
+  --reader-bg: #000000;
+  --reader-surface: #0d0d0d;
+  --reader-ink: #ffffff;
+  --reader-muted: #d9d9d9;
+  --reader-accent: #ffd60a;
+  --reader-border: #8c8c8c;
+  --tj-h: #d0d0d0;
+  --tj-s: #d0d0d0;
+  --tj-l: #d0d0d0;
+  --tj-n: #8ab8ff;
+  --tj-p: #aab4ff;
+  --tj-m: #9fb0ff;
+  --tj-o: #a5b2ff;
+  --tj-q: #ff8a8f;
+  --tj-c: #ff8cf0;
+  --tj-f: #e0a8ff;
+  --tj-w: #8be85f;
+  --tj-i: #5fe0ff;
+  --tj-a: #4fe0b8;
+  --tj-u: #7be876;
+  --tj-d: #d0d0d0;
+  --tj-b: #d0d0d0;
+  --tj-g: #ffae5c;
+}
+
 [data-reader-theme="paper"] {
   --reader-bg: #f6efd9;
   --reader-surface: #fbf6e7;

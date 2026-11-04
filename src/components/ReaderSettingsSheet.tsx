@@ -8,7 +8,7 @@ import { colourText } from '../quran/tajweed';
 import { useModalDialog } from './useModalDialog';
 import { translationCredit, translationLabel, parseTranslationId } from '../quran/translations';
 import { SCRIPTS, TRANSLITERATION_EDITION } from '../quran/editions';
-import { READER_THEMES, TEXT_SIZES, arabicFontSize, type ReaderSettings } from '../quran/settings';
+import { READER_THEMES, LINE_SPACINGS, TEXT_SIZES, arabicFontSize, type ReaderSettings } from '../quran/settings';
 import { BASMALA } from '../quran/text';
 
 interface ReaderSettingsSheetProps {
@@ -109,7 +109,7 @@ export default function ReaderSettingsSheet({ open, onClose, settings, onChange,
           <div className="space-y-5">
             <div>
               <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--reader-muted)' }}>Theme</p>
-              <div className="grid grid-cols-3 gap-2" role="group" aria-label="Theme">
+              <div className="grid grid-cols-2 min-[380px]:grid-cols-4 gap-2" role="group" aria-label="Theme">
                 {READER_THEMES.map((t) => (
                   <button
                     key={t.id}
@@ -155,6 +155,24 @@ export default function ReaderSettingsSheet({ open, onClose, settings, onChange,
               >
                 {BASMALA}
               </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--reader-muted)' }}>Line spacing</p>
+              <div className="grid grid-cols-2 min-[380px]:grid-cols-4 gap-2" role="group" aria-label="Line spacing">
+                {LINE_SPACINGS.map((spacing, index) => (
+                  <button
+                    key={spacing.id}
+                    type="button"
+                    aria-pressed={settings.lineSpacing === index}
+                    onClick={() => onChange({ lineSpacing: index })}
+                    className="tap-target rounded-2xl px-2 text-sm font-bold cursor-pointer"
+                    style={chipStyle(settings.lineSpacing === index)}
+                  >
+                    {spacing.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex items-center justify-between gap-3 rounded-2xl p-4" style={card}>

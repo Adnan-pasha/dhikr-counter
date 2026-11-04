@@ -116,7 +116,7 @@ const contrast = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-for (const name of ['dark', 'paper', 'modern']) {
+for (const name of ['dark', 'paper', 'modern', 'contrast']) {
   test(`${name} theme: every tajweed colour is readable on the page and on the cards`, () => {
     const block = css.match(new RegExp(String.raw`\[data-reader-theme="${name}"\]\s*\{([^}]*)\}`));
     assert.ok(block, `${name} block`);

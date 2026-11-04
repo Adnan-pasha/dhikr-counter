@@ -84,6 +84,8 @@ export interface UserPreferences {
   showTransliteration: boolean;
   /** Show the translation (meaning) line under the Arabic. */
   showTranslation: boolean;
+  /** Mirror the thumb-reach controls (counter buttons, page turn bar) for left-handed use. */
+  leftHanded: boolean;
 }
 
 /** The fields a user can change on a custom dhikr. */
