@@ -93,12 +93,18 @@ const monthKey = ({ year, month }: YearMonth): string => `${year}-${String(month
 export const canShowMonth = (ym: YearMonth, earliest: string, today: string): boolean =>
   monthKey(ym) >= earliest.slice(0, 7) && monthKey(ym) <= today.slice(0, 7);
 
-/** The oldest day the calendar goes back to: the install date, or older saved data, never after today. */
+/** How many days before the install date can still be filled in: people start using the app having already prayed. */
+export const BACKFILL_DAYS = 60;
+
+/**
+ * The oldest day the calendar goes back to: BACKFILL_DAYS before the install date or the oldest saved day,
+ * whichever is older, counted from today at the latest.
+ */
 export const earliestDate = (logs: readonly SalahLog[], installed: string | null, today: string): string => {
   const dates = logs.map((l) => l.date);
   if (installed && DATE_PATTERN.test(installed)) dates.push(installed);
   const oldest = dates.sort()[0];
-  return oldest && oldest < today ? oldest : today;
+  return addDays(oldest && oldest < today ? oldest : today, -BACKFILL_DAYS);
 };
 
 interface StorageLike { getItem(key: string): string | null; setItem(key: string, value: string): void }

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   FARD_PRAYERS, prayerCount, cleanSalahLogs, setDay, salahStreak, monthCells, shiftMonth,
-  canShowMonth, earliestDate, readInstallDate, seedInstallDate, dayLabel, addDays,
+  canShowMonth, earliestDate, readInstallDate, seedInstallDate, dayLabel, addDays, BACKFILL_DAYS,
 } from '../src/salah.ts';
 
 const log = (date, ...done) => ({ date, prayers: Object.fromEntries(done.map((p) => [p, true])) });
@@ -77,11 +77,16 @@ test('shiftMonth wraps years, and months outside the install-to-today range are 
   assert.equal(canShowMonth({ year: 2026, month: 4 }, '2026-02-15', '2026-04-10'), false);
 });
 
-test('the earliest date is the install date, or older saved data, never later than today', () => {
-  assert.equal(earliestDate([log('2026-01-05', 'fajr')], '2026-02-01', '2026-04-10'), '2026-01-05');
-  assert.equal(earliestDate([], '2026-02-01', '2026-04-10'), '2026-02-01');
-  assert.equal(earliestDate([], '2027-01-01', '2026-04-10'), '2026-04-10');
-  assert.equal(earliestDate([], null, '2026-04-10'), '2026-04-10');
+test('days can be filled in for a while before the install date, since people start using the app having already prayed', () => {
+  assert.equal(BACKFILL_DAYS, 60);
+  assert.equal(earliestDate([log('2026-01-05', 'fajr')], '2026-02-01', '2026-04-10'), addDays('2026-01-05', -BACKFILL_DAYS));
+  assert.equal(earliestDate([], '2026-02-01', '2026-04-10'), addDays('2026-02-01', -BACKFILL_DAYS));
+});
+
+test('a brand new install can still reach the last two months, and an odd install date never pushes it past today', () => {
+  assert.equal(earliestDate([], '2026-04-10', '2026-04-10'), '2026-02-09');
+  assert.equal(earliestDate([], '2027-01-01', '2026-04-10'), '2026-02-09');
+  assert.equal(earliestDate([], null, '2026-04-10'), '2026-02-09');
 });
 
 const memoryStorage = () => {
