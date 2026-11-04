@@ -210,6 +210,8 @@ streamed recitation with clear reciter credit. Everything else stays behind a wr
 | 8 | Phase D Duas, Phase U utilities | M + several S | none | Breadth |
 | 9 | Q5 Audio | L | licence gate, 4a for lock-screen | Listening |
 | 10 | 4d Release | M | the rest | Play Store |
+| 11 | Phase A Accounts, sync and backup | L | 4d (post-release) | Optional login, cross-device sync |
+| 12 | Phase S Social | L | Phase A | Groups, shared goals, leaderboards |
 
 Sizes: S is a day or two of work, M about a week, L one to two weeks. These are rough and the licence gates can move them.
 
@@ -223,7 +225,8 @@ Sizes: S is a day or two of work, M about a week, L one to two weeks. These are 
 | 2 | Data source for translations and IndoPak | **Research done** (section 7). Needs your call on the QuranEnc-first approach and on whether to open a Quran Foundation developer account for IndoPak |
 | 3 | Platform | **Android first**, iOS later |
 | 4 | App name and package id | **Open.** Shortlist below |
-| 5 | Skip list: no accounts, points, AI chat, social feed, donations | **Confirmed** |
+| 5 | Skip list: no points, AI chat, social feed, donations at launch | **Confirmed.** Accounts moved out of the skip list on 2026-11-04: planned as Phase A, after the first release (section 10) |
+| 6 | Accounts: scope, sign-in methods, region | **Decided 2026-11-04.** Sync and backup only; email code plus Google; Supabase in the nearest region (Mumbai assumed). Social features come after that. Timing: after release |
 
 ### Name shortlist
 I cannot query the Play Store directly, so "no exact match found" means my web searches did not surface one. Search the Play Console
@@ -238,3 +241,23 @@ and run a trademark check before registering anything.
 | Sakina / Sakinah | Tranquillity | **Avoid.** Many existing apps across stores |
 
 Suggested package id pattern: `com.cognitrixlabs.<name>` in lowercase, for example `com.cognitrixlabs.dhikra`.
+
+---
+
+## 10. Post-release: Phase A (accounts) and Phase S (social)
+
+Starts only after 4d ships. The app stays fully usable without an account; signing in only turns on sync and backup.
+
+### Phase A: Accounts, sync and backup (L)
+- **Backend:** Supabase in the nearest region (Mumbai assumed). One table `user_data(user_id, key, value jsonb, updated_at, device_id)`, primary key `(user_id, key)`, row-level security so users read only their own rows.
+- **Sign-in:** email one-time code plus Google. Apple only if iOS ships. On Android, Google sign-in must use the system browser (`@capacitor/browser`) plus a deep link, because Google blocks WebViews.
+- **Merge on the client, per key:** history and Salah logs union by date (larger count per day, prayer ticks OR-ed); dhikrs, routines, favourites union by id with newest edit winning and tombstones for deletes; pauses, active days and Friday Kahf union; Quran progress furthest wins.
+- **Per-device, never synced:** reminders, sound and volume, left-handed, reader settings, the live `currentCount`.
+- **First login never wipes data:** local and remote are merged and the result is summarised to the user.
+- **Slices:** S1 pure merge core (no network), S2 auth, S3 sync engine (debounced push, pull on login / foreground / reconnect), S4 Account card in Settings, S5 privacy and compliance, S6 hardening and two-device tests.
+- **Compliance:** in-app Delete account plus a web deletion page (Play requires both), data export, privacy policy page, Data-safety answers. Deletion runs in a Supabase Edge Function; the service-role key never ships in the app.
+- **Gotchas:** free Supabase projects pause after about 7 days idle (use Pro or a keep-alive before launch); default Supabase email is heavily rate-limited, so use custom SMTP on the company domain; Google OAuth needs a consent screen and verification; changing the package id after OAuth setup means redoing the Android redirect.
+- **Needs from the owner:** a Supabase project, a Google Cloud OAuth client, an SMTP provider.
+
+### Phase S: Social (L, after Phase A)
+Groups, shared goals and leaderboards, built on accounts. Needs its own design pass first (privacy defaults, moderation, opt-in visibility).

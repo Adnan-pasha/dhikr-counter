@@ -7,7 +7,10 @@ const SOUND_TONES: SoundTone[] = ['wooden', 'chime', 'digital', 'bowl'];
 const THEMES: AppTheme[] = ['slate', 'emerald', 'amber', 'indigo', 'midnight'];
 const HAPTIC_STRENGTHS: HapticStrength[] = ['light', 'medium', 'strong'];
 const MADHABS: Madhab[] = ['hanafi', 'shafi', 'maliki', 'hanbali'];
-const PRAYER_CALCULATION_METHODS: PrayerCalculationMethod[] = ['Karachi', 'MWL', 'UmmAlQura', 'ISNA', 'Egypt'];
+/** Kept in step with CALCULATION_METHODS in prayerTimes.ts (a test checks it) so storage never pulls in the calculator. */
+export const PRAYER_CALCULATION_METHODS: PrayerCalculationMethod[] = [
+  'Karachi', 'MWL', 'UmmAlQura', 'ISNA', 'Egypt', 'Dubai', 'MoonsightingCommittee', 'Kuwait', 'Qatar', 'Singapore', 'Tehran', 'Turkey',
+];
 const AZAN_SOUNDS: AzanSound[] = ['standard'];
 const PRAYER_AZAN_IDS: PrayerAzanId[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 

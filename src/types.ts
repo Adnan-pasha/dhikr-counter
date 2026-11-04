@@ -7,7 +7,9 @@ export type ColorMode = 'dark' | 'light';
 
 export type Madhab = 'hanafi' | 'shafi' | 'maliki' | 'hanbali';
 
-export type PrayerCalculationMethod = 'Karachi' | 'MWL' | 'UmmAlQura' | 'ISNA' | 'Egypt';
+export type PrayerCalculationMethod =
+  | 'Karachi' | 'MWL' | 'UmmAlQura' | 'ISNA' | 'Egypt'
+  | 'Dubai' | 'MoonsightingCommittee' | 'Kuwait' | 'Qatar' | 'Singapore' | 'Tehran' | 'Turkey';
 
 /** Bundled adhan recordings. Legacy 'mecca'/'medina' values migrate to 'standard'. */
 export type AzanSound = 'standard';

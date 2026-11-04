@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Compass, MapPin, Sparkles, Navigation, Info, HelpCircle, 
   Search, Globe, ChevronDown, Check, X, Bell, BellOff, 
   Play, Pause, Volume2, VolumeX, Clock, Sliders, Calendar, AlertCircle
 } from 'lucide-react';
-import { Coordinates, CalculationMethod, PrayerTimes, Madhab as AdhanMadhab } from 'adhan';
 import { getAzanSource } from '../azan';
 import { AppIcon } from '../icons';
 import { AppTheme, Madhab as UserMadhab, PrayerSettings, PrayerCalculationMethod, PrayerAzanId } from '../types';
 import { readPrayerSettings, writePrayerSettings } from '../domain';
+import { CALCULATION_METHODS, PRAYER_EVENTS, computePrayerDay, eventWindow, formatClock, pickCurrent, pickNext, todayKeyIn, type PrayerEvent } from '../prayerTimes';
+import { CITY_PRESETS, qiblaBearing, readPrayerLocation, writePrayerLocation, type CityPreset } from '../places';
 
 interface QiblaScreenProps {
   theme: AppTheme;
@@ -17,84 +18,32 @@ interface QiblaScreenProps {
   onMadhabChange: (madhab: UserMadhab) => void;
 }
 
-interface CityPreset {
-  name: string;
-  lat: number;
-  lng: number;
-  direction: number; // precalculated bearing
-  timezone?: string; // Target IANA Timezone string for offset matching
-}
 
-const RAW_CITY_PRESETS = [
-  { name: 'Mecca (Haram), Saudi Arabia', lat: 21.4225, lng: 39.8262, timezone: 'Asia/Riyadh' },
-  { name: 'Medina, Saudi Arabia', lat: 24.4672, lng: 39.6111, timezone: 'Asia/Riyadh' },
-  { name: 'Riyadh, Saudi Arabia', lat: 24.7136, lng: 46.6753, timezone: 'Asia/Riyadh' },
-  { name: 'London, United Kingdom', lat: 51.5074, lng: -0.1278, timezone: 'Europe/London' },
-  { name: 'New York, United States', lat: 40.7128, lng: -74.0060, timezone: 'America/New_York' },
-  { name: 'Jakarta, Indonesia', lat: -6.2088, lng: 106.8456, timezone: 'Asia/Jakarta' },
-  { name: 'Kuala Lumpur, Malaysia', lat: 3.1390, lng: 101.6869, timezone: 'Asia/Kuala_Lumpur' },
-  { name: 'Cairo, Egypt', lat: 30.0444, lng: 31.2357, timezone: 'Africa/Cairo' },
-  { name: 'Istanbul, Turkey', lat: 41.0082, lng: 28.9784, timezone: 'Europe/Istanbul' },
-  { name: 'Singapore, Singapore', lat: 1.3521, lng: 103.8198, timezone: 'Asia/Singapore' },
-  { name: 'Dubai, United Arab Emirates', lat: 25.2048, lng: 55.2708, timezone: 'Asia/Dubai' },
-  { name: 'Sydney, Australia', lat: -33.8688, lng: 151.2093, timezone: 'Australia/Sydney' },
-  { name: 'Mumbai, India', lat: 19.0760, lng: 72.8777, timezone: 'Asia/Kolkata' },
-  { name: 'Karachi, Pakistan', lat: 24.8607, lng: 67.0011, timezone: 'Asia/Karachi' },
-  { name: 'Dhaka, Bangladesh', lat: 23.8103, lng: 90.4125, timezone: 'Asia/Dhaka' },
-  { name: 'Sarajevo, Bosnia & Herzegovina', lat: 43.8563, lng: 18.4131, timezone: 'Europe/Sarajevo' },
-  { name: 'Casablanca, Morocco', lat: 33.5731, lng: -7.5898, timezone: 'Africa/Casablanca' },
-  { name: 'Cape Town, South Africa', lat: -33.9249, lng: 18.4241, timezone: 'Africa/Johannesburg' },
-  { name: 'Baghdad, Iraq', lat: 33.3152, lng: 44.3661, timezone: 'Asia/Baghdad' },
-  { name: 'Tehran, Iran', lat: 35.6892, lng: 51.3890, timezone: 'Asia/Tehran' },
-  { name: 'Samarkand, Uzbekistan', lat: 39.6542, lng: 66.9597, timezone: 'Asia/Samarkand' },
-  { name: 'Toronto, Canada', lat: 43.6532, lng: -79.3832, timezone: 'America/Toronto' },
-  { name: 'Paris, France', lat: 48.8566, lng: 2.3522, timezone: 'Europe/Paris' },
-  { name: 'Chicago, United States', lat: 41.8781, lng: -87.6298, timezone: 'America/Chicago' },
-  { name: 'Los Angeles, United States', lat: 34.0522, lng: -118.2437, timezone: 'America/Los_Angeles' },
-  { name: 'Tokyo, Japan', lat: 35.6762, lng: 139.6503, timezone: 'Asia/Tokyo' },
-  { name: 'Tashkent, Uzbekistan', lat: 41.2995, lng: 69.2401, timezone: 'Asia/Tashkent' },
-  { name: 'Berlin, Germany', lat: 52.5200, lng: 13.4050, timezone: 'Europe/Berlin' },
-  { name: 'Moscow, Russia', lat: 55.7558, lng: 37.6173, timezone: 'Europe/Moscow' },
-  { name: 'Jerusalem, Palestine', lat: 31.7683, lng: 35.2137, timezone: 'Asia/Gaza' },
-  { name: 'Amman, Jordan', lat: 31.9522, lng: 35.9106, timezone: 'Asia/Amman' },
-  { name: 'Damascus, Syria', lat: 33.5138, lng: 36.2765, timezone: 'Asia/Damascus' },
-  { name: 'Seville, Spain', lat: 37.3891, lng: -5.9845, timezone: 'Europe/Madrid' },
-  { name: 'Prague, Czech Republic', lat: 50.0755, lng: 14.4378, timezone: 'Europe/Prague' },
-  { name: 'Reykjavik, Iceland', lat: 64.1466, lng: -21.9426, timezone: 'Atlantic/Reykjavik' },
-  { name: 'Lagos, Nigeria', lat: 6.5244, lng: 3.3792, timezone: 'Africa/Lagos' },
-  { name: 'Bucharest, Romania', lat: 44.4268, lng: 26.1025, timezone: 'Europe/Bucharest' },
-];
+const NO_LOCATION_LABEL = 'Choose your location';
 
-const calculateQiblaStatic = (lat: number, lng: number) => {
-  const meccaLat = 21.4225 * Math.PI / 180;
-  const meccaLng = 39.8262 * Math.PI / 180;
-  const uLat = lat * Math.PI / 180;
-  const uLng = lng * Math.PI / 180;
+const deviceTimeZone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
-  const dLng = meccaLng - uLng;
-  const y = Math.sin(dLng);
-  const x = Math.cos(uLat) * Math.tan(meccaLat) - Math.sin(uLat) * Math.cos(dLng);
-  
-  let bearing = Math.atan2(y, x);
-  let bearingDeg = (bearing * 180 / Math.PI + 360) % 360;
-  return Math.round(bearingDeg);
+const PRAYER_LABELS: Record<PrayerEvent, { label: string; subtitle: string }> = {
+  fajr: { label: 'Fajr', subtitle: 'Dawn' },
+  sunrise: { label: 'Sunrise', subtitle: 'Ishraq' },
+  dhuhr: { label: 'Dhuhr', subtitle: 'Noon' },
+  asr: { label: 'Asr', subtitle: 'Afternoon' },
+  maghrib: { label: 'Maghrib', subtitle: 'Sunset' },
+  isha: { label: 'Isha', subtitle: 'Night' },
 };
-
-// Major cities worldwide and their calculated bearing direction towards Kaaba
-const CITY_PRESETS: CityPreset[] = RAW_CITY_PRESETS.map(city => ({
-  ...city,
-  direction: calculateQiblaStatic(city.lat, city.lng)
-}));
 
 export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScreenProps) {
   // Navigation sub-tab inside Qibla Finder: Compass vs. PrayTimes
   const [subTab, setSubTab] = useState<'qibla' | 'namaz'>('qibla');
 
   // Coordinates and global timezone references
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [qiblaAngle, setQiblaAngle] = useState<number>(119); // Default to London's direction
-  const [locationName, setLocationName] = useState<string>('London, United Kingdom');
-  const [locationTimezone, setLocationTimezone] = useState<string>('Europe/London');
+  // The place is remembered between visits. Until one is chosen there is no default: guessing a city would show wrong prayer times.
+  const [savedPlace] = useState(() => readPrayerLocation());
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(savedPlace ? { lat: savedPlace.lat, lng: savedPlace.lng } : null);
+  const [qiblaAngle, setQiblaAngle] = useState<number>(savedPlace ? qiblaBearing(savedPlace.lat, savedPlace.lng) : 0);
+  const [locationName, setLocationName] = useState<string>(savedPlace?.label ?? NO_LOCATION_LABEL);
+  const [locationTimezone, setLocationTimezone] = useState<string>(savedPlace && savedPlace.source === 'city' ? savedPlace.timeZone : deviceTimeZone());
+  const hasLocation = coords !== null;
   const [gpsLoading, setGpsLoading] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [isUnsecureContext, setIsUnsecureContext] = useState<boolean>(false);
@@ -425,23 +374,8 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
   const dragStartAngle = useRef<number>(0);
   const startHeading = useRef<number>(0);
 
-  // Bearing calculation engine
-  const calculateQibla = (lat: number, lng: number) => {
-    const meccaLat = 21.4225 * Math.PI / 180;
-    const meccaLng = 39.8262 * Math.PI / 180;
-    const uLat = lat * Math.PI / 180;
-    const uLng = lng * Math.PI / 180;
-
-    const dLng = meccaLng - uLng;
-    const y = Math.sin(dLng);
-    const x = Math.cos(uLat) * Math.tan(meccaLat) - Math.sin(uLat) * Math.cos(dLng);
-    
-    let bearing = Math.atan2(y, x);
-    let bearingDeg = (bearing * 180 / Math.PI + 360) % 360;
-    return Math.round(bearingDeg);
-  };
-
-  // Live Location Fetcher via GPS
+  // Live Location Fetcher via GPS. A newer choice (another request, or a picked city) makes a pending fix stale.
+  const gpsRequestId = useRef(0);
   const requestGPSLocation = () => {
     if (!navigator.geolocation) {
       setGpsError('Geolocation is not supported by your browser.');
@@ -450,27 +384,22 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
 
     setGpsLoading(true);
     setGpsError(null);
+    const requestId = ++gpsRequestId.current;
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (requestId !== gpsRequestId.current) return;
         const { latitude, longitude } = position.coords;
+        const saved = writePrayerLocation({ lat: latitude, lng: longitude, timeZone: deviceTimeZone(), label: 'My location' }, 'gps');
         setCoords({ lat: latitude, lng: longitude });
-        
-        const angle = calculateQibla(latitude, longitude);
-        setQiblaAngle(angle);
-        setLocationName(`My Compass (${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°)`);
-        
-        // Reset timezone to browser's standard live local zone
-        try {
-          const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-          setLocationTimezone(userTz || 'Europe/London');
-        } catch (e) {
-          setLocationTimezone('Europe/London');
-        }
-        
+        setQiblaAngle(qiblaBearing(latitude, longitude));
+        setLocationName(saved?.label ?? 'My location');
+        // The phone is where the user is, so its zone is the place's zone.
+        setLocationTimezone(deviceTimeZone());
         setGpsLoading(false);
       },
       (err) => {
+        if (requestId !== gpsRequestId.current) return;
         console.warn('Geolocation error:', err);
         setGpsError(
           err.code === 1 
@@ -488,7 +417,8 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
     if (typeof window !== 'undefined' && !window.isSecureContext) {
       setIsUnsecureContext(true);
     }
-    requestGPSLocation();
+    // A city the user picked on purpose is not overridden by GPS on every visit.
+    if (!savedPlace || savedPlace.source === 'gps') requestGPSLocation();
   }, []);
 
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
@@ -567,16 +497,19 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
 
   // When city preset selected
   const handleSelectCity = (city: CityPreset) => {
+    gpsRequestId.current += 1;
+    setGpsLoading(false);
+    writePrayerLocation({ lat: city.lat, lng: city.lng, timeZone: city.timeZone, label: city.name }, 'city');
     setCoords({ lat: city.lat, lng: city.lng });
     setQiblaAngle(city.direction);
     setLocationName(city.name);
-    setLocationTimezone(city.timezone || 'Europe/London');
+    setLocationTimezone(city.timeZone);
     setGpsError(null);
   };
 
   // Angle math helper to check if aligned (within 4 degrees)
   const relativeQiblaAngle = (qiblaAngle - heading + 360) % 360;
-  const isAligned = relativeQiblaAngle <= 4 || relativeQiblaAngle >= 356;
+  const isAligned = hasLocation && (relativeQiblaAngle <= 4 || relativeQiblaAngle >= 356);
 
   // Manual Drag Rotation logic for seamless offline desktop simulation
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -654,171 +587,89 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
   };
 
   // ==========================================
-  // NAMAZ & AZAN TIME PRESET CALCULATION
+  // NAMAZ & AZAN TIMES (calculated by src/prayerTimes.ts)
   // ==========================================
-  const activeLat = coords?.lat ?? 51.5074;
-  const activeLng = coords?.lng ?? -0.1278;
-  const activeTz = locationTimezone || 'Europe/London';
+  const activeTz = locationTimezone;
 
-  const coordinates = new Coordinates(activeLat, activeLng);
-  // Default computation date (today)
-  const [calculationDate, setCalculationDate] = useState<Date>(new Date());
-
-  const getParams = () => {
-    switch (calcMethod) {
-      case 'MWL':
-        return CalculationMethod.MuslimWorldLeague();
-      case 'UmmAlQura':
-        return CalculationMethod.UmmAlQura();
-      case 'ISNA':
-        return CalculationMethod.NorthAmerica();
-      case 'Egypt':
-        return CalculationMethod.Egyptian();
-      case 'Karachi':
-      default:
-        return CalculationMethod.Karachi();
-    }
-  };
-
-  const params = getParams();
-  params.madhab = prayerSettings.madhab === 'hanafi' ? AdhanMadhab.Hanafi : AdhanMadhab.Shafi;
-
-  // Primary calculation
-  const prayerTimes = new PrayerTimes(coordinates, calculationDate, params);
-
-  // Time Formatter relative to destination city's timezone offset
-  const formatPrayerTime = (pDate: Date) => {
-    try {
-      return new Intl.DateTimeFormat('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-        timeZone: activeTz
-      }).format(pDate);
-    } catch {
-      return new Intl.DateTimeFormat('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }).format(pDate);
-    }
-  };
-
-  // Ordered list of daily prayer events
-  const prayersList = [
-    { id: 'fajr', label: 'Fajr', subtitle: 'Dawn', time: prayerTimes.fajr, isAzan: true },
-    { id: 'sunrise', label: 'Sunrise', subtitle: 'Ishraq', time: prayerTimes.sunrise, isAzan: false },
-    { id: 'dhuhr', label: 'Dhuhr', subtitle: 'Noon', time: prayerTimes.dhuhr, isAzan: true },
-    { id: 'asr', label: 'Asr', subtitle: 'Afternoon', time: prayerTimes.asr, isAzan: true },
-    { id: 'maghrib', label: 'Maghrib', subtitle: 'Sunset', time: prayerTimes.maghrib, isAzan: true },
-    { id: 'isha', label: 'Isha', subtitle: 'Night', time: prayerTimes.isha, isAzan: true },
-  ];
-
-  // Resolve current active vs next prayer
-  const now = new Date();
-  let currentPrayerIndex = -1;
-  for (let i = 0; i < prayersList.length; i++) {
-    if (now >= prayersList[i].time) {
-      currentPrayerIndex = i;
-    }
-  }
-
-  const activePrayer = currentPrayerIndex !== -1 ? prayersList[currentPrayerIndex] : prayersList[prayersList.length - 1];
-  const nextPrayerIndex = (currentPrayerIndex + 1) % prayersList.length;
-  const nextPrayer = prayersList[nextPrayerIndex];
-
-  const getTomorrowFajr = () => {
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const tomorrowPrayerTimes = new PrayerTimes(coordinates, tomorrow, params);
-    return tomorrowPrayerTimes.fajr;
-  };
-
-  const nextPrayerTime = (nextPrayerIndex === 0 && now > prayersList[prayersList.length - 1].time)
-    ? getTomorrowFajr()
-    : nextPrayer.time;
-
-  // Countdown timer string (hours, minutes, seconds)
-  const [timeRemaining, setTimeRemaining] = useState<string>('');
-
+  // One clock for the whole screen. It also moves the calendar day on at the place's midnight.
+  const [now, setNow] = useState<Date>(() => new Date());
   useEffect(() => {
-    const updateCountdown = () => {
-      const diffMs = nextPrayerTime.getTime() - new Date().getTime();
-      if (diffMs <= 0) {
-        setTimeRemaining('Refreshing...');
-        return;
-      }
-      const hrs = Math.floor(diffMs / (3600 * 1000));
-      const mins = Math.floor((diffMs % (3600 * 1000)) / (60 * 1000));
-      const secs = Math.floor((diffMs % (60 * 1000)) / 1000);
-      
-      setTimeRemaining(
-        `${hrs.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`
-      );
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+    const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
-  }, [nextPrayerTime]);
+  }, []);
 
-  // Destination City Ticking Local Clock
-  const [localCityTime, setLocalCityTime] = useState<string>('');
-  useEffect(() => {
-    const updateLocalClock = () => {
-      try {
-        const str = new Intl.DateTimeFormat('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: true,
-          timeZone: activeTz
-        }).format(new Date());
-        setLocalCityTime(str);
-      } catch {
-        const str = new Intl.DateTimeFormat('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: true
-        }).format(new Date());
-        setLocalCityTime(str);
-      }
-    };
-    updateLocalClock();
-    const interval = setInterval(updateLocalClock, 1000);
-    return () => clearInterval(interval);
-  }, [activeTz]);
+  const place = useMemo(
+    () => (coords ? { lat: coords.lat, lng: coords.lng, timeZone: activeTz } : null),
+    [coords?.lat, coords?.lng, activeTz],
+  );
+  const calcOptions = useMemo(
+    () => ({ method: prayerSettings.calculationMethod, madhab: prayerSettings.madhab }),
+    [prayerSettings.calculationMethod, prayerSettings.madhab],
+  );
+  const dateKey = todayKeyIn(activeTz, now);
+  const prayerDay = useMemo(() => (place ? computePrayerDay(place, dateKey, calcOptions) : null), [place, dateKey, calcOptions]);
+
+  // Ordered list of daily prayer events. Empty until a location is chosen.
+  const prayersList = useMemo(
+    () => (prayerDay ? PRAYER_EVENTS.map((id) => ({ id, ...PRAYER_LABELS[id], time: prayerDay[id], isAzan: id !== 'sunrise' })) : []),
+    [prayerDay],
+  );
+
+  const formatPrayerTime = (pDate: Date) => formatClock(pDate, activeTz, true);
+
+  const waiting = { id: 'fajr' as PrayerEvent, ...PRAYER_LABELS.fajr, time: now };
+  // Yesterday, today and tomorrow, computed once per day. Isha can land after midnight at high latitudes,
+  // so the current and next prayer are looked up in this span rather than in one calendar date.
+  const eventSpan = useMemo(() => (place ? eventWindow(place, calcOptions, dateKey) : []), [place, calcOptions, dateKey]);
+  const activePrayerMoment = eventSpan.length > 0 ? pickCurrent(eventSpan, now) : null;
+  const activePrayer = activePrayerMoment ? { id: activePrayerMoment.event, ...PRAYER_LABELS[activePrayerMoment.event] } : waiting;
+  const upcoming = eventSpan.length > 0 ? pickNext(eventSpan, now) : null;
+  const nextPrayer = upcoming ? { id: upcoming.event, ...PRAYER_LABELS[upcoming.event] } : waiting;
+  const nextPrayerTime = upcoming?.time ?? now;
+
+  // Countdown to the next prayer (hours, minutes, seconds)
+  const diffMs = nextPrayerTime.getTime() - now.getTime();
+  const timeRemaining = !upcoming
+    ? ''
+    : diffMs <= 0
+      ? 'Refreshing...'
+      : `${String(Math.floor(diffMs / 3600000)).padStart(2, '0')}h ${String(Math.floor((diffMs % 3600000) / 60000)).padStart(2, '0')}m ${String(Math.floor((diffMs % 60000) / 1000)).padStart(2, '0')}s`;
+
+  // Destination city's ticking local clock
+  const localCityTime = new Intl.DateTimeFormat('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    timeZone: activeTz,
+  }).format(now);
 
   // Minute-wise Background Auto Alarm Watcher (Plays sound if enabled and app open!)
-  const lastAlarmTriggerTime = useRef<string>('');
+  // Each prayer sounds once: what has already played is remembered by day and prayer, not by minute.
+  const playedAzans = useRef<Set<string>>(new Set());
   const [azanAlert, setAzanAlert] = useState<string | null>(null);
 
   useEffect(() => {
     const watchForPrayerTimes = () => {
-      const nowClock = new Date();
-      const currentMinKey = `${nowClock.getFullYear()}-${nowClock.getMonth()}-${nowClock.getDate()} ${nowClock.getHours()}:${nowClock.getMinutes()}`;
-
-      if (lastAlarmTriggerTime.current === currentMinKey) return;
-
-      prayersList.forEach(p => {
-        if (!p.isAzan) return;
-        if (!isPrayerAzanId(p.id) || !azanSettings[p.id]) return;
-
-        const pt = p.time;
-        const diffMs = nowClock.getTime() - pt.getTime();
+      const nowMs = Date.now();
+      for (const moment of eventSpan) {
+        if (moment.event === 'sunrise' || !isPrayerAzanId(moment.event) || !azanSettings[moment.event]) continue;
+        const elapsedMs = nowMs - moment.time.getTime();
         // Trigger if within a 2-minute window after prayer time
-        if (diffMs >= 0 && diffMs < 120000) {
-          lastAlarmTriggerTime.current = currentMinKey;
-          setAzanAlert(`${p.label} Prayer Time`);
-          playAzan(azanUrls, `${p.label} Prayer`);
-        }
-      });
+        if (elapsedMs < 0 || elapsedMs >= 120000) continue;
+        const playedKey = `${moment.dateKey}-${moment.event}`;
+        if (playedAzans.current.has(playedKey)) continue;
+        playedAzans.current.add(playedKey);
+        const label = PRAYER_LABELS[moment.event].label;
+        setAzanAlert(`${label} Prayer Time`);
+        playAzan(azanUrls, `${label} Prayer`);
+      }
     };
 
     watchForPrayerTimes(); // run immediately on mount
     const interval = setInterval(watchForPrayerTimes, 5000); // check every 5 seconds
     return () => clearInterval(interval);
-  }, [prayersList, azanSettings, selectedAzanSound]);
+  }, [eventSpan, azanSettings, selectedAzanSound]);
 
   // Theme support mapper
   const getThemePalette = (currentTheme: AppTheme) => {
@@ -999,7 +850,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
               </div>
               <div className="flex items-center gap-1.5 ml-1 bg-transparent select-none shrink-0">
                 <span className="text-2xs font-black tracking-wider px-1 rounded-sm bg-slate-900 text-slate-400 border border-slate-800">
-                  {qiblaAngle}° QIBLA
+                  {hasLocation ? `${qiblaAngle}° QIBLA` : 'NO LOCATION'}
                 </span>
                 <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
               </div>
@@ -1023,7 +874,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                       id="city_search_text_input"
                       type="text"
                       autoFocus
-                      placeholder="Search 35+ global directories..."
+                      placeholder={`Search ${CITY_PRESETS.length} cities...`}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-7 pr-7 py-1.5 bg-slate-900 border border-slate-850 text-2xs text-slate-100 rounded-lg focus:outline-none focus:border-brand-500/80 placeholder-slate-500 font-medium"
@@ -1235,8 +1086,14 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
               <span>Compass Alignment: <b className="font-mono text-slate-100">{Math.round(relativeQiblaAngle)}°</b></span>
             </div>
 
+            {!hasLocation && (
+              <p id="qibla_needs_location" className="text-2xs font-bold text-brand-300 bg-brand-500/10 border border-brand-500/20 p-2.5 rounded-lg mt-1 text-center select-none">
+                Choose your location, or allow GPS, to point the compass at the Kaaba.
+              </p>
+            )}
+
             {gpsError && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-[9px] font-bold text-brand-400 bg-brand-500/5 border border-brand-500/10 p-2 rounded-lg mt-1 select-none"
@@ -1372,7 +1229,28 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
            ========================================== */
         <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4 w-full max-w-md mx-auto scrollbar-thin scrollbar-thumb-slate-800">
           
+          {!hasLocation && (
+            <div id="prayer_needs_location" role="status" className="p-5 rounded-2xl border border-slate-850 bg-slate-950/60 flex flex-col items-center gap-3 text-center shrink-0">
+              <MapPin className="w-6 h-6 text-brand-400" />
+              <p className="text-sm font-black text-slate-100">Where are you?</p>
+              <p className="text-2xs font-semibold text-slate-400 leading-relaxed">
+                Prayer times depend on your location. Pick a city above, or let the app use your phone's location. It stays on this device.
+              </p>
+              <button
+                id="btn_prayer_use_gps"
+                type="button"
+                onClick={requestGPSLocation}
+                disabled={gpsLoading}
+                className="min-h-11 px-4 rounded-xl bg-brand-500 text-on-brand text-xs font-black uppercase tracking-wide cursor-pointer disabled:opacity-60"
+              >
+                {gpsLoading ? 'Finding you...' : 'Use my location'}
+              </button>
+              {gpsError && <p className="text-[10px] font-bold text-brand-300">{gpsError}</p>}
+            </div>
+          )}
+
           {/* Main Visual Clock & Next Prayer countdown Hero box */}
+          {hasLocation && (
           <div className={`p-5 rounded-2xl border ${palette.cardBorder} ${palette.cardBg} bg-gradient-to-br ${palette.gradient} ${palette.lightGlow} shrink-0 select-none flex flex-col gap-4 relative overflow-hidden`}>
             
             {/* Animated background mosque dome silhouette trace */}
@@ -1428,6 +1306,8 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             </div>
           </div>
 
+          )}
+
           {/* Azan Alert Banner */}
           {azanAlert && (
             <div className="mx-1 mb-3 p-4 rounded-2xl bg-brand-500/10 border border-brand-500/40 flex items-center justify-between gap-3">
@@ -1449,6 +1329,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
           )}
 
           {/* Interactive Prayer Times Grid Listing */}
+          {hasLocation && (
           <div className="flex flex-col gap-1.5">
             <h4 className="text-4xs font-black uppercase tracking-widest text-brand-400 px-1 pb-1 flex items-center gap-1">
               <Calendar className="w-3 h-3" /> Daily Namaz Timeline
@@ -1529,6 +1410,8 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
             </div>
           </div>
 
+          )}
+
           {/* FIQH & CONVENTION CONFIGURATION FORM CARDS */}
           <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-850 flex flex-col gap-3.5 select-none">
             <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 border-b border-slate-900 pb-1.5 shrink-0">
@@ -1583,11 +1466,9 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                   value={calcMethod}
                   onChange={(e) => updatePrayerSettings({ calculationMethod: e.target.value as PrayerCalculationMethod })}
                 >
-                  <option value="Karachi">Karachi Univ. (Hanafi Default)</option>
-                  <option value="MWL">Muslim World League (MWL Global)</option>
-                  <option value="UmmAlQura">Umm Al-Qura (Saudi Arabia)</option>
-                  <option value="ISNA">ISNA (North America / UK)</option>
-                  <option value="Egypt">Egyptian General Authority</option>
+                  {CALCULATION_METHODS.map((method) => (
+                    <option key={method.id} value={method.id}>{method.label}</option>
+                  ))}
                 </select>
                 <span className="text-[9px] leading-relaxed font-semibold text-slate-400 select-text">
                   Configures local dawn & twilight angle variables for Fajr & Isha starts.
