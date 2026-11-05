@@ -23,6 +23,7 @@ Kept in sync with `src/licenses.ts`, which the app shows under Settings.
 ## Notes
 
 - The adhan recording was converted from Ogg Vorbis to AAC (64 kbps). CC0 permits this; no attribution is required, but it is given here as a courtesy. The reciter is not named on the source page.
+- Ayatul Kursi (2:255) and the last two verses of Al-Baqarah (2:285-286) in the dhikr library are verbatim copies of the Tanzil Uthmani text, with its stop signs. A test compares them with a saved copy of the source (tests/fixtures/quran-verses.json).
 - QuranEnc translations are fetched live from quranenc.com and shown with their footnotes, exactly as published. They are not copied into this repository or hosted by us; the device keeps a cache so surahs already opened work offline.
 - Quran text and the translation are loaded on demand from api.alquran.cloud and are not bundled in the app. Recitation audio is streamed and never bundled. Any future addition needs its licence recorded here first.
 - Translations that carry non-commercial terms (for example those in the Tanzil translation list, except public-domain editions) are not shipped. See docs/ROADMAP.md, section 7.

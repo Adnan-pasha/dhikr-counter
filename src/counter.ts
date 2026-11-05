@@ -5,7 +5,6 @@
 
 export type HapticStrength = 'light' | 'medium' | 'strong';
 export type HapticKind = 'tap' | 'milestone' | 'complete';
-export type AdvanceMode = 'routine' | 'free';
 
 export interface TapResult {
   count: number;
@@ -95,41 +94,20 @@ interface HasId {
   id: string;
 }
 
-/** The dhikr to move to once the current one completes, or null to stay. */
-export const findNextDhikrId = (
-  sequence: HasId[],
-  currentId: string,
-  completedIds: ReadonlySet<string>,
-  mode: AdvanceMode,
-): string | null => {
+/**
+ * The dhikr to move to once the current one completes, or null to stay. Only a routine has a "next": it goes
+ * in its own order, item by item, whatever was already done today (the same routine is run after every prayer,
+ * so earlier runs must not make later ones skip items or stall) and stops at the end.
+ */
+export const findNextDhikrId = (sequence: HasId[], currentId: string): string | null => {
   const index = sequence.findIndex((d) => d.id === currentId);
-  if (index === -1) return null;
-  if (mode === 'routine') {
-    const next = sequence.slice(index + 1).find((d) => !completedIds.has(d.id));
-    return next ? next.id : null;
-  }
-  if (sequence.length < 2) return null;
-  return sequence[(index + 1) % sequence.length].id;
+  return index === -1 ? null : sequence[index + 1]?.id ?? null;
 };
 
-/** The next few items shown dimmed under the current phrase. */
-export const getUpcoming = <T extends HasId>(
-  sequence: T[],
-  currentId: string,
-  completedIds: ReadonlySet<string>,
-  mode: AdvanceMode,
-  limit: number,
-): T[] => {
+/** The next few items shown dimmed under the current phrase. They are the ones the counter will move to. */
+export const getUpcoming = <T extends HasId>(sequence: T[], currentId: string, limit: number): T[] => {
   const index = sequence.findIndex((d) => d.id === currentId);
-  if (index === -1) return [];
-  if (mode === 'routine') {
-    return sequence.slice(index + 1).filter((d) => !completedIds.has(d.id)).slice(0, limit);
-  }
-  const out: T[] = [];
-  for (let step = 1; step < sequence.length && out.length < limit; step += 1) {
-    out.push(sequence[(index + step) % sequence.length]);
-  }
-  return out;
+  return index === -1 ? [] : sequence.slice(index + 1, index + 1 + limit);
 };
 
 const STRENGTH_SCALE: Record<HapticStrength, number> = { light: 0.6, medium: 1, strong: 1.5 };

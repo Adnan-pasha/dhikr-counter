@@ -76,6 +76,24 @@ export const parseStoredArray = <T>(
   return isItem ? parsed.filter(isItem) : (parsed as T[]);
 };
 
+/**
+ * Built-in entries that earlier versions shipped cut off, with the exact Arabic they had. The app saves its whole
+ * dhikr list on the phone, so a fix in the code never reached people who had already opened the app. A saved copy is
+ * replaced only when its Arabic is exactly this old text: anything a person has edited is left alone.
+ */
+const CUT_OFF_ARABIC: Readonly<Record<string, string>> = {
+  'ayatul-kursi': "ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُۥ مَا فِى ٱلسَّمَٰوَٰتِ وَمَا فِى ٱلْأَرْضِ",
+  'last-two-baqarah': "آمَنَ الرَّسُولُ بِمَا أُنزِلَ إِلَيْهِ مِن رَّبِّهِ وَالْمُؤْمِنُونَ كُلٌّ آمَنَ بِاللَّهِ وَمَلَائِكَتِهِ وَكُتُبِهِ وَرُسُلِهِ",
+};
+
+/** Saved built-in copies that still hold the old cut-off text get the full text. Their target and every other entry stay as they are. */
+export const refreshCorrectedBuiltIns = (stored: Dhikr[], library: Dhikr[]): Dhikr[] =>
+  stored.map((d) => {
+    if (!d.isSystem || d.nameAr !== CUT_OFF_ARABIC[d.id]) return d;
+    const fresh = library.find((x) => x.id === d.id);
+    return fresh ? { ...d, nameAr: fresh.nameAr, transliteration: fresh.transliteration, meaning: fresh.meaning } : d;
+  });
+
 export const sanitizeDhikrs = (value: unknown, fallback: Dhikr[]): Dhikr[] => {
   if (!Array.isArray(value)) return fallback;
   const VALID_CATEGORIES = ['morning','evening','daily','istighfar','salawat','protection','sleep','quranic','motivation'];
@@ -278,7 +296,10 @@ const readSchemaVersion = (): number => {
 export const migrateAndHydrateStorage = (defaults: MigrationDefaults): HydratedStorage => {
   const schemaVersion = readSchemaVersion();
 
-  const dhikrs = sanitizeDhikrs(safeParseJSON(localStorage.getItem('tasbih_dhikrs'), defaults.defaultDhikrs), defaults.defaultDhikrs);
+  const dhikrs = refreshCorrectedBuiltIns(
+    sanitizeDhikrs(safeParseJSON(localStorage.getItem('tasbih_dhikrs'), defaults.defaultDhikrs), defaults.defaultDhikrs),
+    defaults.defaultDhikrs,
+  );
   localStorage.setItem('tasbih_dhikrs', JSON.stringify(dhikrs));
 
   const currentDhikrIdRaw = localStorage.getItem('tasbih_current_id');

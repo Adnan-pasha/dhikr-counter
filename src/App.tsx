@@ -25,9 +25,9 @@ import { useQuranProgress } from './quran/useQuranProgress';
 import { practisedDay } from './quran/progress';
 import type { QuranIntent } from './components/QuranReader';
 import { dhikrIdFromSearch } from './notifications';
-import { setDay } from './salah';
+import { setDay, browserStorage } from './salah';
 import { isNativeApp } from './native';
-import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer } from './routines';
+import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer, uniqueInOrder, readStartedRoutine, writeStartedRoutine, afterFinishingRoutine } from './routines';
 import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
 
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
@@ -103,7 +103,9 @@ export default function App() {
   const { progress: quranProgress, actions: quranActions } = useQuranProgress();
   const [quranIntent, setQuranIntent] = useState<QuranIntent | null>(null);
   /** Routine the user started, so shared dhikr (SubhanAllah) continue the right one. */
-  const [startedRoutineId, setStartedRoutineId] = useState<string | null>(null);
+  // The routine that is running. Remembered, so the app being closed mid-routine carries on with it on reopening.
+  const [startedRoutineId, setStartedRoutineId] = useState<string | null>(() => readStartedRoutine(browserStorage()));
+  useEffect(() => { writeStartedRoutine(browserStorage(), startedRoutineId); }, [startedRoutineId]);
   const [afterSalahPrayer, setAfterSalahPrayer] = useState<SalahName | null>(null);
   // Latest prayer logs, updated synchronously so two quick taps compose instead of overwriting each other.
   const salahLogsRef = React.useRef<SalahLog[]>([]);
@@ -245,19 +247,18 @@ export default function App() {
     const matched = resolveActiveRoutine(routines, startedRoutineId, currentDhikrId);
     if (!matched) return null;
     const allAvailable = [...ADHKAAR_LIBRARY, ...dhikrs];
-    return matched.dhikrIds
+    return uniqueInOrder(matched.dhikrIds)
       .map((id: string) => allAvailable.find((d: Dhikr) => d.id === id))
       .filter(Boolean) as Dhikr[];
   }, [currentDhikrId, routines, dhikrs, startedRoutineId]);
 
-  const { handleIncrement, handleUndo, handleReset, canUndo, upcoming, pendingNext } = useCounterFlow({
+  const { handleIncrement, handleUndo, handleReset, canUndo, upcoming, pendingNext, routineComplete } = useCounterFlow({
     activeDhikr,
     currentCount,
     preferences,
     dhikrs,
     currentDhikrId,
     activeRoutine,
-    history,
     setCurrentCount,
     setCurrentDhikrId,
     setHistory,
@@ -492,6 +493,14 @@ export default function App() {
                 onToggleSound={() => setPreferences(prev => ({ ...prev, soundOn: !prev.soundOn }))}
                 onNavigateToLibrary={() => setActiveTab('adhkaar')}
                 modalOpen={confirmModal !== null}
+                routineComplete={routineComplete}
+                onFinishRoutine={activeRoutine ? () => {
+                  const reset = afterFinishingRoutine(activeRoutine);
+                  setStartedRoutineId(null);
+                  if (reset.dhikrId) setCurrentDhikrId(reset.dhikrId);
+                  setCurrentCount(reset.count);
+                  setActiveTab('home');
+                } : undefined}
               />
             )}
 
@@ -529,9 +538,9 @@ export default function App() {
                 completedTodayIds={history
                   .filter((h) => isTimestampOnLocalDay(h.timestamp))
                   .map((h) => h.dhikrId)}
-                onStartDhikr={(id) => {
+                onStartDhikr={(id, routineId) => {
                   setCurrentDhikrId(id);
-                  setStartedRoutineId(null);
+                  setStartedRoutineId(routineId);
                   setCurrentCount(0);
                   setActiveTab('counter');
                 }}
