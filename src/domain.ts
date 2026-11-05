@@ -1,5 +1,6 @@
 import type { HapticStrength } from './counter';
 import { knownAzanSound, normalizeAzanSound } from './azan';
+import { announcePrayerConfigChange } from './prayerConfigEvents';
 import { sanitizeDailyGoal } from './habits';
 import { Dhikr, DhikrHistory, DhikrReminder, UserPreferences, SoundTone, AppTheme, Madhab, PrayerSettings, PrayerCalculationMethod, AzanSound, PrayerAzanId } from './types';
 
@@ -239,6 +240,7 @@ export const writePrayerSettings = (settings: PrayerSettings): PrayerSettings =>
   const sanitized = sanitizePrayerSettings(settings);
   localStorage.setItem('tasbih_prayer_settings', JSON.stringify(sanitized));
   localStorage.setItem('tasbih_azan_settings', JSON.stringify(sanitized.azanEnabled));
+  announcePrayerConfigChange();
   return sanitized;
 };
 

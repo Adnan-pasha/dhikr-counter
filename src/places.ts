@@ -1,4 +1,5 @@
 import { deviceTimeZone, sanitizeLocation, type PrayerLocation } from './prayerTimes';
+import { announcePrayerConfigChange } from './prayerConfigEvents';
 
 export const PRAYER_LOCATION_KEY = 'tasbih_prayer_location';
 
@@ -124,6 +125,7 @@ export const writePrayerLocation = (value: unknown, source: LocationSource): Sav
   const saved: SavedPrayerLocation = { ...location, source };
   try {
     localStorage.setItem(PRAYER_LOCATION_KEY, JSON.stringify(saved));
+    announcePrayerConfigChange();
     return saved;
   } catch {
     return null;
@@ -140,6 +142,7 @@ export const readPrayerPlace = (): SavedPrayerLocation | null => withCurrentZone
 export const clearPrayerLocation = (): void => {
   try {
     localStorage.removeItem(PRAYER_LOCATION_KEY);
+    announcePrayerConfigChange();
   } catch {
     // storage blocked: nothing was kept anyway
   }

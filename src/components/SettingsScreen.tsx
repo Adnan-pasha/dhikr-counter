@@ -5,11 +5,15 @@ import { UserPreferences, SoundTone, AppTheme, DhikrReminder, Dhikr, Madhab } fr
 import { AppIcon } from '../icons';
 import { playBeadSound, playCompletionSound } from '../audio';
 import { THIRD_PARTY_NOTICES } from '../licenses';
+import { BUILD_STAMP } from '../buildInfo';
 import { getHapticPattern } from '../counter';
 import { GOAL_TEMPLATES } from '../habits';
 import NotificationSettings from './NotificationSettings';
+import type { NativeAlarms } from '../useNativeAlarms';
 
 interface SettingsScreenProps {
+  /** The phone's alarms, when running inside the Android app. */
+  alarms?: NativeAlarms;
   preferences: UserPreferences;
   onChangePreferences: (prefs: Partial<UserPreferences>) => void;
   onResetAllData: () => void;
@@ -53,6 +57,7 @@ const Switch = ({
 );
 
 export default function SettingsScreen({
+  alarms,
   preferences,
   onChangePreferences,
   onResetAllData,
@@ -508,7 +513,7 @@ export default function SettingsScreen({
           </div>
         </div>
 
-        <NotificationSettings />
+        <NotificationSettings alarms={alarms} />
 
         {/* Card: Schedules and Gentle Reminders */}
         <div id="reminders_section_card" className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md space-y-4">
@@ -894,6 +899,7 @@ export default function SettingsScreen({
             <p className="text-xs text-slate-400 font-medium mt-0.5">
               Your counts, history and settings stay on this device. There are no accounts, ads or trackers.
             </p>
+            <p id="build_stamp" className="text-xs text-slate-500 font-medium mt-1 select-text">Build {BUILD_STAMP}</p>
           </div>
           <details className="group">
           <summary className="min-h-11 cursor-pointer select-none py-2 text-xs font-bold text-slate-200">Credits &amp; licences ({THIRD_PARTY_NOTICES.length})</summary>

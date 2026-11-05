@@ -4,11 +4,12 @@ import type { AzanSound, Madhab, PrayerAzanId, PrayerSettings, SalahLog, SalahNa
 import { SALAH_META } from '../types';
 import { readPrayerSettings, writePrayerSettings } from '../domain';
 import {
-  PRAYER_EVENTS, computePrayerDay, eventWindow, formatClock, formatCountdown, pickCurrent, pickNext, todayKeyIn,
+  PRAYER_EVENTS, computePrayerDay, deviceTimeZone, differsFromPhoneClock, eventWindow, formatClock, formatCountdown, pickCurrent, pickNext, todayKeyIn,
   type PrayerEvent, type PrayerLocation,
 } from '../prayerTimes';
 import { addDays, browserStorage, earliestDate, prayerCount, readInstallDate } from '../salah';
 import { usePrayerPlace } from '../usePrayerPlace';
+import { hijriLabel } from '../hijri';
 import { hasAdhanPlayed, markAdhanPlayed } from '../adhanMemory';
 import { useAzanPlayer } from '../useAzanPlayer';
 import NextPrayerCard from './prayers/NextPrayerCard';
@@ -16,6 +17,9 @@ import PrayerDayStrip, { type StripDay } from './prayers/PrayerDayStrip';
 import PrayerRow from './prayers/PrayerRow';
 import LocationSheet from './prayers/LocationSheet';
 import PrayerSettingsSheet from './prayers/PrayerSettingsSheet';
+import NativeAlarmsCard from './prayers/NativeAlarmsCard';
+import type { AdhanPlayRequest } from '../nativeAlarms';
+import type { NativeAlarms } from '../useNativeAlarms';
 
 interface PrayersScreenProps {
   madhab: Madhab;
@@ -28,6 +32,15 @@ interface PrayersScreenProps {
   today: string;
   /** The clock, replaceable so tests can set the time. */
   getNow?: () => Date;
+  /** The phone's alarms, shown as a card with their permissions. Left out in a browser. */
+  alarms?: NativeAlarms;
+  /**
+   * Whether this screen plays the adhan itself at prayer time. It does, unless the phone's own alarm is set to ring
+   * (and a tap on that alert plays the full adhan), so it never plays over it.
+   */
+  autoPlayAdhan?: boolean;
+  /** Play one prayer's adhan now (a tapped notification). A new nonce is a new request. */
+  playRequest?: AdhanPlayRequest | null;
 }
 
 const realClock = (): Date => new Date();
@@ -49,18 +62,9 @@ const ADHAN_WINDOW_MS = 120_000;
 const weekday = (date: string): string => new Date(`${date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'narrow' });
 const dayOfMonth = (date: string): number => Number(date.slice(8, 10));
 
-/** The Islamic date, or nothing when the phone has no Hijri calendar. */
-const hijriDate = (instant: Date, timeZone: string): string => {
-  try {
-    const format = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', { day: 'numeric', month: 'long', year: 'numeric', timeZone });
-    return format.resolvedOptions().calendar.startsWith('islamic') ? format.format(instant) : '';
-  } catch {
-    return '';
-  }
-};
-
 /** Prayer times for the day, a tick for each prayer, and a switch for each adhan. */
-export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTogglePrayer, onOpenQibla, today, getNow = realClock }: PrayersScreenProps) {
+export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTogglePrayer, onOpenQibla, today, getNow = realClock, alarms, autoPlayAdhan, playRequest }: PrayersScreenProps) {
+  const autoPlay = autoPlayAdhan ?? true;
   const { place, gpsLoading, gpsError, requestGps, selectCity } = usePrayerPlace();
   const [sheet, setSheet] = React.useState<'location' | 'settings' | null>(null);
   const [selected, setSelected] = React.useState(today);
@@ -146,6 +150,7 @@ export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTog
   const adhanOn = settings.azanEnabled;
   const play = player.play;
   React.useEffect(() => {
+    if (!autoPlay) return undefined;
     const watch = () => {
       const nowMs = getNow().getTime();
       for (const moment of span) {
@@ -162,7 +167,16 @@ export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTog
     watch();
     const interval = setInterval(watch, 5000);
     return () => clearInterval(interval);
-  }, [span, adhanOn, getNow, play]);
+  }, [span, adhanOn, getNow, play, autoPlay]);
+
+  // A tapped prayer notification asks for that prayer's adhan, once per request.
+  const handledRequest = React.useRef<number | null>(null);
+  React.useEffect(() => {
+    if (!playRequest || handledRequest.current === playRequest.nonce) return;
+    handledRequest.current = playRequest.nonce;
+    setAdhanBanner(ROWS[playRequest.prayer].label);
+    play(playRequest.prayer);
+  }, [playRequest, play]);
 
   const closeSheet = React.useCallback(() => setSheet(null), []);
   // "Use my location" in the sheet closes it when the fix arrives, but not when it fails (the error shows there).
@@ -177,11 +191,11 @@ export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTog
   const stopAdhan = () => { player.stop(); setAdhanBanner(null); };
 
   // ── Text ──
-  const placeClock = where && place && place.timeZone !== Intl.DateTimeFormat().resolvedOptions().timeZone
+  const placeClock = where && differsFromPhoneClock(now, where.timeZone, deviceTimeZone())
     ? formatClock(now, where.timeZone, true)
     : undefined;
   const heading = new Date(`${selected}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  const hijri = where && day ? hijriDate(day.dhuhr, where.timeZone) : '';
+  const hijri = where && day ? hijriLabel(day.dhuhr, where.timeZone) : '';
 
   return (
     <div className="screen">
@@ -221,6 +235,8 @@ export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTog
       </div>
 
       <div className="scroll-area space-y-5">
+        {alarms && <NativeAlarmsCard alarms={alarms} />}
+
         {adhanBanner && (
           <div role="status" aria-label="Adhan" className="flex items-center gap-2 rounded-2xl border p-3" style={{ background: 'var(--color-brand-dim)', borderColor: 'var(--color-brand-border)' }}>
             <p className="min-w-0 flex-1 text-sm font-black" style={{ color: 'var(--color-text-primary)' }}>{adhanBanner} prayer time</p>

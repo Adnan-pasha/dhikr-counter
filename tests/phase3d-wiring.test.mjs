@@ -37,5 +37,5 @@ test('the Quran reader can be opened straight onto a surah', () => {
 });
 
 test('settings shows the notification card', () => {
-  assert.ok(read('src/components/SettingsScreen.tsx').includes('<NotificationSettings />'));
+  assert.ok(read('src/components/SettingsScreen.tsx').includes('<NotificationSettings alarms={alarms} />'));
 });
