@@ -35,12 +35,32 @@ test.afterEach(() => cleanup());
 test.after(() => { dom.window.close(); });
 
 test('play starts the bundled adhan and reports it as playing', async () => {
-  const { result } = renderHook(() => useAzanPlayer('standard'));
+  const { result } = renderHook(() => useAzanPlayer('makkah'));
   await act(async () => { result.current.play(); });
   assert.equal(created.length, 1);
-  assert.match(created[0].src, /audio\/adhan\.m4a$/);
+  assert.match(created[0].src, /audio\/azan-makkah\.m4a$/);
   assert.equal(result.current.playing, true);
   assert.equal(result.current.error, null);
+});
+
+test('Fajr always plays its own adhan, whatever voice is chosen', async () => {
+  const { result } = renderHook(() => useAzanPlayer('madinah'));
+  await act(async () => { result.current.play('fajr'); });
+  assert.match(created[0].src, /audio\/azan-fajr\.m4a$/);
+});
+
+test('the other four prayers play the chosen voice', async () => {
+  const { result } = renderHook(() => useAzanPlayer('madinah'));
+  for (const prayer of ['dhuhr', 'asr', 'maghrib', 'isha']) {
+    await act(async () => { result.current.play(prayer); });
+    assert.match(created[created.length - 1].src, /audio\/azan-madinah\.m4a$/, prayer);
+  }
+});
+
+test('a preview can play a voice other than the chosen one', async () => {
+  const { result } = renderHook(() => useAzanPlayer('makkah'));
+  await act(async () => { result.current.play(undefined, 'madinah'); });
+  assert.match(created[0].src, /audio\/azan-madinah\.m4a$/);
 });
 
 test('it stops when the recording ends', async () => {

@@ -11,8 +11,8 @@ export type PrayerCalculationMethod =
   | 'Karachi' | 'MWL' | 'UmmAlQura' | 'ISNA' | 'Egypt'
   | 'Dubai' | 'MoonsightingCommittee' | 'Kuwait' | 'Qatar' | 'Singapore' | 'Tehran' | 'Turkey';
 
-/** Bundled adhan recordings. Legacy 'mecca'/'medina' values migrate to 'standard'. */
-export type AzanSound = 'standard';
+/** The adhan voice for Dhuhr, Asr, Maghrib and Isha (Fajr always has its own). Old stored ids are mapped by normalizeAzanSound. */
+export type AzanSound = 'makkah' | 'madinah';
 
 export type PrayerAzanId = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 

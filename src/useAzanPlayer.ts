@@ -1,10 +1,15 @@
 import React from 'react';
-import { getAzanSource } from './azan';
+import { azanSourceFor } from './azan';
+import type { PrayerAzanId } from './types';
 
 export interface AzanPlayer {
   playing: boolean;
   error: string | null;
-  play: () => void;
+  /**
+   * Plays a prayer's adhan: Fajr's own, or the chosen voice. With no prayer it plays a voice for a preview,
+   * the chosen one unless another is given.
+   */
+  play: (prayer?: PrayerAzanId, voice?: string) => void;
   stop: () => void;
 }
 
@@ -24,10 +29,10 @@ export const useAzanPlayer = (soundId?: string): AzanPlayer => {
     setPlaying(false);
   }, []);
 
-  const play = React.useCallback(() => {
+  const play = React.useCallback((prayer?: PrayerAzanId, voice?: string) => {
     stop();
     setError(null);
-    const audio = new Audio(getAzanSource(soundId).url);
+    const audio = new Audio(azanSourceFor(prayer, voice ?? soundId).url);
     current.current = audio;
     audio.addEventListener('ended', () => {
       if (current.current === audio) {

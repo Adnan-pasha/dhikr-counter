@@ -2,7 +2,8 @@ import React from 'react';
 import { Pause, Play, X } from 'lucide-react';
 import { useModalDialog } from '../useModalDialog';
 import { CALCULATION_METHODS } from '../../prayerTimes';
-import type { Madhab, PrayerCalculationMethod } from '../../types';
+import { AZAN_SOURCES } from '../../azan';
+import type { AzanSound, Madhab, PrayerCalculationMethod } from '../../types';
 
 interface PrayerSettingsSheetProps {
   open: boolean;
@@ -11,9 +12,12 @@ interface PrayerSettingsSheetProps {
   madhab: Madhab;
   onMethodChange: (method: PrayerCalculationMethod) => void;
   onMadhabChange: (madhab: Madhab) => void;
-  /** The adhan is playing, so the test button stops it. */
-  adhanPlaying: boolean;
-  onToggleAdhanTest: () => void;
+  /** The voice for Dhuhr, Asr, Maghrib and Isha. Fajr always has its own. */
+  voice: AzanSound;
+  onVoiceChange: (voice: AzanSound) => void;
+  /** Which recording is playing as a preview ('fajr', 'makkah' or 'madinah'), or null. */
+  playing: string | null;
+  onPreview: (kind: 'fajr' | AzanSound) => void;
 }
 
 const field = { background: 'var(--color-bg-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' } as const;
@@ -23,8 +27,23 @@ const ASR_RULES: ReadonlyArray<{ id: 'standard' | 'hanafi'; label: string; detai
   { id: 'hanafi', label: 'Hanafi', detail: 'Asr when a shadow is twice the object, so it is later' },
 ];
 
-/** How the times are worked out, and a way to hear the adhan. */
-export default function PrayerSettingsSheet({ open, onClose, method, madhab, onMethodChange, onMadhabChange, adhanPlaying, onToggleAdhanTest }: PrayerSettingsSheetProps) {
+/** Play or stop a preview of one recording. */
+function PreviewButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={active ? `Stop ${label}` : `Hear ${label}`}
+      className="tap-target flex w-11 items-center justify-center rounded-xl cursor-pointer"
+      style={field}
+    >
+      {active ? <Pause className="h-5 w-5" aria-hidden="true" /> : <Play className="h-5 w-5" aria-hidden="true" />}
+    </button>
+  );
+}
+
+/** How the times are worked out, and the adhan voice. */
+export default function PrayerSettingsSheet({ open, onClose, method, madhab, onMethodChange, onMadhabChange, voice, onVoiceChange, playing, onPreview }: PrayerSettingsSheetProps) {
   const { dialogRef, initialFocusRef, onKeyDown } = useModalDialog(open, onClose);
   if (!open) return null;
   const rule = madhab === 'hanafi' ? 'hanafi' : 'standard';
@@ -81,15 +100,29 @@ export default function PrayerSettingsSheet({ open, onClose, method, madhab, onM
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleAdhanTest}
-          className="tap-target flex w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold cursor-pointer"
-          style={field}
-        >
-          {adhanPlaying ? <Pause className="h-5 w-5" aria-hidden="true" /> : <Play className="h-5 w-5" aria-hidden="true" />}
-          {adhanPlaying ? 'Stop the adhan' : 'Hear the adhan'}
-        </button>
+        <div role="radiogroup" aria-label="Adhan voice" className="space-y-2">
+          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>Adhan voice</p>
+          <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Fajr has its own adhan. Dhuhr, Asr, Maghrib and Isha use the voice you pick.</p>
+          {(Object.keys(AZAN_SOURCES) as AzanSound[]).map((id) => (
+            <div key={id} className="flex gap-2">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={voice === id}
+                onClick={() => onVoiceChange(id)}
+                className="min-h-11 flex-1 rounded-xl px-3 text-left text-sm font-black cursor-pointer"
+                style={voice === id ? { ...field, borderColor: 'var(--color-brand-border)', background: 'var(--color-brand-dim)' } : field}
+              >
+                {AZAN_SOURCES[id].label}
+              </button>
+              <PreviewButton label={AZAN_SOURCES[id].label} active={playing === id} onClick={() => onPreview(id)} />
+            </div>
+          ))}
+          <div className="flex items-center gap-2">
+            <p className="min-w-0 flex-1 text-sm font-black">Fajr adhan</p>
+            <PreviewButton label="Fajr adhan" active={playing === 'fajr'} onClick={() => onPreview('fajr')} />
+          </div>
+        </div>
       </div>
     </div>
   );

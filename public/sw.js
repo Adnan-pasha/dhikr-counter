@@ -25,7 +25,9 @@ const SHELL_ASSETS = [
   'icon-512.png',
   'icon-maskable-512.png',
   // Bundled adhan: precached so prayer-time playback works offline.
-  'audio/adhan.m4a',
+  'audio/azan-fajr.m4a',
+  'audio/azan-makkah.m4a',
+  'audio/azan-madinah.m4a',
   ...BUILD_MANIFEST.assets,
 ];
 

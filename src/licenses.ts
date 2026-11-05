@@ -9,11 +9,11 @@ export interface ThirdPartyNotice {
 /** Shown in Settings. Keep in sync with THIRD_PARTY_NOTICES.md. */
 export const THIRD_PARTY_NOTICES: ThirdPartyNotice[] = [
   {
-    name: 'Adhan recording (audio)',
-    author: 'Adam-synagda',
-    license: 'CC0 1.0',
-    url: 'https://commons.wikimedia.org/wiki/File:Beautiful_adhan.ogg',
-    note: 'Wikimedia Commons, "Beautiful adhan.ogg". Converted to AAC; no attribution required.',
+    name: 'Adhan recordings (audio)',
+    author: 'Supplied by the project owner',
+    license: 'Licence not independently verified',
+    url: 'https://www.thesufi.com',
+    note: 'Fajr, Makkah and Madinah adhan, from an open download collection that carries no licence text. Converted to AAC and levelled; the reciters are not named in the files. The licence is not independently verified.',
   },
   {
     name: 'adhan',

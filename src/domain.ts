@@ -1,4 +1,5 @@
 import type { HapticStrength } from './counter';
+import { knownAzanSound, normalizeAzanSound } from './azan';
 import { sanitizeDailyGoal } from './habits';
 import { Dhikr, DhikrHistory, DhikrReminder, UserPreferences, SoundTone, AppTheme, Madhab, PrayerSettings, PrayerCalculationMethod, AzanSound, PrayerAzanId } from './types';
 
@@ -11,7 +12,6 @@ const MADHABS: Madhab[] = ['hanafi', 'shafi', 'maliki', 'hanbali'];
 export const PRAYER_CALCULATION_METHODS: PrayerCalculationMethod[] = [
   'Karachi', 'MWL', 'UmmAlQura', 'ISNA', 'Egypt', 'Dubai', 'MoonsightingCommittee', 'Kuwait', 'Qatar', 'Singapore', 'Tehran', 'Turkey',
 ];
-const AZAN_SOUNDS: AzanSound[] = ['standard'];
 const PRAYER_AZAN_IDS: PrayerAzanId[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
@@ -187,7 +187,7 @@ export const sanitizeAzanSettings = (value: unknown): Record<PrayerAzanId, boole
 export const DEFAULT_PRAYER_SETTINGS: PrayerSettings = {
   madhab: 'shafi',
   calculationMethod: 'Karachi',
-  azanSound: 'standard',
+  azanSound: 'makkah',
   azanEnabled: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
 };
 
@@ -201,7 +201,7 @@ export const sanitizePrayerSettings = (value: unknown, fallback: PrayerSettings 
     calculationMethod: PRAYER_CALCULATION_METHODS.includes(value.calculationMethod as PrayerCalculationMethod)
       ? value.calculationMethod as PrayerCalculationMethod
       : fallback.calculationMethod,
-    azanSound: AZAN_SOUNDS.includes(value.azanSound as AzanSound) ? value.azanSound as AzanSound : fallback.azanSound,
+    azanSound: knownAzanSound(value.azanSound) ?? normalizeAzanSound(fallback.azanSound),
     azanEnabled: sanitizeAzanSettings(value.azanEnabled ?? fallback.azanEnabled),
   };
 };
