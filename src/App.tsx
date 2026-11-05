@@ -682,12 +682,7 @@ export default function App() {
                   <span className="text-brand-400 text-xs font-bold animate-pulse">Loading Qibla...</span>
                 </div>
               }>
-                <QiblaScreen
-                  phoneAlarmsActive={phoneRings}
-                  theme={preferences.theme}
-                  madhab={preferences.madhab}
-                  onMadhabChange={(madhab) => setPreferences(prev => ({ ...prev, madhab }))}
-                />
+                <QiblaScreen theme={preferences.theme} />
               </Suspense>
             )}
           </motion.div>

@@ -20,8 +20,7 @@ const { render, screen, fireEvent, cleanup, act } = await import('@testing-libra
 const { default: QiblaScreen } = await import('../src/components/QiblaScreen.tsx');
 const { readPrayerLocation, writePrayerLocation } = await import('../src/places.ts');
 
-const mount = () => render(React.createElement(QiblaScreen, { theme: 'emerald', madhab: 'shafi', onMadhabChange: () => {} }));
-const openTimes = () => fireEvent.click(document.getElementById('btn_subtab_namaz'));
+const mount = () => render(React.createElement(QiblaScreen, { theme: 'emerald' }));
 
 test.beforeEach(() => { localStorage.clear(); });
 test.afterEach(async () => {
@@ -30,45 +29,38 @@ test.afterEach(async () => {
 });
 test.after(() => { dom.window.close(); });
 
-test('with no place chosen, it asks where you are instead of showing London\'s times', async () => {
+test('with no place chosen, it asks where you are instead of assuming London', async () => {
   mount();
-  openTimes();
-  assert.ok(document.getElementById('prayer_needs_location'), 'asks for a location');
-  assert.equal(screen.queryByText('Daily Namaz Timeline'), null, 'no timeline for a guessed place');
   assert.equal(screen.queryByText(/London/), null);
   assert.ok(screen.getAllByText('Choose your location').length > 0, 'the picker invites a choice');
 });
 
-test('choosing a city shows its times and remembers it', async () => {
+test('choosing a city remembers it', async () => {
   mount();
   fireEvent.click(document.getElementById('city_dropdown_trigger_btn'));
   fireEvent.change(document.getElementById('city_search_text_input'), { target: { value: 'Hyderabad' } });
   fireEvent.click(screen.getByText('Hyderabad, India'));
-  openTimes();
-  assert.equal(document.getElementById('prayer_needs_location'), null);
-  assert.ok(screen.getByText('Daily Namaz Timeline'));
   assert.deepEqual(
     (({ lat, lng, timeZone, source }) => ({ lat, lng, timeZone, source }))(readPrayerLocation()),
     { lat: 17.385, lng: 78.4867, timeZone: 'Asia/Kolkata', source: 'city' },
   );
 });
 
-test('a remembered city is there on the next visit, with its five prayers and sunrise', async () => {
+test('a remembered city is there on the next visit', async () => {
   writePrayerLocation({ lat: 21.4225, lng: 39.8262, timeZone: 'Asia/Riyadh', label: 'Mecca (Haram), Saudi Arabia' }, 'city');
   mount();
-  openTimes();
-  assert.equal(document.getElementById('prayer_needs_location'), null);
-  for (const name of ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha']) {
-    assert.ok(screen.getAllByText(name).length > 0, name);
-  }
+  assert.ok(screen.getAllByText('Mecca (Haram), Saudi Arabia').length > 0);
 });
 
-test('the calculation list offers every method, not just five', async () => {
+test('prayer times, the calculation method and the adhan voice live on the Prayers tab, not here', async () => {
   writePrayerLocation({ lat: 21.4225, lng: 39.8262, timeZone: 'Asia/Riyadh', label: 'Mecca' }, 'city');
   mount();
-  openTimes();
-  const select = document.getElementById('select_calculation_agency');
-  assert.equal(select.querySelectorAll('option').length, 12);
+  for (const id of ['btn_subtab_namaz', 'btn_subtab_qibla', 'select_calculation_agency', 'prayer_needs_location']) {
+    assert.equal(document.getElementById(id), null, id);
+  }
+  assert.equal(screen.queryByText('Daily Namaz Timeline'), null);
+  assert.equal(screen.queryByText('Namaz & Azan'), null);
+  assert.ok(document.getElementById('city_dropdown_trigger_btn'), 'the city picker is still here, for the compass');
 });
 
 test('a city chosen on purpose is not overridden by GPS when the screen opens', async () => {
@@ -113,8 +105,6 @@ test('a GPS fix that arrives with nothing else chosen is saved and shown', async
   const place = readPrayerLocation();
   assert.equal(place.source, 'gps');
   assert.equal(place.lat, 17.385);
-  openTimes();
-  assert.equal(document.getElementById('prayer_needs_location'), null);
 });
 
 test('with a GPS fix saved the screen refreshes it on open', async () => {
@@ -129,7 +119,7 @@ test('with a GPS fix saved the screen refreshes it on open', async () => {
   assert.equal(asked, 1);
 });
 
-// ── the adhan on this screen: Fajr has its own recording, the others follow the chosen voice ──
+// ── the adhan is played from the Prayers tab only ──
 
 const played = [];
 globalThis.Audio = class {
@@ -138,46 +128,17 @@ globalThis.Audio = class {
   pause() { this.paused = true; }
 };
 
-const MECCA = { lat: 21.4225, lng: 39.8262, timeZone: 'Asia/Riyadh', label: 'Mecca' };
-
-/** Opens the screen at a moment just after a prayer's time, with the clock held there. */
-const openAt = async (event, voice) => {
-  const { computePrayerDay, todayKeyIn } = await import('../src/prayerTimes.ts');
-  writePrayerLocation(MECCA, 'city');
-  if (voice) {
-    localStorage.setItem('tasbih_prayer_settings', JSON.stringify({ madhab: 'shafi', calculationMethod: 'Karachi', azanSound: voice, azanEnabled: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true } }));
-  }
-  const day = computePrayerDay(MECCA, todayKeyIn(MECCA.timeZone, new Date()), { method: 'Karachi', madhab: 'shafi' });
-  const at = day[event].getTime() + 20_000;
-  mock.timers.enable({ apis: ['Date'], now: at });
-  played.length = 0;
-  mount();
-  openTimes();
-  await act(async () => {});
-};
-
 test.afterEach(() => mock.timers.reset());
 
-test('at Fajr this screen plays the dedicated Fajr recording, whichever voice is chosen', async () => {
-  await openAt('fajr', 'madinah');
-  assert.equal(played.length, 1);
-  assert.match(played[0], /audio\/azan-fajr\.m4a$/);
-});
-
-test('at Dhuhr, Asr, Maghrib and Isha this screen plays the chosen voice', async () => {
-  for (const [event, voice, file] of [['dhuhr', 'madinah', 'azan-madinah'], ['asr', 'makkah', 'azan-makkah'], ['maghrib', 'madinah', 'azan-madinah'], ['isha', 'makkah', 'azan-makkah']]) {
-    await openAt(event, voice);
-    assert.equal(played.length, 1, event);
-    assert.match(played[0], new RegExp(`audio/${file}\.m4a$`), event);
-    cleanup();
-    mock.timers.reset();
-    localStorage.clear();
-  }
-});
-
-test('while it plays, the screen names the recording actually in use', async () => {
-  await openAt('fajr', 'madinah');
-  const banner = screen.getByText(/Now Broadcasting/).textContent;
-  assert.match(banner, /Now Broadcasting: Fajr Prayer \(Fajr adhan\)/, 'the label is the Fajr recording');
-  assert.doesNotMatch(banner, /Madinah/, 'not the voice chosen for the other prayers');
+test('at prayer time this screen plays nothing: the Prayers tab and the phone\'s alarms do that', async () => {
+  const MECCA = { lat: 21.4225, lng: 39.8262, timeZone: 'Asia/Riyadh', label: 'Mecca' };
+  const { computePrayerDay, todayKeyIn } = await import('../src/prayerTimes.ts');
+  writePrayerLocation(MECCA, 'city');
+  const day = computePrayerDay(MECCA, todayKeyIn(MECCA.timeZone, new Date()), { method: 'Karachi', madhab: 'shafi' });
+  mock.timers.enable({ apis: ['Date'], now: day.fajr.getTime() + 20_000 });
+  played.length = 0;
+  mount();
+  await act(async () => {});
+  assert.equal(played.length, 0);
+  assert.equal(screen.queryByText(/Now Broadcasting/), null);
 });
