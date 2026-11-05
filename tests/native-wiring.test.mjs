@@ -80,7 +80,7 @@ test('App keeps the phone\'s alarms in step, and hands the alerts to the phone o
   assert.match(app, /const phoneRings = nativeAlarms\.supported && nativeAlarms\.lastSync\?\.status === 'scheduled'/);
   assert.match(app, /useReminderScheduler\(reminders, preferences, setActiveReminderTriggered, !phoneRings\)/);
   assert.match(app, /autoPlayAdhan=\{!phoneRings\}/);
-  assert.match(app, /phoneAlarmsActive=\{phoneRings\}/);
+  assert.doesNotMatch(app, /phoneAlarmsActive/, 'the Qibla screen no longer plays the adhan, so it is not told');
 });
 
 test('App turns a tap on a notification into the right action', () => {
@@ -93,8 +93,9 @@ test('App turns a tap on a notification into the right action', () => {
   assert.match(app, /alarms=\{nativeAlarms\}/);
 });
 
-test('while the phone\'s alarms are really set, the Qibla screen does not also play the adhan itself', () => {
-  assert.match(read('src/components/QiblaScreen.tsx'), /if \(phoneAlarmsActive\) return undefined;/);
+test('the Qibla screen is only a compass: it has no adhan player of its own to overlap the phone\'s alarms', () => {
+  const qibla = read('src/components/QiblaScreen.tsx');
+  assert.doesNotMatch(qibla, /new Audio\(|AudioContext|computePrayerDay|azanSourceFor/);
 });
 
 test('a tap on the "keep your alerts going" nudge just opens Prayers', () => {

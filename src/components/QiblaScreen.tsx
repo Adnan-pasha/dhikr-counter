@@ -1,23 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Compass, MapPin, Sparkles, Navigation, Info, HelpCircle, 
-  Search, Globe, ChevronDown, Check, X, Bell, BellOff, 
-  Play, Pause, Volume2, VolumeX, Clock, Sliders, Calendar, AlertCircle
+import {
+  Compass, MapPin, Sparkles, Navigation, Info, HelpCircle,
+  Search, Globe, ChevronDown, Check, X, Sliders
 } from 'lucide-react';
-import { azanSourceFor, getAzanSource } from '../azan';
-import { AppIcon } from '../icons';
-import { AppTheme, Madhab as UserMadhab, PrayerSettings, PrayerCalculationMethod, PrayerAzanId } from '../types';
-import { readPrayerSettings, writePrayerSettings } from '../domain';
-import { CALCULATION_METHODS, PRAYER_EVENTS, computePrayerDay, eventWindow, formatClock, pickCurrent, pickNext, todayKeyIn, type PrayerEvent } from '../prayerTimes';
+import { AppTheme } from '../types';
 import { CITY_PRESETS, qiblaBearing, readPrayerLocation, writePrayerLocation, type CityPreset } from '../places';
 
 interface QiblaScreenProps {
-  /** The phone's own alarms are set and ring at prayer time, so this screen does not play the adhan itself. */
-  phoneAlarmsActive?: boolean;
   theme: AppTheme;
-  madhab: UserMadhab;
-  onMadhabChange: (madhab: UserMadhab) => void;
 }
 
 
@@ -25,301 +16,22 @@ const NO_LOCATION_LABEL = 'Choose your location';
 
 const deviceTimeZone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
-const PRAYER_LABELS: Record<PrayerEvent, { label: string; subtitle: string }> = {
-  fajr: { label: 'Fajr', subtitle: 'Dawn' },
-  sunrise: { label: 'Sunrise', subtitle: 'Ishraq' },
-  dhuhr: { label: 'Dhuhr', subtitle: 'Noon' },
-  asr: { label: 'Asr', subtitle: 'Afternoon' },
-  maghrib: { label: 'Maghrib', subtitle: 'Sunset' },
-  isha: { label: 'Isha', subtitle: 'Night' },
-};
-
-export default function QiblaScreen({ theme, madhab, onMadhabChange, phoneAlarmsActive = false }: QiblaScreenProps) {
-  // Navigation sub-tab inside Qibla Finder: Compass vs. PrayTimes
-  const [subTab, setSubTab] = useState<'qibla' | 'namaz'>('qibla');
-
+export default function QiblaScreen({ theme }: QiblaScreenProps) {
   // Coordinates and global timezone references
   // The place is remembered between visits. Until one is chosen there is no default: guessing a city would show wrong prayer times.
   const [savedPlace] = useState(() => readPrayerLocation());
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(savedPlace ? { lat: savedPlace.lat, lng: savedPlace.lng } : null);
   const [qiblaAngle, setQiblaAngle] = useState<number>(savedPlace ? qiblaBearing(savedPlace.lat, savedPlace.lng) : 0);
   const [locationName, setLocationName] = useState<string>(savedPlace?.label ?? NO_LOCATION_LABEL);
-  const [locationTimezone, setLocationTimezone] = useState<string>(savedPlace && savedPlace.source === 'city' ? savedPlace.timeZone : deviceTimeZone());
   const hasLocation = coords !== null;
   const [gpsLoading, setGpsLoading] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [isUnsecureContext, setIsUnsecureContext] = useState<boolean>(false);
   
-  // Unified prayer calculation settings
-  const [prayerSettings, setPrayerSettings] = useState<PrayerSettings>(() => readPrayerSettings(madhab));
-
-  const updatePrayerSettings = (diff: Partial<PrayerSettings>) => {
-    setPrayerSettings((prev) => {
-      const next = writePrayerSettings({ ...prev, ...diff, azanEnabled: diff.azanEnabled ?? prev.azanEnabled });
-      if (diff.madhab && diff.madhab !== madhab) {
-        onMadhabChange(diff.madhab);
-      }
-      return next;
-    });
-  };
-
-  useEffect(() => {
-    setPrayerSettings((prev) => {
-      if (prev.madhab === madhab) return prev;
-      return writePrayerSettings({ ...prev, madhab });
-    });
-  }, [madhab]);
-
-  const fiqh = prayerSettings.madhab === 'hanafi' ? 'Hanafi' : 'Standard';
-  const calcMethod = prayerSettings.calculationMethod;
-  const selectedAzanSound = prayerSettings.azanSound;
-  const azanSettings = prayerSettings.azanEnabled;
-
   // Search state & dropdown autocompletion states
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Azan audio: a single bundled, precached recording (see src/azan.ts); nothing is streamed from third parties.
-  const azanUrls = [getAzanSource(selectedAzanSound).url];
-
-  const [activeAudio, setActiveAudio] = useState<HTMLAudioElement | null>(null);
-  const [syntheticCtx, setSyntheticCtx] = useState<any>(null);
-  const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
-  const [playingAlarmName, setPlayingAlarmName] = useState<string | null>(null);
-  // The recording actually playing: Fajr has its own, the other prayers use the chosen voice.
-  const [playingSourceLabel, setPlayingSourceLabel] = useState<string | null>(null);
-  const [loadingAudio, setLoadingAudio] = useState<boolean>(false);
-  const [audioError, setAudioError] = useState<string | null>(null);
-  const [currentUrlTrying, setCurrentUrlTrying] = useState<string | null>(null);
-  
-
-  const isPrayerAzanId = (id: string): id is PrayerAzanId => id === 'fajr' || id === 'dhuhr' || id === 'asr' || id === 'maghrib' || id === 'isha';
-
-  const handleToggleAzanSetting = (id: PrayerAzanId) => {
-    updatePrayerSettings({
-      azanEnabled: { ...azanSettings, [id]: !azanSettings[id] },
-    });
-  };
-
-  // Peaceful synthesized chimes fallback for offline / blocked environments
-  const playSyntheticChime = (alarmLabel: string) => {
-    try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) {
-        throw new Error('AudioContext not supported');
-      }
-      const ctx = new AudioContextClass();
-      setSyntheticCtx(ctx);
-      setPlayingAlarmName(`${alarmLabel} (Backup Chime)`);
-      setIsAudioPlaying(true);
-      setLoadingAudio(false);
-      setAudioError('All broadcast servers are currently slow or blocked. Loaded local peaceful Backup Chimes instead.');
-      setCurrentUrlTrying('peaceful-chime-generator');
-
-      const now = ctx.currentTime;
-      
-      const playTone = (freq: number, start: number, duration: number, vol: number = 0.2) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, start);
-        
-        gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(vol, start + 0.15);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-        
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(freq * 1.5, start);
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        
-        osc.start(start);
-        osc.stop(start + duration);
-      };
-
-      // Peaceful and harmonic chord progression (Makkah sunrise style)
-      // Chime Arpeggio 1 (F3 Major Pentatonic)
-      playTone(174.61, now, 5.0, 0.35);       // F3
-      playTone(261.63, now + 0.2, 4.8, 0.25); // C4
-      playTone(349.23, now + 0.4, 4.6, 0.25); // F4
-      playTone(440.00, now + 0.6, 4.4, 0.2);  // A4
-      playTone(523.25, now + 0.8, 4.2, 0.15); // C5
-      
-      // Chime Arpeggio 2 (Turnaround chords)
-      playTone(196.00, now + 2.0, 4.5, 0.35); // G3
-      playTone(293.66, now + 2.2, 4.3, 0.25); // D4
-      playTone(392.00, now + 2.4, 4.1, 0.2);  // G4
-      playTone(440.00, now + 2.6, 3.9, 0.2);  // A4
-      playTone(587.33, now + 2.8, 3.7, 0.1);  // D5
-
-      // Chime Arpeggio 3 (Deep resolution)
-      playTone(174.61, now + 4.0, 6.0, 0.35); // F3
-      playTone(261.63, now + 4.2, 5.8, 0.25); // C4
-      playTone(349.23, now + 4.4, 5.6, 0.25); // F4
-      playTone(523.25, now + 4.6, 5.4, 0.2);  // C5
-      playTone(698.46, now + 4.8, 5.2, 0.15); // F5
-
-    } catch (err) {
-      console.error('Synthetic chime failed', err);
-      setIsAudioPlaying(false);
-      setPlayingAlarmName(null);
-      setAudioError('Failed to play sound. Please confirm browser sound permission is authorized.');
-    }
-  };
-
-  // Play test or current Azan audio safely with automatic progressive mirror fallbacks
-  const playAzan = (urls: string[], alarmLabel: string, sourceLabel: string = getAzanSource(selectedAzanSound).label) => {
-    if (activeAudio) {
-      activeAudio.pause();
-    }
-    if (syntheticCtx && syntheticCtx.state !== 'closed') {
-      try {
-        syntheticCtx.close().catch(() => {});
-      } catch {}
-      setSyntheticCtx(null);
-    }
-    
-    setPlayingAlarmName(alarmLabel);
-    setPlayingSourceLabel(sourceLabel);
-    setIsAudioPlaying(true);
-    setLoadingAudio(true);
-    setAudioError(null);
-
-    const playWithIndex = (index: number) => {
-      // If we depleted all streams, instead of showing a static error and playing silence, 
-      // trigger the offline synthesized chime fallback. It sounds beautiful, peaceful and guarantees audio alerts are raised.
-      if (index >= urls.length) {
-        console.warn('[Adhan Player] All network broadcast routes offline. Triggering offline synthesized chime fallback...');
-        playSyntheticChime(alarmLabel);
-        return;
-      }
-
-      const activeUrl = urls[index];
-      setCurrentUrlTrying(activeUrl);
-      console.log(`[Adhan Player] Attempting broadcast route #${index + 1}: ${activeUrl}`);
-
-      const audio = new Audio(activeUrl);
-      audio.volume = 0.8;
-      audio.preload = 'auto';
-      setActiveAudio(audio);
-
-      let isCleanedUp = false;
-      let timeoutId: any = null;
-
-      const cleanupAndPause = () => {
-        if (isCleanedUp) return;
-        isCleanedUp = true;
-        if (timeoutId) clearTimeout(timeoutId);
-        audio.oncanplaythrough = null;
-        audio.onplay = null;
-        audio.onended = null;
-        audio.onerror = null;
-        try {
-          audio.pause();
-        } catch (e) {
-          console.error(e);
-        }
-      };
-
-      // 8-second timeout for first-line raw github raw paths; 6-second timeout for auxiliary mirrors
-      const timeoutLimit = index < 2 ? 8000 : 6000;
-      timeoutId = setTimeout(() => {
-        if (isCleanedUp) return;
-        console.warn(`[Adhan Player] Broadcast route #${index + 1} takes too long. Trying backup server...`);
-        cleanupAndPause();
-        playWithIndex(index + 1);
-      }, timeoutLimit);
-
-      audio.oncanplaythrough = () => {
-        if (isCleanedUp) return;
-        clearTimeout(timeoutId);
-        setLoadingAudio(false);
-        setAudioError(null);
-      };
-
-      audio.onplay = () => {
-        if (isCleanedUp) return;
-        clearTimeout(timeoutId);
-        setLoadingAudio(false);
-        setAudioError(null);
-      };
-
-      audio.play().then(() => {
-        if (isCleanedUp) return;
-        clearTimeout(timeoutId);
-        setLoadingAudio(false);
-        setAudioError(null);
-      }).catch(err => {
-        if (isCleanedUp) return;
-        console.warn(`[Adhan Player] Playback failed for route #${index + 1}:`, err);
-        if (err.name === 'NotAllowedError') {
-          cleanupAndPause();
-          setIsAudioPlaying(false);
-          setPlayingAlarmName(null);
-          setActiveAudio(null);
-          setLoadingAudio(false);
-          setAudioError('Playback blocked by browser autoplay policy. Please touch/click the screen to allow audio.');
-        } else {
-          cleanupAndPause();
-          playWithIndex(index + 1);
-        }
-      });
-
-      audio.onended = () => {
-        cleanupAndPause();
-        setIsAudioPlaying(false);
-        setPlayingAlarmName(null);
-        setActiveAudio(null);
-        setLoadingAudio(false);
-        setCurrentUrlTrying(null);
-      };
-
-      audio.onerror = () => {
-        if (isCleanedUp) return;
-        console.warn(`[Adhan Player] Error loading route #${index + 1}. Transitioning to secondary mirror...`);
-        cleanupAndPause();
-        playWithIndex(index + 1);
-      };
-    };
-
-    playWithIndex(0);
-  };
-
-  const stopAzan = () => {
-    if (activeAudio) {
-      activeAudio.pause();
-    }
-    if (syntheticCtx && syntheticCtx.state !== 'closed') {
-      try {
-        syntheticCtx.close().catch(() => {});
-      } catch (e) {
-        console.error(e);
-      }
-      setSyntheticCtx(null);
-    }
-    setIsAudioPlaying(false);
-    setPlayingAlarmName(null);
-    setActiveAudio(null);
-  };
-
-  // Clean up playing audio on screen exit
-  useEffect(() => {
-    return () => {
-      if (activeAudio) {
-        activeAudio.pause();
-      }
-      if (syntheticCtx && syntheticCtx.state !== 'closed') {
-        try {
-          syntheticCtx.close().catch(() => {});
-        } catch {}
-      }
-    };
-  }, [activeAudio, syntheticCtx]);
 
   // Click outside listener to collapse search results dynamically
   useEffect(() => {
@@ -399,8 +111,6 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange, phoneAlarms
         setCoords({ lat: latitude, lng: longitude });
         setQiblaAngle(qiblaBearing(latitude, longitude));
         setLocationName(saved?.label ?? 'My location');
-        // The phone is where the user is, so its zone is the place's zone.
-        setLocationTimezone(deviceTimeZone());
         setGpsLoading(false);
       },
       (err) => {
@@ -508,7 +218,6 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange, phoneAlarms
     setCoords({ lat: city.lat, lng: city.lng });
     setQiblaAngle(city.direction);
     setLocationName(city.name);
-    setLocationTimezone(city.timeZone);
     setGpsError(null);
   };
 
@@ -591,94 +300,6 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange, phoneAlarms
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  // ==========================================
-  // NAMAZ & AZAN TIMES (calculated by src/prayerTimes.ts)
-  // ==========================================
-  const activeTz = locationTimezone;
-
-  // One clock for the whole screen. It also moves the calendar day on at the place's midnight.
-  const [now, setNow] = useState<Date>(() => new Date());
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const place = useMemo(
-    () => (coords ? { lat: coords.lat, lng: coords.lng, timeZone: activeTz } : null),
-    [coords?.lat, coords?.lng, activeTz],
-  );
-  const calcOptions = useMemo(
-    () => ({ method: prayerSettings.calculationMethod, madhab: prayerSettings.madhab }),
-    [prayerSettings.calculationMethod, prayerSettings.madhab],
-  );
-  const dateKey = todayKeyIn(activeTz, now);
-  const prayerDay = useMemo(() => (place ? computePrayerDay(place, dateKey, calcOptions) : null), [place, dateKey, calcOptions]);
-
-  // Ordered list of daily prayer events. Empty until a location is chosen.
-  const prayersList = useMemo(
-    () => (prayerDay ? PRAYER_EVENTS.map((id) => ({ id, ...PRAYER_LABELS[id], time: prayerDay[id], isAzan: id !== 'sunrise' })) : []),
-    [prayerDay],
-  );
-
-  const formatPrayerTime = (pDate: Date) => formatClock(pDate, activeTz, true);
-
-  const waiting = { id: 'fajr' as PrayerEvent, ...PRAYER_LABELS.fajr, time: now };
-  // Yesterday, today and tomorrow, computed once per day. Isha can land after midnight at high latitudes,
-  // so the current and next prayer are looked up in this span rather than in one calendar date.
-  const eventSpan = useMemo(() => (place ? eventWindow(place, calcOptions, dateKey) : []), [place, calcOptions, dateKey]);
-  const activePrayerMoment = eventSpan.length > 0 ? pickCurrent(eventSpan, now) : null;
-  const activePrayer = activePrayerMoment ? { id: activePrayerMoment.event, ...PRAYER_LABELS[activePrayerMoment.event] } : waiting;
-  const upcoming = eventSpan.length > 0 ? pickNext(eventSpan, now) : null;
-  const nextPrayer = upcoming ? { id: upcoming.event, ...PRAYER_LABELS[upcoming.event] } : waiting;
-  const nextPrayerTime = upcoming?.time ?? now;
-
-  // Countdown to the next prayer (hours, minutes, seconds)
-  const diffMs = nextPrayerTime.getTime() - now.getTime();
-  const timeRemaining = !upcoming
-    ? ''
-    : diffMs <= 0
-      ? 'Refreshing...'
-      : `${String(Math.floor(diffMs / 3600000)).padStart(2, '0')}h ${String(Math.floor((diffMs % 3600000) / 60000)).padStart(2, '0')}m ${String(Math.floor((diffMs % 60000) / 1000)).padStart(2, '0')}s`;
-
-  // Destination city's ticking local clock
-  const localCityTime = new Intl.DateTimeFormat('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,
-    timeZone: activeTz,
-  }).format(now);
-
-  // Minute-wise Background Auto Alarm Watcher (Plays sound if enabled and app open!)
-  // Each prayer sounds once: what has already played is remembered by day and prayer, not by minute.
-  const playedAzans = useRef<Set<string>>(new Set());
-  const [azanAlert, setAzanAlert] = useState<string | null>(null);
-
-  useEffect(() => {
-    // While the phone's own alarms are set they ring at prayer time; this screen must not play over them.
-    if (phoneAlarmsActive) return undefined;
-    const watchForPrayerTimes = () => {
-      const nowMs = Date.now();
-      for (const moment of eventSpan) {
-        if (moment.event === 'sunrise' || !isPrayerAzanId(moment.event) || !azanSettings[moment.event]) continue;
-        const elapsedMs = nowMs - moment.time.getTime();
-        // Trigger if within a 2-minute window after prayer time
-        if (elapsedMs < 0 || elapsedMs >= 120000) continue;
-        const playedKey = `${moment.dateKey}-${moment.event}`;
-        if (playedAzans.current.has(playedKey)) continue;
-        playedAzans.current.add(playedKey);
-        const label = PRAYER_LABELS[moment.event].label;
-        setAzanAlert(`${label} Prayer Time`);
-        const source = azanSourceFor(moment.event, selectedAzanSound);
-        playAzan([source.url], `${label} Prayer`, source.label);
-      }
-    };
-
-    watchForPrayerTimes(); // run immediately on mount
-    const interval = setInterval(watchForPrayerTimes, 5000); // check every 5 seconds
-    return () => clearInterval(interval);
-  }, [eventSpan, azanSettings, selectedAzanSound, phoneAlarmsActive]);
-
   // Theme support mapper
   const getThemePalette = (currentTheme: AppTheme) => {
     switch (currentTheme) {
@@ -746,45 +367,14 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange, phoneAlarms
   return (
     <div id="qibla_finder_container" className="flex flex-col h-full bg-[var(--color-bg-base)] text-slate-100 overflow-hidden">
       
-      {/* Dynamic Azan Broadcast Alert Bar Banner */}
-      <AnimatePresence>
-        {isAudioPlaying && (
-          <motion.div
-            id="azan_broadcast_playing_alert"
-            initial={{ opacity: 0, y: -45 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -45 }}
-            className="bg-brand-500 text-on-brand font-bold px-4 py-2 text-xs flex items-center justify-between gap-2.5 shadow-lg shrink-0 z-50 selection:bg-slate-900 selection:text-white"
-          >
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-950 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-950"></span>
-              </span>
-              <p className="line-clamp-1">
-                <AppIcon name="mosque" className="w-4 h-4 inline -mt-0.5 mr-1" /> Now Broadcasting: <span className="font-extrabold">{playingAlarmName || 'Adhan'}</span> ({playingSourceLabel ?? getAzanSource(selectedAzanSound).label})
-              </p>
-            </div>
-            <button
-              id="btn_dismiss_azan_alarm_banner"
-              onClick={stopAzan}
-              type="button"
-              className="min-h-11 min-w-11 px-3 py-1 rounded bg-slate-950 hover:bg-slate-900 text-brand-400 text-2xs uppercase tracking-wider font-extrabold cursor-pointer transition-colors shrink-0"
-            >
-              Stop
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Primary Container Header */}
       <div className="px-6 pt-5 pb-3 border-b border-slate-800/80 flex justify-between items-center bg-slate-900/50 backdrop-blur-md shrink-0">
         <div>
           <h1 className="text-xl font-black tracking-tight text-slate-50 flex items-center gap-1.5 leading-none select-none">
             <Compass className="w-5 h-5 text-brand-400 animate-spin-slow" />
-            Qibla & Namaz
+            Qibla
           </h1>
-          <p className="text-xs text-slate-400 mt-1 font-medium select-none">Locate sacred direction & prayer timings</p>
+          <p className="text-xs text-slate-400 mt-1 font-medium select-none">Find the direction of the Kaaba</p>
         </div>
         <div className="flex items-center gap-1.5">
           {iosNeedsPermission && (
@@ -805,38 +395,6 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange, phoneAlarms
           >
             <MapPin className="w-3.5 h-3.5" />
             {gpsLoading ? 'Locating...' : 'Use GPS'}
-          </button>
-        </div>
-      </div>
-
-      {/* Subtab Segmented Toggler */}
-      <div id="qibla_subtab_segmented_control" className="px-6 py-2 bg-slate-900/10 border-b border-slate-850 shrink-0">
-        <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-850">
-          <button
-            id="btn_subtab_qibla"
-            type="button"
-            onClick={() => setSubTab('qibla')}
-            className={`flex-1 min-h-11 py-1.5 text-3xs font-black tracking-wider uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              subTab === 'qibla'
-                ? 'bg-brand-500 text-on-brand font-black shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Compass className="w-3 h-3" />
-            Kaaba Compass
-          </button>
-          <button
-            id="btn_subtab_namaz"
-            type="button"
-            onClick={() => setSubTab('namaz')}
-            className={`flex-1 min-h-11 py-1.5 text-3xs font-black tracking-wider uppercase rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              subTab === 'namaz'
-                ? 'bg-brand-500 text-on-brand font-black shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <AppIcon name="mosque" className="w-3.5 h-3.5 shrink-0" />
-            Namaz & Azan
           </button>
         </div>
       </div>
@@ -971,8 +529,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange, phoneAlarms
         </div>
       </div>
 
-      {/* RENDER DUAL VIEWS */}
-      {subTab === 'qibla' ? (
+      {/* COMPASS */}
         <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col items-center justify-between gap-4">
           
           {/* Alignment Glow Announcement */}
@@ -1231,356 +788,6 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange, phoneAlarms
           </div>
 
         </div>
-      ) : (
-        /* ==========================================
-           BRAND NEW PRAYER TIMES & AZAN DISPLAY DECK
-           ========================================== */
-        <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4 w-full max-w-md mx-auto scrollbar-thin scrollbar-thumb-slate-800">
-          
-          {!hasLocation && (
-            <div id="prayer_needs_location" role="status" className="p-5 rounded-2xl border border-slate-850 bg-slate-950/60 flex flex-col items-center gap-3 text-center shrink-0">
-              <MapPin className="w-6 h-6 text-brand-400" />
-              <p className="text-sm font-black text-slate-100">Where are you?</p>
-              <p className="text-2xs font-semibold text-slate-400 leading-relaxed">
-                Prayer times depend on your location. Pick a city above, or let the app use your phone's location. It stays on this device.
-              </p>
-              <button
-                id="btn_prayer_use_gps"
-                type="button"
-                onClick={requestGPSLocation}
-                disabled={gpsLoading}
-                className="min-h-11 px-4 rounded-xl bg-brand-500 text-on-brand text-xs font-black uppercase tracking-wide cursor-pointer disabled:opacity-60"
-              >
-                {gpsLoading ? 'Finding you...' : 'Use my location'}
-              </button>
-              {gpsError && <p className="text-[10px] font-bold text-brand-300">{gpsError}</p>}
-            </div>
-          )}
-
-          {/* Main Visual Clock & Next Prayer countdown Hero box */}
-          {hasLocation && (
-          <div className={`p-5 rounded-2xl border ${palette.cardBorder} ${palette.cardBg} bg-gradient-to-br ${palette.gradient} ${palette.lightGlow} shrink-0 select-none flex flex-col gap-4 relative overflow-hidden`}>
-            
-            {/* Animated background mosque dome silhouette trace */}
-            <div className="absolute right-2 -bottom-4 opacity-[0.03] select-none pointer-events-none">
-              <AppIcon name="mosque" className="w-32 h-32" strokeWidth={1} />
-            </div>
-
-            {/* Top row with location & state details */}
-            <div className="z-10 w-full">
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="text-4xs font-black uppercase tracking-widest text-slate-400 leading-none">
-                  Selected Region
-                </span>
-                <span className="text-4xs font-black uppercase tracking-widest text-brand-400 leading-none">
-                  Active Interval
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                  <MapPin className="w-3 h-3 text-brand-400 shrink-0" />
-                  <h3 className="text-xs font-black text-slate-100 truncate leading-tight">
-                    {locationName}
-                  </h3>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-slate-950 font-black text-3xs text-slate-100 border border-slate-800 whitespace-nowrap shrink-0">
-                  {activePrayer.label}
-                </span>
-              </div>
-            </div>
-
-            {/* Centered centerpiece visual area */}
-            <div className="py-4 border-t border-slate-800/40 flex flex-col justify-center items-center z-10 bg-transparent text-center">
-              {/* Massive centered digital City clock */}
-              <span className="text-3xl font-black font-mono tracking-tight text-slate-50 drop-shadow-[0_2px_8px_rgba(255,255,255,0.08)]">
-                {localCityTime || '--:--:--'}
-              </span>
-              <span className="text-3xs font-bold tracking-widest uppercase text-slate-400 mt-1 block">
-                Local City Time
-              </span>
-
-              {/* Countdown countdown timer inside container */}
-              <div className="mt-5 flex flex-col items-center">
-                <span className="text-3xs font-black tracking-widest text-brand-400 uppercase">
-                  Countdown to {nextPrayer.label}
-                </span>
-                <span className="text-2xl font-black font-mono tracking-tight text-brand-400 drop-shadow-[0_2px_8px_rgba(52,211,160,0.25)] mt-1.5">
-                  {timeRemaining || 'Calculating...'}
-                </span>
-                <span className="text-4xs font-bold text-slate-400 mt-1.5 block uppercase tracking-wider">
-                  Arrival Time: <b className="font-mono text-slate-350">{formatPrayerTime(nextPrayerTime)}</b>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          )}
-
-          {/* Azan Alert Banner */}
-          {azanAlert && (
-            <div className="mx-1 mb-3 p-4 rounded-2xl bg-brand-500/10 border border-brand-500/40 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <AppIcon name="mosque" className="w-7 h-7" />
-                <div>
-                  <p className="text-sm font-black text-brand-400">{azanAlert}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">It is time for prayer. Allahu Akbar!</p>
-                </div>
-              </div>
-              <button
-                aria-label="Dismiss azan alert"
-                onClick={() => setAzanAlert(null)}
-                className="min-h-11 min-w-11 flex items-center justify-center text-slate-500 hover:text-slate-300 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
-          {/* Interactive Prayer Times Grid Listing */}
-          {hasLocation && (
-          <div className="flex flex-col gap-1.5">
-            <h4 className="text-4xs font-black uppercase tracking-widest text-brand-400 px-1 pb-1 flex items-center gap-1">
-              <Calendar className="w-3 h-3" /> Daily Namaz Timeline
-            </h4>
-            
-            <div className="space-y-1">
-              {prayersList.map((p, index) => {
-                const isActive = activePrayer.id === p.id;
-                const isSelectedForSound = isPrayerAzanId(p.id) && azanSettings[p.id];
-
-                return (
-                  <div
-                    key={p.id}
-                    className={`px-3 py-2.5 rounded-xl border flex items-center justify-between transition-all ${
-                      isActive 
-                        ? 'bg-brand-500/10 border-brand-500 ring-2 ring-brand-500/5 shadow-md shadow-brand-950/10'
-                        : 'bg-slate-950/60 border-slate-850 hover:bg-slate-900/60'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 bg-transparent">
-                      {/* Prayer Number / Icon */}
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black font-mono ${isActive ? 'bg-brand-500 text-on-brand' : 'bg-slate-900 text-slate-400'}`}>
-                        {p.id === 'sunrise' ? <AppIcon name="sunrise" className="w-3.5 h-3.5" /> : index + 1}
-                      </div>
-                      
-                      {/* Labels */}
-                      <div className="bg-transparent select-none">
-                        <div className="flex items-center gap-1.5 bg-transparent">
-                          <span className={`text-xs font-black leading-none ${isActive ? 'text-brand-400' : 'text-slate-100'}`}>
-                            {p.label}
-                          </span>
-                          {isActive && (
-                            <span className="text-[8px] font-black tracking-widest uppercase px-1 py-0.2 rounded bg-emerald-500 text-on-brand animate-pulse">
-                              Active Now
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-4xs text-slate-500 font-bold uppercase">{p.subtitle}</span>
-                      </div>
-                    </div>
-
-                    {/* Time reading & Alarm switch button */}
-                    <div className="flex items-center gap-3 bg-transparent">
-                      {/* Formatted absolute time in timezone code */}
-                      <span className={`text-xs font-black font-mono tracking-tight ${isActive ? 'text-brand-400' : 'text-slate-200'}`}>
-                        {formatPrayerTime(p.time)}
-                      </span>
-
-                      {/* BELL ALARM TRIGGER ICON BUTTON */}
-                      {p.isAzan ? (
-                        <button
-                          id={`btn_toggle_azan_alarm_${p.id}`}
-                          type="button"
-                          onClick={() => isPrayerAzanId(p.id) && handleToggleAzanSetting(p.id)}
-                          className={`w-6.5 h-6.5 rounded-full flex items-center justify-center transition-colors border select-none cursor-pointer ${
-                            isSelectedForSound
-                              ? 'bg-brand-500/15 text-brand-400 border-brand-500/30 hover:bg-brand-500/25'
-                              : 'bg-slate-900 text-slate-600 border-slate-800 hover:text-slate-400'
-                          }`}
-                          title={isSelectedForSound ? `Azan for ${p.label} broadcast enabled` : `Azan for ${p.label} broadcast muted`}
-                        >
-                          {isSelectedForSound ? (
-                            <Bell className="w-3.5 h-3.5 animate-bounce-gentle shrink-0" />
-                          ) : (
-                            <BellOff className="w-3.5 h-3.5 shrink-0" />
-                          )}
-                        </button>
-                      ) : (
-                        // Sunrise does not sound an Azan, show sun placeholder
-                        <div className="w-6.5 h-6.5 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 select-none">
-                          <AppIcon name="sunrise" className="w-3.5 h-3.5" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          )}
-
-          {/* FIQH & CONVENTION CONFIGURATION FORM CARDS */}
-          <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-850 flex flex-col gap-3.5 select-none">
-            <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 border-b border-slate-900 pb-1.5 shrink-0">
-              <Sliders className="w-3 h-3 text-brand-400" /> Calculation Juristic Deck
-            </h5>
-
-            <div className="flex flex-col gap-4 bg-transparent">
-              {/* Juristic Hanafi vs Standard Selector */}
-              <div className="bg-transparent flex flex-col gap-1.5 w-full">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                  Asr Juristic Method (Fiqh):
-                </span>
-                <div className="flex bg-slate-900 p-0.5 rounded-xl border border-slate-800 w-full">
-                  <button
-                    id="btn_select_fiqh_hanafi"
-                    type="button"
-                    onClick={() => updatePrayerSettings({ madhab: 'hanafi' })}
-                    className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wide rounded-lg transition-all cursor-pointer ${
-                      fiqh === 'Hanafi'
-                        ? 'bg-brand-500 text-on-brand'
-                        : 'text-slate-400 hover:text-zinc-200'
-                    }`}
-                  >
-                    Hanafi
-                  </button>
-                  <button
-                    id="btn_select_fiqh_shafi"
-                    type="button"
-                    onClick={() => updatePrayerSettings({ madhab: 'shafi' })}
-                    className={`flex-1 py-1.5 text-xs font-black uppercase tracking-wide rounded-lg transition-all cursor-pointer ${
-                      fiqh !== 'Hanafi'
-                        ? 'bg-brand-500 text-on-brand'
-                        : 'text-slate-400 hover:text-zinc-200'
-                    }`}
-                  >
-                    Standard
-                  </button>
-                </div>
-                <span className="text-[9px] leading-relaxed font-semibold text-slate-400 select-text">
-                  Hanafi calculates Asr when shadows are 2x long. Standard (Shafi) uses 1x long.
-                </span>
-              </div>
-
-              {/* Calculation Convention Selector */}
-              <div className="bg-transparent flex flex-col gap-1.5 w-full">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                  Calculation Agency:
-                </span>
-                <select
-                  id="select_calculation_agency"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-200 p-2 focus:outline-none focus:border-brand-500 cursor-pointer"
-                  value={calcMethod}
-                  onChange={(e) => updatePrayerSettings({ calculationMethod: e.target.value as PrayerCalculationMethod })}
-                >
-                  {CALCULATION_METHODS.map((method) => (
-                    <option key={method.id} value={method.id}>{method.label}</option>
-                  ))}
-                </select>
-                <span className="text-[9px] leading-relaxed font-semibold text-slate-400 select-text">
-                  Configures local dawn & twilight angle variables for Fajr & Isha starts.
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* ADVANCED BROADCAST & TEST SOUND CONSOLE */}
-          <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-850 flex flex-col gap-2.5 select-none">
-            <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1 border-b border-slate-900 pb-1.5 shrink-0">
-              <Volume2 className="w-3.5 h-3.5 text-brand-400" /> Azan Audio Console (Broadcast Test)
-            </h5>
-
-            <div className="flex flex-col gap-3.5 pt-1">
-              {/* Bundled adhan recording */}
-              <div className="bg-transparent flex flex-col gap-1.5 w-full">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Adhan recording</span>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {getAzanSource(selectedAzanSound).label}, stored on your device so it plays offline.
-                  Recording by Adam-synagda (CC0, Wikimedia Commons).
-                </p>
-              </div>
-
-              {/* Play / Stop Action button */}
-              <div className="bg-transparent w-full shrink-0">
-                {isAudioPlaying ? (
-                  <button
-                    id="btn_broadcast_pause_play"
-                    onClick={stopAzan}
-                    type="button"
-                    className="w-full justify-center px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 font-black text-xs text-slate-100 uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm"
-                  >
-                    <VolumeX className="w-3.5 h-3.5" /> Stop Azan
-                  </button>
-                ) : (
-                  <button
-                    id="btn_broadcast_preview_play"
-                    onClick={() => playAzan(azanUrls, 'Broadcast Preview Adhan')}
-                    type="button"
-                    disabled={loadingAudio}
-                    className="w-full justify-center px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 font-black text-xs text-on-brand uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm disabled:opacity-50 disabled:cursor-wait"
-                  >
-                    {loadingAudio ? (
-                      <>
-                        <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-950 border-t-transparent animate-spin"></div>
-                        Connecting...
-                      </>
-                    ) : (
-                      <>
-                        <Volume2 className="w-3.5 h-3.5" /> Play Test Adhan
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-
-              {/* Buffering Status/Route Feedback */}
-              {isAudioPlaying && loadingAudio && currentUrlTrying && (
-                <div id="adhan_buffering_box" className="text-brand-400 text-[10px] mt-2 bg-brand-500/5 border border-brand-500/15 rounded-lg p-2.5 flex items-center gap-2 animate-pulse justify-center">
-                  <div className="w-2.5 h-2.5 rounded-full border border-brand-500 border-t-transparent animate-spin"></div>
-                  <span className="font-semibold select-none">Buffering mosque stream route ...</span>
-                </div>
-              )}
-
-              {/* Error log info */}
-              {audioError && (
-                <div id="adhan_error_box" className="text-rose-400 text-[10px] mt-2 bg-rose-500/5 border border-rose-500/15 rounded-lg p-2.5 flex items-start gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold block">Stream Connection Issue</span>
-                    <span className="text-rose-300/80 leading-relaxed select-text font-medium block mt-0.5">{audioError}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Simulated sound spectrum animation when audio plays */}
-            {isAudioPlaying && (
-              <div className="flex justify-center items-end gap-1 px-4 py-2 bg-slate-900 border border-slate-850 rounded-lg mt-1 select-none pointer-events-none">
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 mr-2">Broadcasting:</span>
-                {[...Array(14)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-1 bg-brand-500 rounded-full animate-pulse"
-                    style={{
-                      height: `${Math.floor(Math.random() * 20) + 6}px`,
-                      animationDuration: `${0.3 + (i % 5) * 0.15}s`
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-start gap-1 pb-1 pt-1 opacity-80.">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-[8px] leading-relaxed text-slate-400 font-medium select-text">
-                When the application is open, the system tracks prayer times automatically in the background and will sound the Adhan when a prayer time arrives (for prayers with active bells).
-              </p>
-            </div>
-          </div>
-
-        </div>
-      )}
 
     </div>
   );
