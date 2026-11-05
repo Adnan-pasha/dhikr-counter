@@ -5,7 +5,7 @@ import {
   Search, Globe, ChevronDown, Check, X, Bell, BellOff, 
   Play, Pause, Volume2, VolumeX, Clock, Sliders, Calendar, AlertCircle
 } from 'lucide-react';
-import { getAzanSource } from '../azan';
+import { azanSourceFor, getAzanSource } from '../azan';
 import { AppIcon } from '../icons';
 import { AppTheme, Madhab as UserMadhab, PrayerSettings, PrayerCalculationMethod, PrayerAzanId } from '../types';
 import { readPrayerSettings, writePrayerSettings } from '../domain';
@@ -85,6 +85,8 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
   const [syntheticCtx, setSyntheticCtx] = useState<any>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [playingAlarmName, setPlayingAlarmName] = useState<string | null>(null);
+  // The recording actually playing: Fajr has its own, the other prayers use the chosen voice.
+  const [playingSourceLabel, setPlayingSourceLabel] = useState<string | null>(null);
   const [loadingAudio, setLoadingAudio] = useState<boolean>(false);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [currentUrlTrying, setCurrentUrlTrying] = useState<string | null>(null);
@@ -169,7 +171,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
   };
 
   // Play test or current Azan audio safely with automatic progressive mirror fallbacks
-  const playAzan = (urls: string[], alarmLabel: string) => {
+  const playAzan = (urls: string[], alarmLabel: string, sourceLabel: string = getAzanSource(selectedAzanSound).label) => {
     if (activeAudio) {
       activeAudio.pause();
     }
@@ -181,6 +183,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
     }
     
     setPlayingAlarmName(alarmLabel);
+    setPlayingSourceLabel(sourceLabel);
     setIsAudioPlaying(true);
     setLoadingAudio(true);
     setAudioError(null);
@@ -662,7 +665,8 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
         playedAzans.current.add(playedKey);
         const label = PRAYER_LABELS[moment.event].label;
         setAzanAlert(`${label} Prayer Time`);
-        playAzan(azanUrls, `${label} Prayer`);
+        const source = azanSourceFor(moment.event, selectedAzanSound);
+        playAzan([source.url], `${label} Prayer`, source.label);
       }
     };
 
@@ -754,7 +758,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-950"></span>
               </span>
               <p className="line-clamp-1">
-                <AppIcon name="mosque" className="w-4 h-4 inline -mt-0.5 mr-1" /> Now Broadcasting: <span className="font-extrabold">{playingAlarmName || 'Adhan'}</span> ({getAzanSource(selectedAzanSound).label})
+                <AppIcon name="mosque" className="w-4 h-4 inline -mt-0.5 mr-1" /> Now Broadcasting: <span className="font-extrabold">{playingAlarmName || 'Adhan'}</span> ({playingSourceLabel ?? getAzanSource(selectedAzanSound).label})
               </p>
             </div>
             <button

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronDown, Compass, MapPin, Settings2, VolumeX } from 'lucide-react';
-import type { Madhab, PrayerAzanId, PrayerSettings, SalahLog, SalahName } from '../types';
+import type { AzanSound, Madhab, PrayerAzanId, PrayerSettings, SalahLog, SalahName } from '../types';
 import { SALAH_META } from '../types';
 import { readPrayerSettings, writePrayerSettings } from '../domain';
 import {
@@ -62,7 +62,6 @@ const hijriDate = (instant: Date, timeZone: string): string => {
 /** Prayer times for the day, a tick for each prayer, and a switch for each adhan. */
 export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTogglePrayer, onOpenQibla, today, getNow = realClock }: PrayersScreenProps) {
   const { place, gpsLoading, gpsError, requestGps, selectCity } = usePrayerPlace();
-  const player = useAzanPlayer();
   const [sheet, setSheet] = React.useState<'location' | 'settings' | null>(null);
   const [selected, setSelected] = React.useState(today);
   const [adhanBanner, setAdhanBanner] = React.useState<string | null>(null);
@@ -76,6 +75,19 @@ export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTog
 
   // ── Settings: remembered on the phone, with the Asr rule shared with the rest of the app ──
   const [settings, setSettings] = React.useState<PrayerSettings>(() => readPrayerSettings(madhab));
+  const player = useAzanPlayer(settings.azanSound);
+  // Which recording the settings sheet is previewing, so its button can offer to stop it.
+  const [previewing, setPreviewing] = React.useState<string | null>(null);
+  const preview = (kind: 'fajr' | AzanSound) => {
+    if (previewing === kind && player.playing) {
+      player.stop();
+      setPreviewing(null);
+      return;
+    }
+    setPreviewing(kind);
+    if (kind === 'fajr') player.play('fajr');
+    else player.play(undefined, kind);
+  };
   const latestSettings = React.useRef(settings);
   const save = (next: PrayerSettings) => {
     const written = writePrayerSettings(next);
@@ -144,7 +156,7 @@ export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTog
         if (hasAdhanPlayed(key)) continue;
         markAdhanPlayed(key);
         setAdhanBanner(ROWS[moment.event].label);
-        play();
+        play(moment.event);
       }
     };
     watch();
@@ -302,8 +314,10 @@ export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTog
         madhab={settings.madhab}
         onMethodChange={(calculationMethod) => update({ calculationMethod })}
         onMadhabChange={(next) => update({ madhab: next })}
-        adhanPlaying={player.playing}
-        onToggleAdhanTest={() => (player.playing ? player.stop() : player.play())}
+        voice={settings.azanSound}
+        onVoiceChange={(azanSound) => update({ azanSound })}
+        playing={player.playing ? previewing : null}
+        onPreview={preview}
       />
     </div>
   );

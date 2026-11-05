@@ -187,8 +187,41 @@ test('the adhan sounds once when a prayer time arrives and its switch is on', as
   mount({ getNow: () => new Date(day.fajr.getTime() + 20_000) });
   await act(async () => {});
   assert.equal(audios.length, 1);
-  assert.match(audios[0].src, /adhan/);
+  assert.match(audios[0].src, /azan-fajr\.m4a$/, 'Fajr has its own adhan');
   assert.match(screen.getByRole('status', { name: /adhan/i }).textContent, /Fajr/);
+});
+
+test('Dhuhr, Asr, Maghrib and Isha play the chosen voice, and Madinah can be chosen in settings', async () => {
+  withMecca();
+  mount();
+  fireEvent.click(screen.getByRole('button', { name: 'Prayer settings' }));
+  const dialog = screen.getByRole('dialog', { name: 'Prayer settings' });
+  const voices = within(dialog).getByRole('radiogroup', { name: 'Adhan voice' });
+  assert.equal(within(voices).getByRole('radio', { name: 'Makkah' }).getAttribute('aria-checked'), 'true', 'Makkah is the default');
+  fireEvent.click(within(voices).getByRole('radio', { name: 'Madinah' }));
+  assert.equal(JSON.parse(localStorage.getItem('tasbih_prayer_settings')).azanSound, 'madinah');
+  assert.equal(within(voices).getByRole('radio', { name: 'Madinah' }).getAttribute('aria-checked'), 'true');
+  cleanup();
+
+  const day = computePrayerDay(MECCA_PLACE, today, OPTS);
+  mount({ getNow: () => new Date(day.dhuhr.getTime() + 20_000) });
+  await act(async () => {});
+  assert.equal(audios.length, 1);
+  assert.match(audios[0].src, /azan-madinah\.m4a$/);
+});
+
+test('previewing a voice plays it, and the button turns into a stop button', async () => {
+  withMecca();
+  mount();
+  fireEvent.click(screen.getByRole('button', { name: 'Prayer settings' }));
+  const dialog = screen.getByRole('dialog', { name: 'Prayer settings' });
+  await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: 'Hear Madinah' })); });
+  assert.match(audios[audios.length - 1].src, /azan-madinah\.m4a$/, 'plays Madinah even though Makkah is chosen');
+  assert.ok(within(dialog).getByRole('button', { name: 'Stop Madinah' }), 'now offers to stop');
+  await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: 'Stop Madinah' })); });
+  assert.ok(within(dialog).getByRole('button', { name: 'Hear Madinah' }));
+  await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: 'Hear Fajr adhan' })); });
+  assert.match(audios[audios.length - 1].src, /azan-fajr\.m4a$/);
 });
 
 test('as the clock moves past a prayer time the adhan starts then, once, and never again on later checks', async () => {

@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 
@@ -127,4 +127,57 @@ test('with a GPS fix saved the screen refreshes it on open', async () => {
   mount();
   await act(async () => {});
   assert.equal(asked, 1);
+});
+
+// ── the adhan on this screen: Fajr has its own recording, the others follow the chosen voice ──
+
+const played = [];
+globalThis.Audio = class {
+  constructor(src) { this.src = src; this.paused = true; played.push(src); }
+  play() { this.paused = false; return Promise.resolve(); }
+  pause() { this.paused = true; }
+};
+
+const MECCA = { lat: 21.4225, lng: 39.8262, timeZone: 'Asia/Riyadh', label: 'Mecca' };
+
+/** Opens the screen at a moment just after a prayer's time, with the clock held there. */
+const openAt = async (event, voice) => {
+  const { computePrayerDay, todayKeyIn } = await import('../src/prayerTimes.ts');
+  writePrayerLocation(MECCA, 'city');
+  if (voice) {
+    localStorage.setItem('tasbih_prayer_settings', JSON.stringify({ madhab: 'shafi', calculationMethod: 'Karachi', azanSound: voice, azanEnabled: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true } }));
+  }
+  const day = computePrayerDay(MECCA, todayKeyIn(MECCA.timeZone, new Date()), { method: 'Karachi', madhab: 'shafi' });
+  const at = day[event].getTime() + 20_000;
+  mock.timers.enable({ apis: ['Date'], now: at });
+  played.length = 0;
+  mount();
+  openTimes();
+  await act(async () => {});
+};
+
+test.afterEach(() => mock.timers.reset());
+
+test('at Fajr this screen plays the dedicated Fajr recording, whichever voice is chosen', async () => {
+  await openAt('fajr', 'madinah');
+  assert.equal(played.length, 1);
+  assert.match(played[0], /audio\/azan-fajr\.m4a$/);
+});
+
+test('at Dhuhr, Asr, Maghrib and Isha this screen plays the chosen voice', async () => {
+  for (const [event, voice, file] of [['dhuhr', 'madinah', 'azan-madinah'], ['asr', 'makkah', 'azan-makkah'], ['maghrib', 'madinah', 'azan-madinah'], ['isha', 'makkah', 'azan-makkah']]) {
+    await openAt(event, voice);
+    assert.equal(played.length, 1, event);
+    assert.match(played[0], new RegExp(`audio/${file}\.m4a$`), event);
+    cleanup();
+    mock.timers.reset();
+    localStorage.clear();
+  }
+});
+
+test('while it plays, the screen names the recording actually in use', async () => {
+  await openAt('fajr', 'madinah');
+  const banner = screen.getByText(/Now Broadcasting/).textContent;
+  assert.match(banner, /Now Broadcasting: Fajr Prayer \(Fajr adhan\)/, 'the label is the Fajr recording');
+  assert.doesNotMatch(banner, /Madinah/, 'not the voice chosen for the other prayers');
 });

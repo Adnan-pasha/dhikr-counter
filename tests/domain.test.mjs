@@ -283,13 +283,13 @@ test('sanitizePrayerSettings validates calculation method, madhab, azan sound, a
   }, {
     madhab: 'hanafi',
     calculationMethod: 'MWL',
-    azanSound: 'standard',
+    azanSound: 'madinah',
     azanEnabled: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
   });
 
   assert.equal(result.madhab, 'hanafi');
   assert.equal(result.calculationMethod, 'MWL');
-  assert.equal(result.azanSound, 'standard');
+  assert.equal(result.azanSound, 'madinah', 'an unknown voice falls back to the fallback voice');
   assert.equal(result.azanEnabled.fajr, false);
   assert.equal(result.azanEnabled.dhuhr, true);
   assert.equal(result.azanEnabled.maghrib, false);
@@ -311,19 +311,20 @@ test('readPrayerSettings migrates legacy azan settings and writePrayerSettings p
   assert.equal(migrated.azanEnabled.asr, false);
   assert.match(localStorage.getItem('tasbih_prayer_settings') || '', /azanEnabled/);
 
-  const written = writePrayerSettings({ ...migrated, calculationMethod: 'Egypt', azanSound: 'standard' });
+  const written = writePrayerSettings({ ...migrated, calculationMethod: 'Egypt', azanSound: 'madinah' });
   assert.equal(written.calculationMethod, 'Egypt');
-  assert.equal(written.azanSound, 'standard');
+  assert.equal(written.azanSound, 'madinah');
   assert.match(localStorage.getItem('tasbih_prayer_settings') || '', /Egypt/);
   assert.match(localStorage.getItem('tasbih_azan_settings') || '', /fajr/);
 });
 
-test('legacy mecca/medina adhan choices migrate to the bundled standard adhan', () => {
+test('stored adhan choices from earlier versions map to the voice they stood for', () => {
   const fallback = sanitizePrayerSettings(null);
-  assert.equal(fallback.azanSound, 'standard');
-  for (const legacy of ['mecca', 'medina']) {
-    assert.equal(sanitizePrayerSettings({ azanSound: legacy }).azanSound, 'standard', legacy);
+  assert.equal(fallback.azanSound, 'makkah');
+  for (const [legacy, voice] of [['standard', 'makkah'], ['mecca', 'makkah'], ['medina', 'madinah'], ['makkah', 'makkah'], ['madinah', 'madinah']]) {
+    assert.equal(sanitizePrayerSettings({ azanSound: legacy }).azanSound, voice, legacy);
   }
+  assert.equal(sanitizePrayerSettings({ azanSound: 42 }).azanSound, 'makkah', 'not even text');
 });
 
 const PREF_FALLBACK = {

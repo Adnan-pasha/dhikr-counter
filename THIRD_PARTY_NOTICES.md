@@ -4,7 +4,7 @@ Kept in sync with `src/licenses.ts`, which the app shows under Settings.
 
 | Component | Author | Licence | Source |
 |---|---|---|---|
-| Adhan recording (`public/audio/adhan.m4a`) | Adam-synagda | CC0 1.0 | https://commons.wikimedia.org/wiki/File:Beautiful_adhan.ogg |
+| Adhan recordings (`public/audio/azan-fajr.m4a`, `azan-makkah.m4a`, `azan-madinah.m4a`) | Supplied by the project owner; reciters not named in the files | Licence not independently verified | https://www.thesufi.com |
 | adhan | Batoul Apps | MIT | https://github.com/batoulapps/adhan-js |
 | Inter | The Inter Project Authors | SIL OFL 1.1 | https://github.com/rsms/inter |
 | Space Grotesk | Florian Karsten | SIL OFL 1.1 | https://github.com/floriankarsten/space-grotesk |
@@ -22,7 +22,8 @@ Kept in sync with `src/licenses.ts`, which the app shows under Settings.
 
 ## Notes
 
-- The adhan recording was converted from Ogg Vorbis to AAC (64 kbps). CC0 permits this; no attribution is required, but it is given here as a courtesy. The reciter is not named on the source page.
+- The three adhan recordings (Fajr, Makkah, Madinah) were supplied by the project owner from an open download collection (their files are tagged with thesufi.com) and converted to mono AAC (40 kbps) with loudness levelled. The files carry no licence text, the reciters are not named, and the licence has not been independently verified. The project owner decided to use them. If a rights holder objects, remove them and the references in `src/azan.ts`.
+- The earlier placeholder adhan (CC0, Wikimedia Commons, "Beautiful adhan.ogg" by Adam-synagda) was removed when these recordings replaced it.
 - Ayatul Kursi (2:255) and the last two verses of Al-Baqarah (2:285-286) in the dhikr library are verbatim copies of the Tanzil Uthmani text, with its stop signs. A test compares them with a saved copy of the source (tests/fixtures/quran-verses.json).
 - QuranEnc translations are fetched live from quranenc.com and shown with their footnotes, exactly as published. They are not copied into this repository or hosted by us; the device keeps a cache so surahs already opened work offline.
 - Quran text and the translation are loaded on demand from api.alquran.cloud and are not bundled in the app. Recitation audio is streamed and never bundled. Any future addition needs its licence recorded here first.
