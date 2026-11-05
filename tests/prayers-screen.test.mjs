@@ -347,3 +347,77 @@ test('every control is at least 44px tall', () => {
     assert.match(screen.getByRole('button', { name }).className, /min-h-11/);
   }
 });
+
+// ── on the phone: the alarm card, and a tapped alert plays its adhan ───────────
+
+const phoneAlarms = (over = {}) => ({
+  supported: true,
+  status: { notifications: 'granted', exactAlarms: 'granted' },
+  lastSync: { status: 'scheduled', scheduled: 50, exact: true },
+  next: null,
+  requestNotifications: async () => 'granted',
+  openExactSettings: async () => 'granted',
+  sendTest: async () => ({ status: 'scheduled', scheduled: 1, exact: true }),
+  ...over,
+});
+
+test('on the phone the Prayers screen shows the alerts card, and in a browser it does not', () => {
+  withMecca();
+  mount({ alarms: phoneAlarms() });
+  assert.ok(screen.getByRole('region', { name: 'Prayer alerts' }));
+  cleanup();
+  mount();
+  assert.equal(screen.queryByRole('region', { name: 'Prayer alerts' }), null);
+});
+
+test('the alerts card is there even before a place is chosen, since reminders need it too', () => {
+  mount({ alarms: phoneAlarms() });
+  assert.ok(screen.getByRole('region', { name: 'Prayer alerts' }));
+});
+
+test('on the phone the screen does not play the adhan itself at prayer time, because the phone\'s alarm rings', async () => {
+  withMecca();
+  const day = computePrayerDay(MECCA_PLACE, today, OPTS);
+  mount({ getNow: () => new Date(day.fajr.getTime() + 20_000), autoPlayAdhan: false });
+  await act(async () => {});
+  assert.equal(audios.length, 0);
+});
+
+test('in a browser it still plays the adhan itself', async () => {
+  withMecca();
+  const day = computePrayerDay(MECCA_PLACE, today, OPTS);
+  mount({ getNow: () => new Date(day.fajr.getTime() + 20_000), autoPlayAdhan: true });
+  await act(async () => {});
+  assert.equal(audios.length, 1);
+});
+
+test('a tapped Fajr alert plays Fajr\'s own recording and says which prayer it is', async () => {
+  withMecca();
+  mount({ autoPlayAdhan: false, playRequest: { prayer: 'fajr', nonce: 1 } });
+  await act(async () => {});
+  assert.equal(audios.length, 1);
+  assert.match(audios[0].src, /azan-fajr\.m4a$/);
+  assert.match(screen.getByRole('status', { name: /adhan/i }).textContent, /Fajr/);
+});
+
+test('a tapped Dhuhr alert plays the chosen voice', async () => {
+  withMecca();
+  localStorage.setItem('tasbih_prayer_settings', JSON.stringify({ madhab: 'shafi', calculationMethod: 'Karachi', azanSound: 'madinah', azanEnabled: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true } }));
+  mount({ autoPlayAdhan: false, playRequest: { prayer: 'dhuhr', nonce: 1 } });
+  await act(async () => {});
+  assert.match(audios[0].src, /azan-madinah\.m4a$/);
+});
+
+test('one tap plays once, however often the screen redraws, and a second tap plays again', async () => {
+  withMecca();
+  const props = { madhab: 'shafi', onMadhabChange: () => {}, salahLogs: [], onTogglePrayer: () => {}, onOpenQibla: () => {}, today, getNow: () => NOW, autoPlayAdhan: false };
+  const { rerender } = render(React.createElement(PrayersScreen, { ...props, playRequest: { prayer: 'asr', nonce: 1 } }));
+  await act(async () => {});
+  rerender(React.createElement(PrayersScreen, { ...props, playRequest: { prayer: 'asr', nonce: 1 } }));
+  rerender(React.createElement(PrayersScreen, { ...props, salahLogs: [{ date: today, prayers: { fajr: true } }], playRequest: { prayer: 'asr', nonce: 1 } }));
+  await act(async () => {});
+  assert.equal(audios.length, 1, 'the same request is not played twice');
+  rerender(React.createElement(PrayersScreen, { ...props, playRequest: { prayer: 'asr', nonce: 2 } }));
+  await act(async () => {});
+  assert.equal(audios.length, 2, 'a new tap plays again');
+});

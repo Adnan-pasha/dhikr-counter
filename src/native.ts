@@ -30,3 +30,38 @@ export const installAndroidBack = async (): Promise<void> => {
   const handle = androidBackHandler(getBackStack(), window.history, () => { void App.exitApp(); });
   await App.addListener('backButton', handle);
 };
+
+/** The phone's notification scheduler, or null in a browser. Loaded on demand so the web app never carries it. */
+export const getAlarmPort = async (): Promise<import('./alarmSync').AlarmPort | null> => {
+  if (!isNativeApp()) return null;
+  const { LocalNotifications } = await import('@capacitor/local-notifications');
+  const { toAlarmPort } = await import('./alarmSync');
+  // Never return the plugin itself from an async function (see toAlarmPort).
+  return toAlarmPort(LocalNotifications as unknown as import('./alarmSync').AlarmPort);
+};
+
+/** Calls `handler` with what a notification carried when the person taps it. Returns a function that stops listening. */
+export const onNotificationTap = (handler: (extra: unknown) => void): (() => void) => {
+  if (!isNativeApp()) return () => {};
+  let stopped = false;
+  let remove: (() => void) | null = null;
+  void import('@capacitor/local-notifications').then(async ({ LocalNotifications }) => {
+    const handle = await LocalNotifications.addListener('localNotificationActionPerformed', (event) => handler(event.notification.extra));
+    if (stopped) void handle.remove();
+    else remove = () => { void handle.remove(); };
+  });
+  return () => { stopped = true; remove?.(); };
+};
+
+/** Calls `handler` each time the app comes back to the front. Returns a function that stops listening. */
+export const onAppResume = (handler: () => void): (() => void) => {
+  if (!isNativeApp()) return () => {};
+  let stopped = false;
+  let remove: (() => void) | null = null;
+  void import('@capacitor/app').then(async ({ App }) => {
+    const handle = await App.addListener('resume', handler);
+    if (stopped) void handle.remove();
+    else remove = () => { void handle.remove(); };
+  });
+  return () => { stopped = true; remove?.(); };
+};

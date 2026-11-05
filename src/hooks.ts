@@ -29,10 +29,13 @@ export const useReminderScheduler = (
   reminders: DhikrReminder[],
   preferences: UserPreferences,
   setActiveReminderTriggered: React.Dispatch<React.SetStateAction<DhikrReminder | null>>,
+  /** Off when the phone's own alarms do the reminding, so one reminder is never announced twice. */
+  enabled = true,
 ) => {
   const reminderQueueRef = React.useRef<DhikrReminder[]>([]);
 
   useEffect(() => {
+    if (!enabled) return undefined;
     let lastActiveAt: Date | null = null;
 
     const processReminderTick = (reason: 'interval' | 'visible' = 'interval') => {
@@ -77,7 +80,7 @@ export const useReminderScheduler = (
       clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [reminders, preferences, setActiveReminderTriggered]);
+  }, [reminders, preferences, setActiveReminderTriggered, enabled]);
 
   const dismissReminder = React.useCallback(() => {
     const next = reminderQueueRef.current.shift() ?? null;

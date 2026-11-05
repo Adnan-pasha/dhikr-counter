@@ -4,6 +4,8 @@ import {
   getNotificationStatus, requestNotificationPermission, showReminderNotification, type NotificationStatus,
 } from '../notifications';
 import type { DhikrReminder } from '../types';
+import type { NativeAlarms } from '../useNativeAlarms';
+import NativeAlarmsCard from './prayers/NativeAlarmsCard';
 
 const TEST_REMINDER: DhikrReminder = {
   id: 'test',
@@ -22,8 +24,18 @@ const STATUS_TEXT: Record<NotificationStatus, string> = {
   denied: 'Notifications are blocked. Allow them in your browser or site settings.',
 };
 
+interface NotificationSettingsProps {
+  /** The phone's alarms. Inside the Android app they replace the browser section below. */
+  alarms?: NativeAlarms;
+}
+
 /** Shows whether reminder notifications can appear, lets the user turn them on, and sends a test. */
-export default function NotificationSettings() {
+export default function NotificationSettings({ alarms }: NotificationSettingsProps) {
+  if (alarms?.supported) return <NativeAlarmsCard alarms={alarms} />;
+  return <BrowserNotificationSettings />;
+}
+
+function BrowserNotificationSettings() {
   const [status, setStatus] = React.useState<NotificationStatus>(() => getNotificationStatus());
   const [testResult, setTestResult] = React.useState<'sent' | 'failed' | null>(null);
 

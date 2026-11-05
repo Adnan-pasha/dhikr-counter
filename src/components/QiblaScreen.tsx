@@ -13,6 +13,8 @@ import { CALCULATION_METHODS, PRAYER_EVENTS, computePrayerDay, eventWindow, form
 import { CITY_PRESETS, qiblaBearing, readPrayerLocation, writePrayerLocation, type CityPreset } from '../places';
 
 interface QiblaScreenProps {
+  /** The phone's own alarms are set and ring at prayer time, so this screen does not play the adhan itself. */
+  phoneAlarmsActive?: boolean;
   theme: AppTheme;
   madhab: UserMadhab;
   onMadhabChange: (madhab: UserMadhab) => void;
@@ -32,7 +34,7 @@ const PRAYER_LABELS: Record<PrayerEvent, { label: string; subtitle: string }> = 
   isha: { label: 'Isha', subtitle: 'Night' },
 };
 
-export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScreenProps) {
+export default function QiblaScreen({ theme, madhab, onMadhabChange, phoneAlarmsActive = false }: QiblaScreenProps) {
   // Navigation sub-tab inside Qibla Finder: Compass vs. PrayTimes
   const [subTab, setSubTab] = useState<'qibla' | 'namaz'>('qibla');
 
@@ -653,6 +655,8 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
   const [azanAlert, setAzanAlert] = useState<string | null>(null);
 
   useEffect(() => {
+    // While the phone's own alarms are set they ring at prayer time; this screen must not play over them.
+    if (phoneAlarmsActive) return undefined;
     const watchForPrayerTimes = () => {
       const nowMs = Date.now();
       for (const moment of eventSpan) {
@@ -673,7 +677,7 @@ export default function QiblaScreen({ theme, madhab, onMadhabChange }: QiblaScre
     watchForPrayerTimes(); // run immediately on mount
     const interval = setInterval(watchForPrayerTimes, 5000); // check every 5 seconds
     return () => clearInterval(interval);
-  }, [eventSpan, azanSettings, selectedAzanSound]);
+  }, [eventSpan, azanSettings, selectedAzanSound, phoneAlarmsActive]);
 
   // Theme support mapper
   const getThemePalette = (currentTheme: AppTheme) => {

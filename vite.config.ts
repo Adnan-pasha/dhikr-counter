@@ -42,9 +42,15 @@ const swBuildManifest = (): Plugin => ({
   },
 });
 
+// When this build was made (UTC), shown in Settings so an installed copy can be told apart from another.
+const BUILD_STAMP = `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+
 export default defineConfig(() => {
   return {
     base: '/',
+    define: {
+      __BUILD_STAMP__: JSON.stringify(BUILD_STAMP),
+    },
     plugins: [react(), tailwindcss(), swBuildManifest()],
     resolve: {
       alias: {

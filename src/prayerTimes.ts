@@ -220,6 +220,13 @@ export const formatClock = (date: Date, timeZone: string, hour12 = true): string
   return new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hourCycle: hour12 ? 'h12' : 'h23', timeZone: zone }).format(date);
 };
 
+/**
+ * Whether a place's clock reads differently from the phone's right now. Compared by what the clocks say, not by zone
+ * names: the same zone has several names (Asia/Kolkata is also Asia/Calcutta), and a phone may use either.
+ */
+export const differsFromPhoneClock = (now: Date, placeZone: string, phoneZone: string): boolean =>
+  formatClock(now, placeZone, false) !== formatClock(now, phoneZone, false);
+
 /** "1h 20m", "12m" or "45s". Never negative. */
 export const formatCountdown = (milliseconds: number): string => {
   const total = Math.max(0, Math.floor(milliseconds / 1000));

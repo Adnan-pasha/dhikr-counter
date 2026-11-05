@@ -26,7 +26,9 @@ import { practisedDay } from './quran/progress';
 import type { QuranIntent } from './components/QuranReader';
 import { dhikrIdFromSearch } from './notifications';
 import { setDay, browserStorage } from './salah';
-import { isNativeApp } from './native';
+import { isNativeApp, onNotificationTap } from './native';
+import { useNativeAlarms } from './useNativeAlarms';
+import { routeNotificationTap, type AdhanPlayRequest } from './nativeAlarms';
 import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer, uniqueInOrder, readStartedRoutine, writeStartedRoutine, afterFinishingRoutine } from './routines';
 import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
 
@@ -231,7 +233,25 @@ export default function App() {
     if (lastReadSurah > 0) localStorage.setItem('tasbih_quran_last_read', String(lastReadSurah));
   }, [lastReadSurah]);
 
-  const { dismissReminder } = useReminderScheduler(reminders, preferences, setActiveReminderTriggered);
+  // On the phone, Android's own alarms ring the prayers and reminders even with the app closed. The in-app alerts
+  // stand down only while those alarms are really set, so one alert is never announced twice and, if setting them
+  // fails or notifications are not allowed, the app still alerts while it is open.
+  const nativeAlarms = useNativeAlarms(reminders);
+  const phoneRings = nativeAlarms.supported && nativeAlarms.lastSync?.status === 'scheduled';
+  const { dismissReminder } = useReminderScheduler(reminders, preferences, setActiveReminderTriggered, !phoneRings);
+
+  // Tapping a notification: a reminder opens its dhikr; a prayer alert opens Prayers and plays that adhan.
+  const [playRequest, setPlayRequest] = useState<AdhanPlayRequest | null>(null);
+  useEffect(() => onNotificationTap((extra) => {
+    const route = routeNotificationTap(extra);
+    if (!route) return;
+    if (route.action === 'open-dhikr') {
+      setLaunchDhikrId(route.dhikrId);
+      return;
+    }
+    setActiveTab('prayers');
+    if (route.action === 'play-adhan') setPlayRequest((previous) => ({ prayer: route.prayer, nonce: (previous?.nonce ?? 0) + 1 }));
+  }), []);
 
 
   const activeDhikr = dhikrs.find((d) => d.id === currentDhikrId) || SYSTEM_DHIKRS[0];
@@ -625,6 +645,7 @@ export default function App() {
 
             {activeTab === 'settings' && (
               <SettingsScreen
+                alarms={nativeAlarms}
                 preferences={preferences}
                 onChangePreferences={(diff) => setPreferences((prev) => ({ ...prev, ...diff }))}
                 onResetAllData={handleResetAllData}
@@ -648,6 +669,9 @@ export default function App() {
                   today={today}
                   onTogglePrayer={(date, prayer) => togglePrayer(date, prayer, false)}
                   onOpenQibla={() => setActiveTab('qibla')}
+                  alarms={nativeAlarms}
+                  autoPlayAdhan={!phoneRings}
+                  playRequest={playRequest}
                 />
               </Suspense>
             )}
@@ -659,6 +683,7 @@ export default function App() {
                 </div>
               }>
                 <QiblaScreen
+                  phoneAlarmsActive={phoneRings}
                   theme={preferences.theme}
                   madhab={preferences.madhab}
                   onMadhabChange={(madhab) => setPreferences(prev => ({ ...prev, madhab }))}
