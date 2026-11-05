@@ -117,41 +117,42 @@ test('free counters cycle the string every 33', () => {
 
 const seq = ['a', 'b', 'c', 'd'].map((id) => ({ id }));
 
-test('routine mode advances to the next pending dhikr and skips completed ones', () => {
-  assert.equal(findNextDhikrId(seq, 'a', new Set(['a']), 'routine'), 'b');
-  assert.equal(findNextDhikrId(seq, 'a', new Set(['a', 'b']), 'routine'), 'c');
+test('a routine always advances to the very next dhikr in the routine, whatever was done today', () => {
+  assert.equal(findNextDhikrId(seq, 'a'), 'b');
+  assert.equal(findNextDhikrId(seq, 'b'), 'c');
+  assert.equal(findNextDhikrId(seq, 'c'), 'd');
 });
 
-test('routine mode stops at the end instead of looping', () => {
-  assert.equal(findNextDhikrId(seq, 'd', new Set(['d']), 'routine'), null);
-  assert.equal(findNextDhikrId(seq, 'c', new Set(['c', 'd']), 'routine'), null);
+test('a routine stops at the end instead of looping', () => {
+  assert.equal(findNextDhikrId(seq, 'd'), null);
 });
 
-test('free mode moves to the next item and wraps', () => {
-  assert.equal(findNextDhikrId(seq, 'b', new Set(), 'free'), 'c');
-  assert.equal(findNextDhikrId(seq, 'd', new Set(), 'free'), 'a');
-});
-
-test('an unknown current dhikr yields no advance; a one-item sequence yields none', () => {
-  assert.equal(findNextDhikrId(seq, 'zzz', new Set(), 'free'), null);
-  assert.equal(findNextDhikrId([{ id: 'only' }], 'only', new Set(), 'free'), null);
+test('an unknown current dhikr, or a one-item sequence, yields no advance', () => {
+  assert.equal(findNextDhikrId(seq, 'zzz'), null);
+  assert.equal(findNextDhikrId([{ id: 'only' }], 'only'), null);
 });
 
 // ── getUpcoming ──────────────────────────────────────────────────────────────
 
-test('upcoming lists the next pending items after the current one', () => {
-  assert.deepEqual(getUpcoming(seq, 'a', new Set(['a']), 'routine', 2).map((d) => d.id), ['b', 'c']);
-  assert.deepEqual(getUpcoming(seq, 'a', new Set(['a', 'b']), 'routine', 2).map((d) => d.id), ['c', 'd']);
+test('upcoming lists the next items in routine order, the same ones the counter will move to', () => {
+  assert.deepEqual(getUpcoming(seq, 'a', 2).map((d) => d.id), ['b', 'c']);
+  assert.deepEqual(getUpcoming(seq, 'b', 2).map((d) => d.id), ['c', 'd']);
 });
 
-test('upcoming in routine mode ends with the sequence; in free mode it wraps', () => {
-  assert.deepEqual(getUpcoming(seq, 'c', new Set(), 'routine', 2).map((d) => d.id), ['d']);
-  assert.deepEqual(getUpcoming(seq, 'c', new Set(), 'free', 2).map((d) => d.id), ['d', 'a']);
+test('upcoming ends with the routine and never wraps', () => {
+  assert.deepEqual(getUpcoming(seq, 'c', 2).map((d) => d.id), ['d']);
+  assert.deepEqual(getUpcoming(seq, 'd', 2), []);
 });
 
 test('upcoming never includes the current item or repeats', () => {
-  assert.deepEqual(getUpcoming([{ id: 'x' }], 'x', new Set(), 'free', 2), []);
-  assert.deepEqual(getUpcoming(seq, 'zzz', new Set(), 'free', 2), []);
+  assert.deepEqual(getUpcoming([{ id: 'x' }], 'x', 2), []);
+  assert.deepEqual(getUpcoming(seq, 'zzz', 2), []);
+});
+
+test('the next dhikr is always the first of the upcoming ones, so the hint never lies', () => {
+  for (const { id } of seq) {
+    assert.equal(findNextDhikrId(seq, id), getUpcoming(seq, id, 1)[0]?.id ?? null, id);
+  }
 });
 
 // ── haptics ──────────────────────────────────────────────────────────────────

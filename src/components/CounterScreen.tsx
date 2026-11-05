@@ -33,6 +33,10 @@ interface CounterScreenProps {
   pendingNext: Dhikr | null;
   /** True while a confirm dialog is open; the keyboard counting shortcut is paused. */
   modalOpen?: boolean;
+  /** The last dhikr of the running routine has reached its target. */
+  routineComplete?: boolean;
+  /** Ends the routine and leaves the counter. Offered once the routine is complete. */
+  onFinishRoutine?: () => void;
 }
 
 // ─── Theme config ─────────────────────────────────────────────────────────────
@@ -86,6 +90,8 @@ export default function CounterScreen({
   upcoming,
   pendingNext,
   modalOpen = false,
+  routineComplete = false,
+  onFinishRoutine,
 }: CounterScreenProps) {
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
@@ -126,6 +132,25 @@ export default function CounterScreen({
     const toast = setTimeout(() => setJustCompleted(false), 2600);
     return () => { clearTimeout(flash); clearTimeout(toast); };
   }, [currentCount, target]);
+
+  // A long text scrolls inside its area; a soft fade at the bottom says there is more to read.
+  const textRef = useRef<HTMLDivElement>(null);
+  const [moreBelow, setMoreBelow] = useState(false);
+  const updateFade = useCallback(() => {
+    const el = textRef.current;
+    if (!el) return;
+    setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 4);
+  }, []);
+  useEffect(() => {
+    const el = textRef.current;
+    if (!el) return undefined;
+    el.scrollTop = 0;
+    updateFade();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(updateFade);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [currentDhikr.id, reading.transliteration, reading.translation, updateFade]);
 
   const addRipple = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -178,19 +203,23 @@ export default function CounterScreen({
   const caption = justCompleted
     ? pendingNext
       ? `Masha'Allah! Next: ${pendingNext.nameEn}`
-      : "Masha'Allah! Round complete"
+      : routineComplete
+        ? "Masha'Allah! Routine complete"
+        : "Masha'Allah! Round complete"
     : pendingNext
       ? `Next: ${pendingNext.nameEn}`
-      : target <= 0
+      : routineComplete
+        ? 'Routine complete. Barakallahu feek'
+        : target <= 0
         ? 'Free count'
         : remaining === 0
           ? 'Round complete'
           : `${remaining} remaining${rounds > 0 ? ` · round ${rounds + 1}` : ''}`;
-  const captionIsHighlight = justCompleted || pendingNext !== null;
+  const captionIsHighlight = justCompleted || pendingNext !== null || !!routineComplete;
 
   return (
     <div className="relative flex flex-col h-full overflow-hidden" style={{ background: 'var(--color-bg-base)' }}>
-      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{liveMessage}</div>
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{liveMessage}{routineComplete ? ' Routine complete.' : ''}</div>
 
       {/* Ambient glow */}
       <div
@@ -266,29 +295,51 @@ export default function CounterScreen({
       </motion.div>
 
       {/* ── Tap stage: everything between the header and the controls is one big target ── */}
-      <button
-        id="tap_bead_clicker"
-        type="button"
-        aria-label={`Tap anywhere to count ${countLabel}`}
-        onPointerDown={handlePointerDown}
-        onClick={handleClick}
-        className="relative flex-1 min-h-0 w-full select-none cursor-pointer overflow-hidden z-10 touch-manipulation"
-        style={{ background: 'transparent', border: 0, padding: 0, WebkitUserSelect: 'none' }}
-      >
-        {ripples.map(r => (
-          <motion.span
-            key={r.id}
-            className="absolute rounded-full pointer-events-none"
-            style={{ left: r.x - 8, top: r.y - 8, width: 16, height: 16, background: theme.ring, opacity: 0.35 }}
-            initial={{ scale: 0.5, opacity: 0.4 }}
-            animate={{ scale: 12, opacity: 0 }}
-            transition={{ duration: 0.55, ease: 'easeOut' }}
-          />
-        ))}
+      <div className="relative flex-1 min-h-0 w-full z-10">
+        {/* The tap layer: one plain button under everything else. Nothing interactive sits inside it. */}
+        <button
+          id="tap_bead_clicker"
+          type="button"
+          aria-label={`Tap anywhere to count ${countLabel}`}
+          onPointerDown={handlePointerDown}
+          onClick={handleClick}
+          className="absolute inset-0 h-full w-full select-none cursor-pointer overflow-hidden touch-manipulation"
+          style={{ background: 'transparent', border: 0, padding: 0, WebkitUserSelect: 'none' }}
+        >
+          {ripples.map(r => (
+            <motion.span
+              key={r.id}
+              className="absolute rounded-full pointer-events-none"
+              style={{ left: r.x - 8, top: r.y - 8, width: 16, height: 16, background: theme.ring, opacity: 0.35 }}
+              initial={{ scale: 0.5, opacity: 0.4 }}
+              animate={{ scale: 12, opacity: 0 }}
+              transition={{ duration: 0.55, ease: 'easeOut' }}
+            />
+          ))}
+        </button>
 
-        <div className="pointer-events-none relative flex h-full flex-col items-center justify-between px-5 pt-3 pb-3">
-          {/* Phrase + queue */}
-          <div className="w-full text-center" style={{ opacity: isFocusMode ? 0.9 : 1 }}>
+        {/* What is shown over the tap layer. Touches fall through to it, except on the text and Finish. */}
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center px-5 pt-3 pb-3">
+          {/*
+            Phrase and queue. A long dhikr (Darood Ibrahim, Ayatul Kursi) scrolls inside this area, so the count below is
+            always on screen. Touching it to scroll must not count a bead; a tap (a click, which a scroll never produces) does.
+          */}
+          <div
+            id="dhikr_text"
+            ref={textRef}
+            role="region"
+            aria-label="Dhikr text"
+            tabIndex={0}
+            onScroll={updateFade}
+            onClick={() => onIncrement()}
+            className="pointer-events-auto w-full min-h-0 flex-1 overflow-y-auto text-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            style={{
+              opacity: isFocusMode ? 0.9 : 1,
+              maskImage: moreBelow ? 'linear-gradient(to bottom, #000 calc(100% - 28px), transparent)' : undefined,
+              WebkitMaskImage: moreBelow ? 'linear-gradient(to bottom, #000 calc(100% - 28px), transparent)' : undefined,
+              overscrollBehavior: 'contain',
+            }}
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentDhikr.id}
@@ -335,52 +386,67 @@ export default function CounterScreen({
             )}
           </div>
 
-          {/* Count inside the progress ring */}
-          <div className="relative w-48 h-48 [@media(max-height:760px)]:w-40 [@media(max-height:760px)]:h-40 shrink-0 flex items-center justify-center">
-            <ProgressRing progress={progress} color={theme.ring} />
-            <div className="flex flex-col items-center text-center">
-              <motion.div
-                key={`count-${currentCount}`}
-                initial={{ scale: 0.88, opacity: 0.7 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 380, damping: 20 }}
-                className={`flex justify-center font-display font-black tabular-nums leading-none ${display.stacked ? 'flex-col items-center' : 'items-baseline'}`}
-                style={{ color: 'var(--color-text-primary)' }}
-              >
-                <span style={{ fontSize: `min(${display.countSize}px, 8.4vh)` }}>{target > 0 ? inRound : currentCount}</span>
-                {target > 0 && (
-                  <span
-                    className="font-bold"
-                    style={{
-                      fontSize: `min(${display.targetSize}px, 3.6vh)`,
-                      color: 'var(--color-text-muted)',
-                      marginInlineStart: display.stacked ? 0 : 4,
-                      marginTop: display.stacked ? 4 : 0,
-                    }}
-                  >
-                    /{target}
-                  </span>
-                )}
-              </motion.div>
+          {/* The count, the ring and the line under it: never squeezed out by a long text */}
+          <div id="counter_ring_group" className="shrink-0 flex w-full flex-col items-center gap-2 pt-2">
+            <div className="relative w-48 h-48 [@media(max-height:760px)]:w-40 [@media(max-height:760px)]:h-40 shrink-0 flex items-center justify-center">
+              <ProgressRing progress={progress} color={theme.ring} />
+              <div className="flex flex-col items-center text-center">
+                <motion.div
+                  key={`count-${currentCount}`}
+                  initial={{ scale: 0.88, opacity: 0.7 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 20 }}
+                  className={`flex justify-center font-display font-black tabular-nums leading-none ${display.stacked ? 'flex-col items-center' : 'items-baseline'}`}
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  <span style={{ fontSize: `min(${display.countSize}px, 8.4vh)` }}>{target > 0 ? inRound : currentCount}</span>
+                  {target > 0 && (
+                    <span
+                      className="font-bold"
+                      style={{
+                        fontSize: `min(${display.targetSize}px, 3.6vh)`,
+                        color: 'var(--color-text-muted)',
+                        marginInlineStart: display.stacked ? 0 : 4,
+                        marginTop: display.stacked ? 4 : 0,
+                      }}
+                    >
+                      /{target}
+                    </span>
+                  )}
+                </motion.div>
+              </div>
             </div>
+
+            <p
+              className="section-label max-w-full truncate text-center"
+              style={{ color: captionIsHighlight ? 'var(--color-text-brand)' : 'var(--color-text-muted)', minHeight: 20 }}
+            >
+              {caption}
+            </p>
+
           </div>
 
-          <p
-            className="section-label max-w-full truncate text-center"
-            style={{ color: captionIsHighlight ? 'var(--color-text-brand)' : 'var(--color-text-muted)', minHeight: 20 }}
-          >
-            {caption}
-          </p>
+          {routineComplete && onFinishRoutine && (
+            <button
+              id="btn_finish_routine"
+              type="button"
+              onClick={onFinishRoutine}
+              className="pointer-events-auto tap-target mt-2 shrink-0 rounded-xl px-6 text-sm font-black cursor-pointer text-on-brand"
+              style={{ background: 'var(--color-brand-500)' }}
+            >
+              Finish
+            </button>
+          )}
 
-          {/* Bead string + hint */}
-          <div className="w-full flex flex-col items-center min-h-0 flex-1 max-h-[132px]">
-            <BeadString total={beads.total} filled={beads.filled} color={theme.ring} className="w-full max-w-sm min-h-0 flex-1" />
-            <p className="text-xs mt-1 shrink-0" style={{ color: 'var(--color-text-muted)', minHeight: 16 }}>
+          {/* Bead string and hint, decoration only. On short screens they give their room to the text. */}
+          <div className="shrink-0 w-full flex flex-col items-center gap-2 pt-2 [@media(max-height:700px)]:hidden" aria-hidden="true">
+            <BeadString total={beads.total} filled={beads.filled} color={theme.ring} className="w-full max-w-sm h-14" />
+            <p className="text-xs shrink-0" style={{ color: 'var(--color-text-muted)', minHeight: 16 }}>
               {currentCount === 0 && !pendingNext ? 'Tap anywhere to count' : ''}
             </p>
           </div>
         </div>
-      </button>
+      </div>
 
       {/* ── Controls ──────────────────────────────────────────────────── */}
       <motion.div

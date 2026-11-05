@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, AFTER_SALAH_ROUTINE_ID, isFardPrayer } from '../src/routines.ts';
+import {
+  resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, AFTER_SALAH_ROUTINE_ID, isFardPrayer,
+  uniqueInOrder, readStartedRoutine, writeStartedRoutine, STARTED_ROUTINE_KEY, afterFinishingRoutine,
+} from '../src/routines.ts';
 import { GOAL_TEMPLATES, DEFAULT_DAILY_GOAL, progressLabel, sanitizeDailyGoal } from '../src/habits.ts';
 
 const routine = (id, dhikrIds) => ({ id, name: id, icon: 'dua', dhikrIds, createdAt: '2026-01-01T00:00:00.000Z' });
@@ -13,21 +16,79 @@ test('the routine the user started wins even when an earlier routine shares the 
   assert.equal(resolveActiveRoutine([morning, after], 'routine-after-salah', 'subhanallah')?.id, 'routine-after-salah');
 });
 
-test('without a started routine the first routine containing the dhikr is used', () => {
+test('without a started routine no routine is guessed, because the same dhikr sits in several routines', () => {
   const a = routine('a', ['x', 'y']);
   const b = routine('b', ['y']);
-  assert.equal(resolveActiveRoutine([a, b], null, 'y')?.id, 'a');
+  assert.equal(resolveActiveRoutine([a, b], null, 'y'), null);
+  assert.equal(resolveActiveRoutine([a, b], null, 'x'), null);
 });
 
-test('a started routine is dropped once the current dhikr is not part of it', () => {
+test('a started routine is dropped once the current dhikr is not part of it, and nothing else is guessed', () => {
   const a = routine('a', ['x']);
   const b = routine('b', ['y']);
-  assert.equal(resolveActiveRoutine([a, b], 'a', 'y')?.id, 'b');
+  assert.equal(resolveActiveRoutine([a, b], 'a', 'y'), null);
   assert.equal(resolveActiveRoutine([a], 'a', 'zzz'), null);
 });
 
-test('a deleted routine id falls back safely', () => {
-  assert.equal(resolveActiveRoutine([routine('a', ['x'])], 'gone', 'x')?.id, 'a');
+test('a deleted routine id means no routine', () => {
+  assert.equal(resolveActiveRoutine([routine('a', ['x'])], 'gone', 'x'), null);
+});
+
+test('every default routine, started by id, is the one that runs for each of its dhikr', async () => {
+  const { DEFAULT_ROUTINES } = await import('../src/adhkaar-data.ts');
+  for (const r of DEFAULT_ROUTINES) {
+    for (const id of r.dhikrIds) assert.equal(resolveActiveRoutine(DEFAULT_ROUTINES, r.id, id)?.id, r.id, `${r.id} / ${id}`);
+  }
+});
+
+// ── a routine that lists the same dhikr twice must not loop ───────────────────
+
+test('a dhikr listed twice in a routine is counted once, in the place it first appears', () => {
+  assert.deepEqual(uniqueInOrder(['a', 'b', 'a', 'c', 'b']), ['a', 'b', 'c']);
+  assert.deepEqual(uniqueInOrder([]), []);
+  assert.deepEqual(uniqueInOrder(['x']), ['x']);
+});
+
+// ── finishing a routine leaves the counter ready for next time ───────────────
+
+test('finishing a routine puts the counter back on its first dhikr, at zero', () => {
+  assert.deepEqual(afterFinishingRoutine([{ id: 'subhanallah' }, { id: 'alhamdulillah' }, { id: 'darood-ibrahim' }]), { dhikrId: 'subhanallah', count: 0 });
+});
+
+test('with nothing to go back to, only the count is cleared', () => {
+  assert.deepEqual(afterFinishingRoutine([]), { dhikrId: null, count: 0 });
+});
+
+// ── the running routine survives the app being closed ────────────────────────
+
+const memory = () => {
+  const data = new Map();
+  return { data, getItem: (k) => (data.has(k) ? data.get(k) : null), setItem: (k, v) => { data.set(k, String(v)); }, removeItem: (k) => { data.delete(k); } };
+};
+
+test('the running routine is remembered, and forgotten when none is running', () => {
+  const storage = memory();
+  assert.equal(readStartedRoutine(storage), null);
+  writeStartedRoutine(storage, 'routine-after-salah');
+  assert.equal(readStartedRoutine(storage), 'routine-after-salah');
+  writeStartedRoutine(storage, null);
+  assert.equal(readStartedRoutine(storage), null);
+  assert.equal(storage.data.has(STARTED_ROUTINE_KEY), false, 'the key is removed, not left empty');
+});
+
+test('a missing or blocked store never breaks anything', () => {
+  assert.equal(readStartedRoutine(null), null);
+  assert.doesNotThrow(() => writeStartedRoutine(null, 'x'));
+  const blocked = { getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); }, removeItem: () => { throw new Error('blocked'); } };
+  assert.equal(readStartedRoutine(blocked), null);
+  assert.doesNotThrow(() => writeStartedRoutine(blocked, 'x'));
+  assert.doesNotThrow(() => writeStartedRoutine(blocked, null));
+});
+
+test('a stored value that is not a routine id is ignored', () => {
+  const storage = memory();
+  storage.data.set(STARTED_ROUTINE_KEY, '');
+  assert.equal(readStartedRoutine(storage), null);
 });
 
 // ── prayer log toggle ─────────────────────────────────────────────────────────
