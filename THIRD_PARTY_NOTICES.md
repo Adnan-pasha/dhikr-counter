@@ -24,6 +24,7 @@ Kept in sync with `src/licenses.ts`, which the app shows under Settings.
 
 - The three adhan recordings (Fajr, Makkah, Madinah) were supplied by the project owner from an open download collection (their files are tagged with thesufi.com) and converted to mono AAC (40 kbps) with loudness levelled. The files carry no licence text, the reciters are not named, and the licence has not been independently verified. The project owner decided to use them. If a rights holder objects, remove them and the references in `src/azan.ts`.
 - The earlier placeholder adhan (CC0, Wikimedia Commons, "Beautiful adhan.ogg" by Adam-synagda) was removed when these recordings replaced it.
+- Ayatul Kursi (2:255) and the last two verses of Al-Baqarah (2:285-286) in the dhikr library are verbatim copies of the Tanzil Uthmani text, with its stop signs. A test compares them with a saved copy of the source (tests/fixtures/quran-verses.json).
 - QuranEnc translations are fetched live from quranenc.com and shown with their footnotes, exactly as published. They are not copied into this repository or hosted by us; the device keeps a cache so surahs already opened work offline.
 - Quran text and the translation are loaded on demand from api.alquran.cloud and are not bundled in the app. Recitation audio is streamed and never bundled. Any future addition needs its licence recorded here first.
 - Translations that carry non-commercial terms (for example those in the Tanzil translation list, except public-domain editions) are not shipped. See docs/ROADMAP.md, section 7.

@@ -298,8 +298,8 @@ interface CounterFlowDeps {
   preferences: UserPreferences;
   dhikrs: Dhikr[];
   currentDhikrId: string;
+  /** The routine being run, in order, or null when a single dhikr was picked. */
   activeRoutine: Dhikr[] | null;
-  history: DhikrHistory[];
   setCurrentCount: React.Dispatch<React.SetStateAction<number>>;
   setCurrentDhikrId: React.Dispatch<React.SetStateAction<string>>;
   setHistory: React.Dispatch<React.SetStateAction<DhikrHistory[]>>;
@@ -361,16 +361,17 @@ export const useCounterFlow = (deps: CounterFlowDeps) => {
   }, [deps.currentDhikrId]);
   React.useEffect(() => clearPending, []);
 
-  const sequence = deps.activeRoutine ?? deps.dhikrs;
-  const mode = deps.activeRoutine ? 'routine' : 'free';
-  const completedTodayIds = React.useMemo(
-    () => new Set<string>(deps.history.filter((h) => isTimestampOnLocalDay(h.timestamp)).map((h) => h.dhikrId)),
-    [deps.history],
-  );
+  // Only a routine has a "next". A single dhikr picked from Home or the library is counted where it is.
   const upcoming = React.useMemo(
-    () => getUpcoming(sequence, deps.currentDhikrId, completedTodayIds, mode, 2),
-    [sequence, deps.currentDhikrId, completedTodayIds, mode],
+    () => (deps.activeRoutine ? getUpcoming(deps.activeRoutine, deps.currentDhikrId, 2) : []),
+    [deps.activeRoutine, deps.currentDhikrId],
   );
+  // The routine is finished when its last dhikr has been counted to its target.
+  const lastOfRoutine = deps.activeRoutine?.[deps.activeRoutine.length - 1];
+  const routineComplete = !!lastOfRoutine
+    && lastOfRoutine.id === deps.currentDhikrId
+    && deps.activeDhikr.targetCount > 0
+    && deps.currentCount >= deps.activeDhikr.targetCount;
 
   const handleIncrement = () => {
     // A tap during the pause moves on immediately and counts for the next dhikr.
@@ -404,10 +405,9 @@ export const useCounterFlow = (deps: CounterFlowDeps) => {
     d.setHistory((prev) => [...prev, newLog]);
 
     if (!prefs.autoAdvance) return;
-    const completedIds = new Set<string>(completedTodayIds);
-    completedIds.add(dhikr.id);
-    const seq = d.activeRoutine ?? d.dhikrs;
-    const nextId = findNextDhikrId(seq, dhikr.id, completedIds, d.activeRoutine ? 'routine' : 'free');
+    const seq = d.activeRoutine;
+    if (!seq) return;
+    const nextId = findNextDhikrId(seq, dhikr.id);
     const next = nextId ? seq.find((x) => x.id === nextId) : undefined;
     if (!next) return;
 
@@ -448,7 +448,7 @@ export const useCounterFlow = (deps: CounterFlowDeps) => {
     });
   };
 
-  return { handleIncrement, handleUndo, handleReset, canUndo: deps.currentCount > 0, upcoming, pendingNext };
+  return { handleIncrement, handleUndo, handleReset, canUndo: deps.currentCount > 0, upcoming, pendingNext, routineComplete };
 };
 
 

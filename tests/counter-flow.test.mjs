@@ -117,12 +117,59 @@ test('switching dhikr by hand cancels a pending advance', async () => {
   assert.equal(result.current.currentDhikrId, 'd', 'stays on the chosen dhikr');
 });
 
-test('the advance skips dhikr already completed today', async () => {
+test('the advance follows the routine order even when later items were already done today', async () => {
   const done = [{ id: 'h1', dhikrId: 'b', dhikrName: 'b', count: 2, timestamp: new Date().toISOString() }];
   const { result } = mount({ routine: [A, B, dhikr('d', 5)], startHistory: done });
   await tap(result, 3);
+  assert.equal(result.current.pendingNext?.id, 'b', 'the hint names the real next item');
   await act(async () => { mock.timers.tick(ADVANCE_DELAY_MS + 1); });
-  assert.equal(result.current.currentDhikrId, 'd');
+  assert.equal(result.current.currentDhikrId, 'b');
+});
+
+test('a routine that was fully done earlier today still runs from start to finish, item by item', async () => {
+  const everything = [A, B, dhikr('d', 5)];
+  const done = everything.map((x, i) => ({ id: `h${i}`, dhikrId: x.id, dhikrName: x.id, count: x.targetCount, timestamp: new Date().toISOString() }));
+  const { result } = mount({ routine: everything, startHistory: done });
+  const visited = [result.current.currentDhikrId];
+  for (const item of everything.slice(0, -1)) {
+    await tap(result, item.targetCount);
+    await act(async () => { mock.timers.tick(ADVANCE_DELAY_MS + 1); });
+    visited.push(result.current.currentDhikrId);
+  }
+  assert.deepEqual(visited, ['a', 'b', 'd']);
+});
+
+test('the routine is complete only when its last dhikr reaches its target', async () => {
+  const { result } = mount({ routine: [A, B] });
+  assert.equal(result.current.routineComplete, false, 'not at the start');
+  await tap(result, 3);
+  await act(async () => { mock.timers.tick(ADVANCE_DELAY_MS + 1); });
+  assert.equal(result.current.currentDhikrId, 'b');
+  assert.equal(result.current.routineComplete, false, 'on the last item but not yet counted');
+  await tap(result, 1);
+  assert.equal(result.current.routineComplete, false, 'one short');
+  await tap(result, 1);
+  assert.equal(result.current.routineComplete, true, 'target reached on the last item');
+  await act(async () => { result.current.handleUndo(); });
+  assert.equal(result.current.routineComplete, false, 'undo reopens it');
+});
+
+test('a single dhikr picked on its own never moves to another one, however many rounds are counted', async () => {
+  const { result } = mount({ routine: [A] }); // one item: the harness treats it as no routine
+  await tap(result, 3);
+  assert.equal(result.current.pendingNext, null, 'no "next" hint');
+  assert.deepEqual(result.current.upcoming, []);
+  await act(async () => { mock.timers.tick(ADVANCE_DELAY_MS * 3); });
+  assert.equal(result.current.currentDhikrId, 'a', 'stays where it is');
+  await tap(result, 3);
+  assert.equal(result.current.history.length, 2, 'each round is still logged');
+  assert.equal(result.current.currentDhikrId, 'a');
+});
+
+test('there is no routine to complete when none is running', async () => {
+  const { result } = mount({ routine: [A] }); // one item: the harness treats it as no routine
+  await tap(result, 3);
+  assert.equal(result.current.routineComplete, false);
 });
 
 test('the last dhikr of a routine stays put instead of looping', async () => {

@@ -107,7 +107,11 @@ export const earliestDate = (logs: readonly SalahLog[], installed: string | null
   return addDays(oldest && oldest < today ? oldest : today, -BACKFILL_DAYS);
 };
 
-interface StorageLike { getItem(key: string): string | null; setItem(key: string, value: string): void }
+export interface StorageLike {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
 
 /** The browser's storage, or null where it is missing or blocked. */
 export const browserStorage = (): StorageLike | null => {

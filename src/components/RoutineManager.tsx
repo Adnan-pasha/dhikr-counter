@@ -16,7 +16,8 @@ interface RoutineManagerProps {
   customDhikrs: Dhikr[];
   currentDhikrId: string;
   completedTodayIds: string[];
-  onStartDhikr: (id: string) => void;
+  /** Starts a dhikr as part of a routine, so the counter follows that routine's order. */
+  onStartDhikr: (id: string, routineId: string) => void;
   onAddRoutine: (routine: Omit<Routine, 'id' | 'createdAt'>) => void;
   onEditRoutine: (id: string, name: string, icon: IconKey, dhikrIds: string[]) => void;
   onDeleteRoutine: (id: string) => void;
@@ -270,7 +271,7 @@ export default function RoutineManager({
             onEditDhikrIdsChange={setEditDhikrIds}
             onEditPickerSearchChange={setEditPickerSearch}
             onToggleEditPicker={() => setShowEditPicker(v => !v)}
-            onStartDhikr={onStartDhikr}
+            onStartDhikr={(id) => onStartDhikr(id, activeRoutine.id)}
             onStartEdit={() => startEdit(activeRoutine)}
             onCancelEdit={() => setEditingRoutineId(null)}
             onSaveEdit={() => handleSaveEdit(activeRoutine.id)}
@@ -393,9 +394,18 @@ function RoutineDetail({
 
         {/* Action button */}
         {allComplete ? (
-          <div className="w-full py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 font-black text-xs flex items-center justify-center gap-2">
-            <Check className="w-3.5 h-3.5" />
-            Complete! Masha'Allah
+          <div className="space-y-2">
+            <div className="w-full py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 font-black text-xs flex items-center justify-center gap-2">
+              <Check className="w-3.5 h-3.5" />
+              Complete! Masha'Allah
+            </div>
+            <button
+              onClick={() => dhikrs[0] && onStartDhikr(dhikrs[0].id)}
+              className="w-full min-h-11 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-black text-xs flex items-center justify-center gap-2 cursor-pointer hover:border-brand-500/40 hover:text-brand-400"
+            >
+              <Play className="w-3.5 h-3.5" />
+              Repeat {routine.name}
+            </button>
           </div>
         ) : (
           <button
