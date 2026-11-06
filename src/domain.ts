@@ -188,6 +188,8 @@ export const sanitizeReminders = (value: unknown, fallback: DhikrReminder[]): Dh
     && r.days.every((d) => isString(d) && DAY_KEYS.includes(d))
     && isString(r.label)
     && isBool(r.isEnabled));
+  // An empty list is a choice (every reminder deleted); a list with nothing usable in it is corrupt data.
+  if (value.length === 0) return [];
   return cleaned.length > 0 ? cleaned : fallback;
 };
 
@@ -234,6 +236,23 @@ export const readPrayerSettings = (fallbackMadhab: Madhab = DEFAULT_PRAYER_SETTI
     : saved;
   localStorage.setItem('tasbih_prayer_settings', JSON.stringify(hydrated));
   return hydrated;
+};
+
+/** Settings and the Prayers screen both choose the madhab; this makes the saved prayer settings (which the phone's alarms are planned from) follow the app's preference. */
+export const alignPrayerMadhab = (madhab: Madhab): void => {
+  const saved = readPrayerSettings(madhab);
+  if (saved.madhab !== madhab) writePrayerSettings({ ...saved, madhab });
+};
+
+/** localStorage.setItem that cannot throw: a full or blocked store loses one save, not the whole screen. */
+export const safeSetItem = (key: string, value: string): boolean => {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    console.warn(`Could not save ${key}:`, error);
+    return false;
+  }
 };
 
 export const writePrayerSettings = (settings: PrayerSettings): PrayerSettings => {

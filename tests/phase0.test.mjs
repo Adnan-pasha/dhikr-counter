@@ -96,7 +96,8 @@ test('persistence effects are gated on hydration so initial empty state never ov
   const body = hooks.slice(hooks.indexOf('export const usePersistentAppState'), hooks.indexOf('interface DhikrActionDeps'));
   const slices = ['dhikrs', 'current_id', 'current_count', 'history', 'preferences', 'reminders', 'favourites', 'routines', 'salah_logs'];
   for (const slice of slices) {
-    const effect = body.split('useEffect(').find((chunk) => chunk.includes(`setItem('tasbih_${slice}'`));
+    // Saves go through safeSetItem (which cannot throw), so the call is matched whatever its capitalisation.
+    const effect = body.split('useEffect(').find((chunk) => chunk.toLowerCase().includes(`setitem('tasbih_${slice}'`));
     assert.ok(effect, `an effect persists ${slice}`);
     assert.match(effect, /hydrated/, `${slice} is gated on hydration`);
   }
