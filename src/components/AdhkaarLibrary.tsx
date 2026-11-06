@@ -188,7 +188,7 @@ export default function AdhkaarLibrary({
             type="text"
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setActiveCategory('all'); setShowFeaturedOnly(false); setShowFavouritesOnly(false); }}
-            placeholder="Search by name, meaning, tag..."
+            aria-label="Search by name, meaning, tag" placeholder="Search by name, meaning, tag..."
             className="w-full min-h-11 pl-9 pr-8 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 transition-colors"
           />
           {searchQuery && (
@@ -230,12 +230,12 @@ export default function AdhkaarLibrary({
           >
             <div className="px-4 py-4 space-y-2">
               <p className="text-xs font-black uppercase tracking-widest text-brand-400 mb-2 flex items-center gap-1.5"><AppIcon name="plus" className="w-3.5 h-3.5" /> New Custom Dhikr</p>
-              <input value={newEn} onChange={(e) => setNewEn(e.target.value)} placeholder="English name *" className="w-full min-h-11 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
-              <input value={newAr} onChange={(e) => setNewAr(e.target.value)} placeholder="Arabic text (optional)" dir="rtl" className="w-full min-h-11 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 text-right" />
-              <input value={newTransliteration} onChange={(e) => setNewTransliteration(e.target.value)} placeholder="Transliteration (optional)" className="w-full min-h-11 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
-              <input value={newMeaning} onChange={(e) => setNewMeaning(e.target.value)} placeholder="Meaning / description" className="w-full min-h-11 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+              <input value={newEn} onChange={(e) => setNewEn(e.target.value)} aria-label="English name" placeholder="English name *" className="w-full min-h-11 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+              <input value={newAr} onChange={(e) => setNewAr(e.target.value)} aria-label="Arabic text" placeholder="Arabic text (optional)" dir="rtl" className="w-full min-h-11 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 text-right" />
+              <input value={newTransliteration} onChange={(e) => setNewTransliteration(e.target.value)} aria-label="Transliteration" placeholder="Transliteration (optional)" className="w-full min-h-11 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+              <input value={newMeaning} onChange={(e) => setNewMeaning(e.target.value)} aria-label="Meaning / description" placeholder="Meaning / description" className="w-full min-h-11 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <div className="flex gap-2 items-center">
-                <input type="number" value={newCount} onChange={(e) => setNewCount(e.target.value)} placeholder="Count" min="1" className="flex-1 min-h-11 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+                <input type="number" value={newCount} onChange={(e) => setNewCount(e.target.value)} aria-label="Count" placeholder="Count" min="1" className="flex-1 min-h-11 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
                 {[33, 99, 100].map(n => (
                   <button key={n} onClick={() => setNewCount(String(n))} className={`min-h-11 min-w-11 px-2.5 py-2 rounded-xl text-xs font-black border cursor-pointer transition-all ${newCount === String(n) ? 'bg-brand-500 text-on-brand border-brand-500' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-brand-400'}`}>{n}</button>
                 ))}
@@ -531,11 +531,11 @@ function AdhkaarCard({
           >
             <div className="px-4 py-3 bg-slate-950/40 space-y-2">
               <p className="text-xs font-black uppercase tracking-widest text-brand-400">Editing — {dhikr.nameEn}</p>
-              <input value={editName} onChange={e => onEditNameChange(e.target.value)} placeholder="English name" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
-              <input value={editNameAr} onChange={e => onEditNameArChange(e.target.value)} placeholder="Arabic text" dir="rtl" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 text-right" />
-              <input value={editTransliteration} onChange={e => onEditTransliterationChange(e.target.value)} placeholder="Transliteration (optional)" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
-              <input value={editMeaning} onChange={e => onEditMeaningChange(e.target.value)} placeholder="Meaning" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
-              <input type="number" value={editCount} onChange={e => onEditCountChange(e.target.value)} placeholder="Count" min="1" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+              <input value={editName} onChange={e => onEditNameChange(e.target.value)} aria-label="English name" placeholder="English name" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+              <input value={editNameAr} onChange={e => onEditNameArChange(e.target.value)} aria-label="Arabic text" placeholder="Arabic text" dir="rtl" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50 text-right" />
+              <input value={editTransliteration} onChange={e => onEditTransliterationChange(e.target.value)} aria-label="Transliteration" placeholder="Transliteration (optional)" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+              <input value={editMeaning} onChange={e => onEditMeaningChange(e.target.value)} aria-label="Meaning" placeholder="Meaning" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+              <input type="number" value={editCount} onChange={e => onEditCountChange(e.target.value)} aria-label="Count" placeholder="Count" min="1" className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
               <div className="flex gap-2">
                 <button onClick={onCancelEdit} className="flex-1 py-2 rounded-xl border border-slate-700 text-slate-400 font-black text-xs cursor-pointer hover:bg-slate-800">Cancel</button>
                 <button onClick={onSaveEdit} className="flex-[2] py-2 rounded-xl bg-gradient-to-tr from-brand-500 to-brand-400 text-on-brand font-black text-xs cursor-pointer hover:opacity-90">Save ✓</button>

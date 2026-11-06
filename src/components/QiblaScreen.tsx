@@ -440,6 +440,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
                       id="city_search_text_input"
                       type="text"
                       autoFocus
+                      aria-label="Search cities"
                       placeholder={`Search ${CITY_PRESETS.length} cities...`}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
@@ -533,7 +534,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
         <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col items-center justify-between gap-4">
           
           {/* Alignment Glow Announcement */}
-          <div className="text-center w-full max-w-xs shrink-0 select-none">
+          <div role="status" className="text-center w-full max-w-xs shrink-0 select-none">
             <AnimatePresence mode="wait">
               {isAligned ? (
                 <motion.div
@@ -568,6 +569,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
 
             <div
               id="compass_rotator_dial"
+              aria-hidden="true"
               ref={dialRef}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -659,9 +661,10 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
 
             {gpsError && (
               <motion.div
+                role="alert"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-[9px] font-bold text-brand-400 bg-brand-500/5 border border-brand-500/10 p-2 rounded-lg mt-1 select-none"
+                className="text-xs font-bold text-brand-400 bg-brand-500/5 border border-brand-500/10 p-2 rounded-lg mt-1 select-none"
               >
                 {gpsError}
               </motion.div>
@@ -716,6 +719,8 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
                 </div>
                 <input
                   type="range"
+                  aria-label="Rotate dial"
+                  aria-valuetext={`${Math.round(heading)} degrees`}
                   min="0"
                   max="359"
                   value={Math.round(heading)}

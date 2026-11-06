@@ -21,6 +21,7 @@ export default function ReminderBanner({
     <AnimatePresence>
       {reminder && (
         <motion.div
+          role="status"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
@@ -30,18 +31,18 @@ export default function ReminderBanner({
           <div className="px-4 py-3 flex items-center gap-3">
             {/* Icon */}
             <div className="p-1.5 rounded-xl bg-brand-500/20 text-brand-400 border border-brand-500/20 shrink-0">
-              <Clock className="w-3.5 h-3.5 animate-pulse" />
+              <Clock className="w-3.5 h-3.5 animate-pulse" aria-hidden="true" />
             </div>
 
             {/* Text */}
             <div className="flex-1 min-w-0">
-              <span className="text-[8px] font-black text-brand-400 uppercase tracking-widest block leading-none">
+              <span className="text-xs font-black text-brand-400 uppercase tracking-widest block leading-none">
                 Gentle Remembrance Alert
               </span>
               <h4 className="text-xs font-black text-slate-50 truncate leading-tight mt-0.5">
                 {reminder.label}
               </h4>
-              <span className="text-[10px] text-slate-400 font-medium">
+              <span className="text-xs text-slate-400 font-medium">
                 {reminder.dhikrName}
               </span>
             </div>
@@ -55,16 +56,16 @@ export default function ReminderBanner({
                     playCompletionSound(preferences.volume);
                   }
                 }}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-tr from-brand-500 to-brand-400 text-on-brand font-black text-[10px] shadow-md cursor-pointer hover:opacity-90 transition-opacity whitespace-nowrap"
+                className="min-h-11 px-4 py-1.5 rounded-xl bg-gradient-to-tr from-brand-500 to-brand-400 text-on-brand font-black text-xs shadow-md cursor-pointer hover:opacity-90 transition-opacity whitespace-nowrap"
               >
                 Start
               </button>
               <button
                 onClick={onDismiss}
                 aria-label="Dismiss reminder"
-                className="p-1.5 rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all cursor-pointer"
+                className="min-h-11 min-w-11 flex items-center justify-center rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all cursor-pointer"
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
           </div>
