@@ -92,7 +92,8 @@ export const useReminderScheduler = (
 
 
 import { Dhikr, DhikrHistory } from './types';
-import { migrateAndHydrateStorage, isTimestampOnLocalDay, getLocalDateString } from './domain';
+import { migrateAndHydrateStorage, isTimestampOnLocalDay, getLocalDateString, safeSetItem, alignPrayerMadhab } from './domain';
+import { announcePrayerConfigChange } from './prayerConfigEvents';
 import { sanitizePauses, sanitizeActiveDays, type StreakPause } from './habits';
 import { showReminderNotification } from './notifications';
 
@@ -184,21 +185,21 @@ export const usePersistentAppState = (
   // them would overwrite saved data (React StrictMode re-runs the load effect in development
   // and would then read back the overwritten values).
   useEffect(() => {
-    if (hydrated && state.dhikrs.length > 0) localStorage.setItem('tasbih_dhikrs', JSON.stringify(state.dhikrs));
+    if (hydrated && state.dhikrs.length > 0) safeSetItem('tasbih_dhikrs', JSON.stringify(state.dhikrs));
   }, [hydrated, state.dhikrs]);
-  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_current_id', state.currentDhikrId); }, [hydrated, state.currentDhikrId]);
+  useEffect(() => { if (hydrated) safeSetItem('tasbih_current_id', state.currentDhikrId); }, [hydrated, state.currentDhikrId]);
   // The count changes on every tap, so it is written once shortly after the last tap rather than
   // on each one, and flushed straight away when the page is hidden or closed.
   const latestCountRef = React.useRef(state.currentCount);
   latestCountRef.current = state.currentCount;
   useEffect(() => {
     if (!hydrated) return undefined;
-    const timer = setTimeout(() => localStorage.setItem('tasbih_current_count', String(state.currentCount)), COUNT_PERSIST_DELAY_MS);
+    const timer = setTimeout(() => safeSetItem('tasbih_current_count', String(state.currentCount)), COUNT_PERSIST_DELAY_MS);
     return () => clearTimeout(timer);
   }, [hydrated, state.currentCount]);
   useEffect(() => {
     if (!hydrated) return undefined;
-    const flush = () => localStorage.setItem('tasbih_current_count', String(latestCountRef.current));
+    const flush = () => safeSetItem('tasbih_current_count', String(latestCountRef.current));
     const onVisibility = () => { if (document.visibilityState === 'hidden') flush(); };
     window.addEventListener('pagehide', flush);
     document.addEventListener('visibilitychange', onVisibility);
@@ -209,16 +210,18 @@ export const usePersistentAppState = (
   }, [hydrated]);
   useEffect(() => {
     if (!hydrated) return;
-    localStorage.setItem('tasbih_history', JSON.stringify(state.history));
+    safeSetItem('tasbih_history', JSON.stringify(state.history));
   }, [hydrated, state.history]);
-  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_preferences', JSON.stringify(state.preferences)); }, [hydrated, state.preferences]);
-  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_reminders', JSON.stringify(state.reminders)); }, [hydrated, state.reminders]);
-  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_favourites', JSON.stringify(state.favouriteIds)); }, [hydrated, state.favouriteIds]);
-  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_routines', JSON.stringify(state.routines)); }, [hydrated, state.routines]);
-  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_salah_logs', JSON.stringify(state.salahLogs)); }, [hydrated, state.salahLogs]);
-  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_streak_pauses', JSON.stringify(state.streakPauses)); }, [hydrated, state.streakPauses]);
-  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_active_days', JSON.stringify(state.activeDays)); }, [hydrated, state.activeDays]);
-  useEffect(() => { if (hydrated) localStorage.setItem('tasbih_friday_kahf', JSON.stringify(state.fridayKahf)); }, [hydrated, state.fridayKahf]);
+  useEffect(() => { if (hydrated) safeSetItem('tasbih_preferences', JSON.stringify(state.preferences)); }, [hydrated, state.preferences]);
+  useEffect(() => { if (hydrated) safeSetItem('tasbih_reminders', JSON.stringify(state.reminders)); }, [hydrated, state.reminders]);
+  useEffect(() => { if (hydrated) safeSetItem('tasbih_favourites', JSON.stringify(state.favouriteIds)); }, [hydrated, state.favouriteIds]);
+  useEffect(() => { if (hydrated) safeSetItem('tasbih_routines', JSON.stringify(state.routines)); }, [hydrated, state.routines]);
+  useEffect(() => { if (hydrated) safeSetItem('tasbih_salah_logs', JSON.stringify(state.salahLogs)); }, [hydrated, state.salahLogs]);
+  useEffect(() => { if (hydrated) safeSetItem('tasbih_streak_pauses', JSON.stringify(state.streakPauses)); }, [hydrated, state.streakPauses]);
+  useEffect(() => { if (hydrated) safeSetItem('tasbih_active_days', JSON.stringify(state.activeDays)); }, [hydrated, state.activeDays]);
+  useEffect(() => { if (hydrated) safeSetItem('tasbih_friday_kahf', JSON.stringify(state.fridayKahf)); }, [hydrated, state.fridayKahf]);
+  // The madhab is chosen in Settings and on the Prayers screen; the phone's alarms are planned from the saved prayer settings.
+  useEffect(() => { if (hydrated) alignPrayerMadhab(state.preferences.madhab); }, [hydrated, state.preferences.madhab]);
 };
 
 
@@ -515,6 +518,8 @@ export const useHistoryActions = (deps: HistoryFlowDeps) => {
         deps.setSalahLogs([]);
         deps.setActiveTab('counter');
         localStorage.clear();
+        // The phone's alarms were planned from what was just erased.
+        announcePrayerConfigChange();
         deps.onResetOnboarding?.();
         deps.setConfirmModal(null);
       }

@@ -7,13 +7,15 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  /** Reset Data was tapped once: waiting for the person to confirm or back out. */
+  confirmingReset: boolean;
 }
 
 export default class AppErrorBoundary extends React.Component<Props, State> {
   declare props: Props;
-  state: State = { hasError: false };
+  state: State = { hasError: false, confirmingReset: false };
 
-  static getDerivedStateFromError(): State {
+  static getDerivedStateFromError(): Partial<State> {
     return { hasError: true };
   }
 
@@ -27,6 +29,10 @@ export default class AppErrorBoundary extends React.Component<Props, State> {
     window.location.reload();
   };
 
+  askToReset = () => this.setState({ confirmingReset: true });
+
+  keepData = () => this.setState({ confirmingReset: false });
+
   handleResetStorage = () => {
     trackEvent('app_error_boundary_reset_storage');
     localStorage.clear();
@@ -35,21 +41,40 @@ export default class AppErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const confirming = this.state.confirmingReset;
       return (
         <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center px-6">
-          <div className="max-w-md w-full rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-center shadow-xl">
+          <div role="alert" className="max-w-md w-full rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-center shadow-xl">
             <h1 className="text-lg font-bold mb-2">Something went wrong</h1>
-            <p className="text-sm text-slate-300 mb-6">
-              The app hit an unexpected error. You can reload, or reset local app data if this keeps happening.
-            </p>
-            <div className="flex gap-3 justify-center">
-              <button onClick={this.handleReload} className="px-4 py-2 rounded-lg bg-emerald-500 text-on-brand font-semibold">
-                Reload App
-              </button>
-              <button onClick={this.handleResetStorage} className="px-4 py-2 rounded-lg border border-slate-700 text-slate-100">
-                Reset Data
-              </button>
-            </div>
+            {confirming ? (
+              <>
+                <p className="text-sm text-slate-300 mb-6">
+                  This erases all your counts, history, routines and settings on this device. It cannot be undone.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <button onClick={this.keepData} className="min-h-11 px-4 py-2 rounded-lg bg-emerald-500 text-on-brand font-semibold">
+                    Keep my data
+                  </button>
+                  <button onClick={this.handleResetStorage} className="min-h-11 px-4 py-2 rounded-lg border border-rose-500 text-rose-300 font-semibold">
+                    Erase everything
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-slate-300 mb-6">
+                  The app hit an unexpected error. Reload first: your data is safe. Reset local app data only if reloading does not help.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <button onClick={this.handleReload} className="min-h-11 px-4 py-2 rounded-lg bg-emerald-500 text-on-brand font-semibold">
+                    Reload App
+                  </button>
+                  <button onClick={this.askToReset} className="min-h-11 px-4 py-2 rounded-lg border border-slate-700 text-slate-100">
+                    Reset Data
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       );
