@@ -1,5 +1,5 @@
 import React from 'react';
-import { BellRing, BellOff } from 'lucide-react';
+import { BellRing, BellOff, ChevronDown } from 'lucide-react';
 import type { NativeAlarms } from '../../useNativeAlarms';
 
 interface NativeAlarmsCardProps {
@@ -118,9 +118,15 @@ export default function NativeAlarmsCard({ alarms, now = realClock }: NativeAlar
         <p role="status" className="text-xs font-bold" style={{ color: 'var(--color-text-brand)' }}>{testMessage}</p>
       )}
 
-      <details className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-        <summary className="min-h-11 flex items-center cursor-pointer font-bold" style={{ color: 'var(--color-text-primary)' }}>If alerts do not arrive</summary>
-        <div className="space-y-2 pb-2">
+      <details className="group text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+        <summary
+          className="min-h-11 flex items-center justify-between gap-2 rounded-xl px-3 cursor-pointer font-bold list-none [&::-webkit-details-marker]:hidden"
+          style={{ color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' }}
+        >
+          <span>If alerts do not arrive</span>
+          <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <div className="space-y-2 px-1 pt-2 pb-2">
           <p>Some phones stop apps from running in the background to save battery. On Xiaomi, POCO and Redmi phones:</p>
           <ol className="list-decimal pl-5 space-y-1">
             <li>Open Settings, then Apps, then Muneeb.</li>

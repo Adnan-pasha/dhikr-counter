@@ -12,7 +12,7 @@ globalThis.localStorage = dom.window.localStorage;
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const React = (await import('react')).default;
-const { render, screen, fireEvent, cleanup } = await import('@testing-library/react');
+const { render, screen, fireEvent, cleanup, act } = await import('@testing-library/react');
 const { default: BottomNav } = await import('../src/components/BottomNav.tsx');
 const { getBackStack } = await import('../src/backStack.ts');
 
@@ -90,4 +90,50 @@ test('Home shows the next prayer and links to Prayers', () => {
   const home = fs.readFileSync(new URL('../src/components/HomeScreen.tsx', import.meta.url), 'utf8');
   assert.match(home, /<HomeNextPrayer madhab=\{preferences\.madhab\} onOpen=\{\(\) => onNavigateTo\('prayers'\)\} \/>/);
   assert.match(home, /tab: 'prayers'/);
+});
+
+test('the bar tells a screen reader which tab is the current one, and only one', () => {
+  const { rerender } = render(React.createElement(BottomNav, { activeTab: 'quran', onTabChange: () => {} }));
+  const current = () => [...document.querySelectorAll('[aria-current]')].map((el) => el.id);
+  assert.deepEqual(current(), ['tab_trigger_quran']);
+  rerender(React.createElement(BottomNav, { activeTab: 'prayers', onTabChange: () => {} }));
+  assert.deepEqual(current(), ['tab_trigger_prayers']);
+});
+
+test('the highlight is a pill that slides between tabs, and the active icon lifts', () => {
+  const nav = fs.readFileSync(new URL('../src/components/BottomNav.tsx', import.meta.url), 'utf8');
+  assert.match(nav, /layoutId="nav-active-pill"/);
+  assert.match(nav, /data-nav-icon/, 'the icon wrapper that lifts');
+  assert.match(nav, /y: isActive \? -2 : 0/);
+});
+
+test('the bar is a labelled navigation landmark', () => {
+  render(React.createElement(BottomNav, { activeTab: 'home', onTabChange: () => {} }));
+  const nav = screen.getByRole('navigation', { name: 'Main' });
+  assert.ok(nav.querySelector('#tab_trigger_home'));
+});
+
+test('More is a real dialog: announced as expanded, focus moves in, Escape closes it and focus goes back', async () => {
+  render(React.createElement(BottomNav, { activeTab: 'home', onTabChange: () => {} }));
+  const more = screen.getByRole('button', { name: 'More features' });
+  assert.equal(more.getAttribute('aria-expanded'), 'false');
+  more.focus();
+  fireEvent.click(more);
+  assert.equal(more.getAttribute('aria-expanded'), 'true');
+  const dialog = screen.getByRole('dialog', { name: 'More features' });
+  assert.equal(dialog.getAttribute('aria-modal'), 'true');
+  assert.ok(screen.getByRole('heading', { name: 'More Features' }));
+  assert.equal(document.activeElement, screen.getByRole('button', { name: 'Close menu' }), 'focus is inside the sheet');
+  fireEvent.keyDown(document, { key: 'Escape' });
+  assert.equal(document.activeElement, more, 'focus returns to the More button');
+  // The sheet itself slides away over a moment (an animation jsdom does not finish), so the state is what is checked.
+  assert.equal(more.getAttribute('aria-expanded'), 'false', 'announced as collapsed again');
+});
+
+test('the current item in the More menu is marked too', () => {
+  render(React.createElement(BottomNav, { activeTab: 'stats', onTabChange: () => {} }));
+  fireEvent.click(screen.getByRole('button', { name: 'More features' }));
+  const current = [...document.querySelectorAll('[role="dialog"] [aria-current]')].map((el) => el.textContent);
+  assert.equal(current.length, 1);
+  assert.match(current[0], /Stats/);
 });

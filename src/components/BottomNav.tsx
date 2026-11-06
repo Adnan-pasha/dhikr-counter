@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useBackLayer } from '../useBackLayer';
+import { useModalDialog } from './useModalDialog';
 import {
   Home, CircleDot, BookOpen, Compass,
   RefreshCw, Moon, Trophy, Settings,
@@ -32,9 +32,22 @@ const MORE_TABS: { id: Tab; label: string; icon: React.ReactNode; desc: string }
   { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" />,   desc: 'Sounds, theme & preferences' },
 ];
 
+/** The highlight behind the current tab. All tabs share one layoutId, so it glides from tab to tab on a spring. */
+function NavPill() {
+  return (
+    <motion.div
+      layoutId="nav-active-pill"
+      aria-hidden="true"
+      className="absolute top-0 left-1/2 -translate-x-1/2 w-14 h-8 rounded-full"
+      style={{ background: 'var(--nav-active-bg)', boxShadow: '0 0 14px var(--color-brand-dim)' }}
+      transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+    />
+  );
+}
+
 export default function BottomNav({ activeTab, onTabChange, leftHanded = false }: BottomNavProps) {
   const [showMore, setShowMore] = useState(false);
-  useBackLayer(showMore, () => setShowMore(false));
+  const { dialogRef, initialFocusRef, onKeyDown } = useModalDialog(showMore, () => setShowMore(false));
   const isMoreActive = MORE_TABS.some(t => t.id === activeTab);
 
   const handleTabPress = (tab: Tab) => {
@@ -61,6 +74,11 @@ export default function BottomNav({ activeTab, onTabChange, leftHanded = false }
       <AnimatePresence>
         {showMore && (
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="More features"
+            onKeyDown={onKeyDown}
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
@@ -79,8 +97,10 @@ export default function BottomNav({ activeTab, onTabChange, leftHanded = false }
 
             {/* Header */}
             <div className={`flex items-center justify-between px-5 pb-3 ${leftHanded ? 'flex-row-reverse' : ''}`}>
-              <p className="section-label">More Features</p>
+              <h2 className="section-label">More Features</h2>
               <button
+                ref={initialFocusRef}
+                type="button"
                 onClick={() => setShowMore(false)}
                 aria-label="Close menu"
                 className="p-2 rounded-full cursor-pointer"
@@ -101,6 +121,7 @@ export default function BottomNav({ activeTab, onTabChange, leftHanded = false }
                 return (
                   <motion.button
                     key={tab.id}
+                    aria-current={isActive ? 'page' : undefined}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleTabPress(tab.id)}
                     className="flex items-center gap-3 p-4 rounded-2xl border cursor-pointer text-left"
@@ -133,7 +154,8 @@ export default function BottomNav({ activeTab, onTabChange, leftHanded = false }
       </AnimatePresence>
 
       {/* Bottom tab bar — 68px height for comfortable tap targets */}
-      <div
+      <nav
+        aria-label="Main"
         className={`shrink-0 flex items-center justify-around px-1 select-none z-30 relative pb-safe ${leftHanded ? 'flex-row-reverse' : ''}`}
         style={{
           height: '68px',
@@ -150,21 +172,21 @@ export default function BottomNav({ activeTab, onTabChange, leftHanded = false }
               key={tab.id}
               id={`tab_trigger_${tab.id}`}
               aria-label={tab.label}
-              whileTap={{ scale: 0.85 }}
+              aria-current={isActive ? 'page' : undefined}
+              whileTap={{ scale: 0.88 }}
               onClick={() => handleTabPress(tab.id)}
               className="flex flex-col items-center gap-0.5 py-1 px-1 cursor-pointer focus:outline-none relative min-w-0 flex-1"
             >
-              {isActive && (
-                <motion.div
-                  layoutId="nav-active-pill"
-                  className="absolute top-1 left-1/2 -translate-x-1/2 w-12 h-9 rounded-xl"
-                  style={{ background: 'var(--nav-active-bg)' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                />
-              )}
-              <span className="relative z-10 transition-colors duration-150" style={{ color: isActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)' }}>
-                {tab.icon}
-              </span>
+              {isActive && <NavPill />}
+              <motion.span
+                data-nav-icon
+                className="relative z-10 transition-colors duration-150"
+                style={{ color: isActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)' }}
+                animate={{ y: isActive ? -2 : 0, scale: isActive ? 1.1 : 1 }}
+                transition={{ type: 'spring', damping: 14, stiffness: 320 }}
+              >
+                {React.cloneElement(tab.icon as React.ReactElement<{ strokeWidth?: number }>, { strokeWidth: isActive ? 2.4 : 1.9 })}
+              </motion.span>
               {/* 12px minimum for tab labels */}
               <span
                 className="relative z-10 transition-colors duration-150 font-semibold max-w-full"
@@ -187,17 +209,19 @@ export default function BottomNav({ activeTab, onTabChange, leftHanded = false }
           onClick={() => setShowMore(v => !v)}
           className="flex flex-col items-center gap-0.5 py-1 px-1 cursor-pointer focus:outline-none relative min-w-0 flex-1"
           aria-label="More features"
+          aria-haspopup="dialog"
+          aria-expanded={showMore}
         >
-          {(isMoreActive && !showMore) && (
-            <motion.div
-              layoutId="nav-active-pill"
-              className="absolute top-1 left-1/2 -translate-x-1/2 w-12 h-9 rounded-xl"
-              style={{ background: 'var(--nav-active-bg)' }}
-            />
-          )}
-          <span className="relative z-10 transition-colors duration-150" style={{ color: showMore || isMoreActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)' }}>
-            <MoreHorizontal className="w-6 h-6 max-w-[26px] max-h-[26px]" />
-          </span>
+          {(isMoreActive && !showMore) && <NavPill />}
+          <motion.span
+            data-nav-icon
+            className="relative z-10 transition-colors duration-150"
+            style={{ color: showMore || isMoreActive ? 'var(--color-text-brand)' : 'var(--nav-inactive)' }}
+            animate={{ y: isMoreActive && !showMore ? -2 : 0, scale: isMoreActive && !showMore ? 1.1 : 1 }}
+            transition={{ type: 'spring', damping: 14, stiffness: 320 }}
+          >
+            <MoreHorizontal className="w-6 h-6 max-w-[26px] max-h-[26px]" strokeWidth={isMoreActive ? 2.4 : 1.9} />
+          </motion.span>
           <span
             className="relative z-10 font-semibold max-w-full"
             style={{
@@ -208,7 +232,7 @@ export default function BottomNav({ activeTab, onTabChange, leftHanded = false }
             More
           </span>
         </motion.button>
-      </div>
+      </nav>
     </>
   );
 }
