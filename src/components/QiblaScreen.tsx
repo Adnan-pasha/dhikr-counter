@@ -123,7 +123,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
         );
         setGpsLoading(false);
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 600000 }
     );
   };
 

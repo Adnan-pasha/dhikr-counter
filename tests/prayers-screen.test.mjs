@@ -1,5 +1,6 @@
 import test, { mock } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 process.env.NODE_ENV = 'development';
@@ -285,6 +286,7 @@ test('a saved GPS place whose refresh fails says so instead of staying silent', 
   Object.defineProperty(dom.window.navigator, 'geolocation', { configurable: true, value: { getCurrentPosition: (_ok, no) => { fail = no; } } });
   mount();
   await act(async () => { fail({ code: 2 }); });
+  await act(async () => { fail({ code: 2 }); }); // the patient second try
   assert.match(document.body.textContent, /Could not refresh your location/);
 });
 
@@ -296,6 +298,7 @@ test('"Use my location" in the sheet closes it when the fix arrives, and stays o
   fireEvent.click(screen.getByRole('button', { name: /Mecca \(Haram\)/ }));
   fireEvent.click(within(screen.getByRole('dialog', { name: 'Your location' })).getByRole('button', { name: 'Use my location' }));
   await act(async () => { no({ code: 2 }); });
+  await act(async () => { no({ code: 2 }); }); // the patient second try
   assert.ok(screen.getByRole('dialog', { name: 'Your location' }), 'a failure keeps the sheet open to show why');
   fireEvent.click(within(screen.getByRole('dialog', { name: 'Your location' })).getByRole('button', { name: 'Use my location' }));
   await act(async () => { ok({ coords: { latitude: 17.385, longitude: 78.4867 } }); });
@@ -420,4 +423,35 @@ test('one tap plays once, however often the screen redraws, and a second tap pla
   rerender(React.createElement(PrayersScreen, { ...props, playRequest: { prayer: 'asr', nonce: 2 } }));
   await act(async () => {});
   assert.equal(audios.length, 2, 'a new tap plays again');
+});
+
+test('a tapped alert is played once, then handed back, so visiting Prayers again later does not replay it', async () => {
+  withMecca();
+  const handled = [];
+  const props = { madhab: 'shafi', onMadhabChange: () => {}, salahLogs: [], onTogglePrayer: () => {}, onOpenQibla: () => {}, today, getNow: () => NOW, autoPlayAdhan: false, onPlayRequestHandled: () => handled.push(1) };
+  const first = render(React.createElement(PrayersScreen, { ...props, playRequest: { prayer: 'asr', nonce: 1 } }));
+  await act(async () => {});
+  assert.equal(audios.length, 1);
+  assert.equal(handled.length, 1, 'the app is told the request was used');
+  // The app clears the request; leaving the tab and coming back mounts the screen again with nothing pending.
+  first.unmount();
+  render(React.createElement(PrayersScreen, { ...props, playRequest: null }));
+  await act(async () => {});
+  assert.equal(audios.length, 1, 'nothing plays on the return visit');
+});
+
+test('after the request is cleared, the next tap plays even though it carries the same number', async () => {
+  withMecca();
+  const props = { madhab: 'shafi', onMadhabChange: () => {}, salahLogs: [], onTogglePrayer: () => {}, onOpenQibla: () => {}, today, getNow: () => NOW, autoPlayAdhan: false, onPlayRequestHandled: () => {} };
+  const { rerender } = render(React.createElement(PrayersScreen, { ...props, playRequest: { prayer: 'asr', nonce: 1 } }));
+  await act(async () => {});
+  rerender(React.createElement(PrayersScreen, { ...props, playRequest: null }));
+  rerender(React.createElement(PrayersScreen, { ...props, playRequest: { prayer: 'asr', nonce: 1 } }));
+  await act(async () => {});
+  assert.equal(audios.length, 2);
+});
+
+test('the app clears a tapped alert once the Prayers screen has used it', () => {
+  const app = fs.readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8');
+  assert.match(app, /onPlayRequestHandled=\{\(\) => setPlayRequest\(null\)\}/);
 });

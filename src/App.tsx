@@ -672,6 +672,7 @@ export default function App() {
                   alarms={nativeAlarms}
                   autoPlayAdhan={!phoneRings}
                   playRequest={playRequest}
+                  onPlayRequestHandled={() => setPlayRequest(null)}
                 />
               </Suspense>
             )}
