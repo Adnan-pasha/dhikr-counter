@@ -1,7 +1,7 @@
 {
-  "name": "Tasbih Spiritual Counter",
-  "short_name": "Tasbih",
-  "description": "A private, ad-free dhikr counter with prayer routines, history, audio feedback, haptics and custom themes.",
+  "name": "Muneeb – Your Daily Islamic Companion",
+  "short_name": "Muneeb",
+  "description": "Prayer times and adhan alerts, a dhikr counter, adhkaar, the Quran and Qibla in one private, ad-free app.",
   "start_url": "./",
   "id": "./",
   "scope": "./",
