@@ -41,6 +41,8 @@ interface PrayersScreenProps {
   autoPlayAdhan?: boolean;
   /** Play one prayer's adhan now (a tapped notification). A new nonce is a new request. */
   playRequest?: AdhanPlayRequest | null;
+  /** Called once a play request has been used, so the app can clear it and a later visit here does not replay it. */
+  onPlayRequestHandled?: () => void;
 }
 
 const realClock = (): Date => new Date();
@@ -63,7 +65,7 @@ const weekday = (date: string): string => new Date(`${date}T12:00:00`).toLocaleD
 const dayOfMonth = (date: string): number => Number(date.slice(8, 10));
 
 /** Prayer times for the day, a tick for each prayer, and a switch for each adhan. */
-export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTogglePrayer, onOpenQibla, today, getNow = realClock, alarms, autoPlayAdhan, playRequest }: PrayersScreenProps) {
+export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTogglePrayer, onOpenQibla, today, getNow = realClock, alarms, autoPlayAdhan, playRequest, onPlayRequestHandled }: PrayersScreenProps) {
   const autoPlay = autoPlayAdhan ?? true;
   const { place, gpsLoading, gpsError, requestGps, selectCity } = usePrayerPlace();
   const [sheet, setSheet] = React.useState<'location' | 'settings' | null>(null);
@@ -172,11 +174,17 @@ export default function PrayersScreen({ madhab, onMadhabChange, salahLogs, onTog
   // A tapped prayer notification asks for that prayer's adhan, once per request.
   const handledRequest = React.useRef<number | null>(null);
   React.useEffect(() => {
-    if (!playRequest || handledRequest.current === playRequest.nonce) return;
+    if (!playRequest) {
+      // Cleared by the app: the next request may reuse the same number.
+      handledRequest.current = null;
+      return;
+    }
+    if (handledRequest.current === playRequest.nonce) return;
     handledRequest.current = playRequest.nonce;
     setAdhanBanner(ROWS[playRequest.prayer].label);
     play(playRequest.prayer);
-  }, [playRequest, play]);
+    onPlayRequestHandled?.();
+  }, [playRequest, play, onPlayRequestHandled]);
 
   const closeSheet = React.useCallback(() => setSheet(null), []);
   // "Use my location" in the sheet closes it when the fix arrives, but not when it fails (the error shows there).
