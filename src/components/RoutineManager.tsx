@@ -172,7 +172,7 @@ export default function RoutineManager({
               <input
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
-                placeholder="Routine name (e.g. Fajr Routine, Night Prayers)"
+                aria-label="Routine name" placeholder="Routine name (e.g. Fajr Routine, Night Prayers)"
                 className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50"
               />
 
@@ -208,7 +208,7 @@ export default function RoutineManager({
                 {showDhikrPicker && (
                   <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
                     <div className="space-y-2 pt-1">
-                      <input value={pickerSearch} onChange={e => setPickerSearch(e.target.value)} placeholder="Search adhkaar..." className="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+                      <input value={pickerSearch} onChange={e => setPickerSearch(e.target.value)} aria-label="Search adhkaar" placeholder="Search adhkaar..." className="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
                       <div className="max-h-48 overflow-y-auto space-y-1">
                         {pickedDhikrs.map(d => {
                           const added = newDhikrIds.includes(d.id);
@@ -440,7 +440,7 @@ function RoutineDetail({
               <input
                 value={editName}
                 onChange={e => onEditNameChange(e.target.value)}
-                placeholder="Routine name"
+                aria-label="Routine name" placeholder="Routine name"
                 className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50"
               />
 
@@ -471,7 +471,7 @@ function RoutineDetail({
                 {showEditPicker && (
                   <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
                     <div className="space-y-2 pt-1">
-                      <input value={editPickerSearch} onChange={e => onEditPickerSearchChange(e.target.value)} placeholder="Search..." className="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
+                      <input value={editPickerSearch} onChange={e => onEditPickerSearchChange(e.target.value)} aria-label="Search" placeholder="Search..." className="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500/50" />
                       <div className="max-h-48 overflow-y-auto space-y-1">
                         {editPickedDhikrs.map(d => {
                           const added = editDhikrIds.includes(d.id);

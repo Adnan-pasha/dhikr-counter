@@ -559,6 +559,12 @@ body {
 
 /* The slate badge's text is slate-600, which the remap turns into a surface-light shade; give it text ink. */
 [data-theme="light"] .badge-slate { color: #475569; }
+/* On a light page the dark theme's bright badge colours are too faint; these all reach 4.5:1 or more on white. */
+[data-theme="light"] .badge-amber   { color: #92400E; }
+[data-theme="light"] .badge-emerald { color: #047857; }
+[data-theme="light"] .badge-indigo  { color: #4338CA; }
+[data-theme="light"] .badge-rose    { color: #BE123C; }
+[data-theme="light"] .badge-teal    { color: #0F766E; }
 
 /* Amber/orange gradient buttons stay vivid in both modes — no override needed.
    Status colours (emerald/rose/indigo) keep sufficient contrast via their

@@ -86,6 +86,20 @@ const DEFAULT_REMINDERS: DhikrReminder[] = [
   }
 ];
 
+/** What a screen reader hears for each screen, and what the page title says. */
+const SCREEN_TITLES = {
+  home: 'Home',
+  counter: 'Tasbih',
+  adhkaar: 'Adhkaar',
+  routine: 'Routines',
+  salah: 'Salah',
+  quran: 'Quran',
+  stats: 'Stats',
+  settings: 'Settings',
+  qibla: 'Qibla',
+  prayers: 'Prayers',
+} as const;
+
 export default function App() {
   const [onboardingCompleted, setOnboardingCompleted] = useState(
     () => localStorage.getItem('tasbih_onboarding_completed') === 'true',
@@ -173,6 +187,20 @@ export default function App() {
   const [lastReadSurah, setLastReadSurah] = useState<number>(0);
   const [confirmModal, setConfirmModal] = useState<ConfirmModalState | null>(null);
   useBackLayer(confirmModal !== null, () => setConfirmModal(null));
+
+  // A screen reader is told which screen it is on: the page title follows the tab, and focus moves to the new
+  // screen so TalkBack does not stay on the bottom bar.
+  const screenTitle = SCREEN_TITLES[activeTab];
+  const screenRef = React.useRef<HTMLElement>(null);
+  const firstScreen = React.useRef(true);
+  useEffect(() => {
+    document.title = `${screenTitle} · Muneeb`;
+    if (firstScreen.current) {
+      firstScreen.current = false;
+      return;
+    }
+    screenRef.current?.focus({ preventScroll: true });
+  }, [activeTab, screenTitle]);
 
   // The phone's back button steps back through the tabs the reader came by. Going Home starts the trail afresh.
   const lastTab = React.useRef(activeTab);
@@ -456,9 +484,12 @@ export default function App() {
           </AnimatePresence>
 
           {/* Each screen eases in on entry; opacity-only under reduced motion (MotionConfig). */}
-          <motion.div
+          <motion.main
             key={activeTab}
-            className="flex-1 min-h-0 relative"
+            ref={screenRef}
+            tabIndex={-1}
+            aria-label={screenTitle}
+            className="flex-1 min-h-0 relative outline-none"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
@@ -685,7 +716,7 @@ export default function App() {
                 <QiblaScreen theme={preferences.theme} />
               </Suspense>
             )}
-          </motion.div>
+          </motion.main>
 
           {/* ── BOTTOM NAVIGATION ───────────────────────────────────────── */}
           <BottomNav

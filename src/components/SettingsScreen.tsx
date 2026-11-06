@@ -315,8 +315,8 @@ export default function SettingsScreen({
 
           {preferences.soundOn && (
             <div className="pt-2 animate-fade-in space-y-3">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Tone Style</label>
-              <div className="grid grid-cols-4 gap-2">
+              <p id="label_tone_style" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Tone Style</p>
+              <div role="group" aria-labelledby="label_tone_style" className="grid grid-cols-4 gap-2">
                 {(['wooden', 'chime', 'digital', 'bowl'] as SoundTone[]).map((t) => (
                   <button
                     id={`btn_test_tone_${t}`}
@@ -346,6 +346,8 @@ export default function SettingsScreen({
                 <input
                   id="range_volume_slider"
                   type="range"
+                  aria-label="Volume"
+                  aria-valuetext={`${Math.round(preferences.volume * 100)}%`}
                   min="0.1"
                   max="1.0"
                   step="0.05"
@@ -588,7 +590,7 @@ export default function SettingsScreen({
  
                 {/* Input: Label string */}
                 <div className="space-y-1 bg-transparent">
-                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">Duty Label / Title</label>
+                  <label htmlFor="input_reminder_label" className="block text-xs font-black uppercase text-slate-400 tracking-wider">Duty Label / Title</label>
                   <input
                     id="input_reminder_label"
                     type="text"
@@ -603,7 +605,7 @@ export default function SettingsScreen({
  
                 {/* Choose Dhikr items */}
                 <div className="space-y-1 bg-transparent">
-                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">Preset Target Praise</label>
+                  <label htmlFor="select_reminder_dhikr" className="block text-xs font-black uppercase text-slate-400 tracking-wider">Preset Target Praise</label>
                   <select
                     id="select_reminder_dhikr"
                     value={newReminderDhikrId}
@@ -620,7 +622,7 @@ export default function SettingsScreen({
  
                 {/* Interactive Time Dial (Chevrons + Spin Select) */}
                 <div className="space-y-1 bg-transparent">
-                  <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">Set Reminder Time</label>
+                  <p id="label_reminder_time" className="block text-xs font-black uppercase text-slate-400 tracking-wider">Set Reminder Time</p>
                   
                   <div className="flex items-center gap-4 bg-slate-900/60 border border-slate-850 rounded-2xl p-3.5 justify-center relative">
                     {/* Hour control column */}
@@ -640,6 +642,7 @@ export default function SettingsScreen({
                       </button>
                       <select
                         id="select_time_hour"
+                        aria-label="Hour"
                         value={timeHour}
                         onChange={(e) => setTimeHour(e.target.value)}
                         className="bg-slate-950 text-slate-100 font-mono font-black text-sm px-3 py-1.5 rounded-xl border border-slate-850 focus:outline-none focus:border-brand-500 cursor-pointer text-center"
@@ -681,6 +684,7 @@ export default function SettingsScreen({
                       </button>
                       <select
                         id="select_time_minute"
+                        aria-label="Minute"
                         value={timeMinute}
                         onChange={(e) => setTimeMinute(e.target.value)}
                         className="bg-slate-950 text-slate-100 font-mono font-black text-sm px-3 py-1.5 rounded-xl border border-slate-850 focus:outline-none focus:border-brand-500 cursor-pointer text-center"
@@ -732,7 +736,7 @@ export default function SettingsScreen({
                 {/* Weekdays pickers (High art circles!) */}
                 <div className="space-y-2 bg-transparent">
                   <div className="flex justify-between items-center bg-transparent">
-                    <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">Recurrent Intervals</label>
+                    <p id="label_reminder_days" className="block text-xs font-black uppercase text-slate-400 tracking-wider">Recurrent Intervals</p>
                     <div className="flex gap-1 bg-transparent">
                       <button
                         type="button"

@@ -787,7 +787,7 @@ export default function StatsScreen({
                 <input
                   id="input_hadith_search"
                   type="text"
-                  placeholder="Filter Hadiths (Bukhari, Muslim, blessings...)"
+                  aria-label="Filter Hadiths" placeholder="Filter Hadiths (Bukhari, Muslim, blessings...)"
                   value={hadithSearch}
                   onChange={(e) => setHadithSearch(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900 focus:outline-none focus:border-brand-500 text-xs text-slate-150 placeholder-slate-500"

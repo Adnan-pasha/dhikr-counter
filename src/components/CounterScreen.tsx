@@ -94,6 +94,14 @@ export default function CounterScreen({
   onFinishRoutine,
 }: CounterScreenProps) {
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const enterFocusModeRef = useRef<HTMLButtonElement>(null);
+  const exitFocusModeRef = useRef<HTMLButtonElement>(null);
+  const focusModeSeen = useRef(false);
+  useEffect(() => {
+    // Entering hides the header the pressed button lives in, so focus goes to Exit; leaving puts it back on Enter.
+    if (!focusModeSeen.current) { focusModeSeen.current = true; return; }
+    (isFocusMode ? exitFocusModeRef : enterFocusModeRef).current?.focus();
+  }, [isFocusMode]);
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
   const [showFlash, setShowFlash] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
@@ -241,6 +249,8 @@ export default function CounterScreen({
         )}
       </AnimatePresence>
 
+      <h1 className="sr-only">Tasbih counter</h1>
+
       {/* ── Header ────────────────────────────────────────────────────── */}
       <motion.div
         animate={{ opacity: isFocusMode ? 0 : 1, y: isFocusMode ? -16 : 0 }}
@@ -248,6 +258,7 @@ export default function CounterScreen({
         className="screen-header z-20"
         style={{ pointerEvents: isFocusMode ? 'none' : 'auto' }}
         aria-hidden={isFocusMode}
+        inert={isFocusMode}
       >
         <div className="header-row">
           <button
@@ -282,6 +293,7 @@ export default function CounterScreen({
                 : <VolumeX className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} />}
             </button>
             <button
+              ref={enterFocusModeRef}
               onClick={() => setIsFocusMode(true)}
               aria-label="Enter focus mode"
               className="tap-target rounded-xl cursor-pointer transition-all"
@@ -399,9 +411,10 @@ export default function CounterScreen({
                   className={`flex justify-center font-display font-black tabular-nums leading-none ${display.stacked ? 'flex-col items-center' : 'items-baseline'}`}
                   style={{ color: 'var(--color-text-primary)' }}
                 >
-                  <span style={{ fontSize: `min(${display.countSize}px, 8.4vh)` }}>{target > 0 ? inRound : currentCount}</span>
+                  <span aria-hidden="true" style={{ fontSize: `min(${display.countSize}px, 8.4vh)` }}>{target > 0 ? inRound : currentCount}</span>
                   {target > 0 && (
                     <span
+                      aria-hidden="true"
                       className="font-bold"
                       style={{
                         fontSize: `min(${display.targetSize}px, 3.6vh)`,
@@ -493,6 +506,7 @@ export default function CounterScreen({
       <AnimatePresence>
         {isFocusMode && (
           <motion.button
+            ref={exitFocusModeRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
