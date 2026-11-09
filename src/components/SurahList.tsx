@@ -1,7 +1,10 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { AlertCircle, Bookmark, BookMarked, ChevronLeft, Loader2, RefreshCw, Search, SlidersHorizontal, X } from 'lucide-react';
+import { AlertCircle, Bookmark, BookMarked, ChevronLeft, Loader2, RefreshCw, Search, SlidersHorizontal, Star, X } from 'lucide-react';
 import type { Surah } from '../quran/types';
+import { SUGGESTED_SURAHS, useFavouriteSurahs } from '../quran/favouriteSurahs';
+import { searchSurahs } from '../quran/surahSearch';
+import { surahByNumber } from '../quran/surahs';
 
 interface SurahListProps {
   surahs: Surah[];
@@ -22,12 +25,19 @@ interface SurahListProps {
 export default function SurahList({ surahs, loading, error, onRetry, lastReadSurah, bookmarkedAyahs, onSelect, onGoBack, tabs, onOpenSettings }: SurahListProps) {
   const [query, setQuery] = React.useState('');
   const q = query.trim().toLowerCase();
+  const { favourites, isFavourite, toggle } = useFavouriteSurahs();
+  // Besides plain matches, the forgiving search finds a name however it is spelt ("yasin", "rahman").
+  const spelledLike = q ? new Set(searchSurahs(query).map((s) => s.number)) : null;
   const visible = surahs.filter((s) =>
     !q
     || s.englishName.toLowerCase().includes(q)
     || s.englishNameTranslation.toLowerCase().includes(q)
     || s.name.includes(q)
-    || String(s.number).includes(q));
+    || String(s.number).includes(q)
+    || spelledLike?.has(s.number));
+
+  /** The loaded surah when there is one, else the built-in entry, so a favourite opens even when the list failed to load. */
+  const surahOf = (n: number): Surah | undefined => surahs.find((s) => s.number === n) ?? surahByNumber(n);
 
   const lastRead = surahs.find((s) => s.number === lastReadSurah);
 
@@ -85,6 +95,60 @@ export default function SurahList({ surahs, loading, error, onRetry, lastReadSur
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {!q && favourites.length > 0 && (
+          <section aria-label="My surahs" className="px-4 pt-3 pb-1">
+            <h2 className="mb-2 text-xs font-black uppercase tracking-widest text-slate-400">My surahs</h2>
+            <div className="flex flex-wrap gap-2">
+              {favourites.map((n) => {
+                const surah = surahOf(n);
+                if (!surah) return null;
+                return (
+                  <div key={n} className="flex items-stretch overflow-hidden rounded-xl border border-brand-500/30 bg-brand-500/10">
+                    <button
+                      type="button"
+                      aria-label={`Open ${surah.englishName}`}
+                      onClick={() => onSelect(surah)}
+                      className="min-h-11 flex items-center gap-2 pl-3 pr-2 text-sm font-black text-brand-400 cursor-pointer"
+                    >
+                      <span>{surah.englishName}</span>
+                      <span className="text-base font-arabic text-slate-300" lang="ar" dir="rtl">{surah.name.replace(/^\S+\s+/, '')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${surah.englishName} from My surahs`}
+                      onClick={() => toggle(n)}
+                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+        {!q && favourites.length === 0 && (
+          <section aria-label="Suggested daily surahs" className="px-4 pt-3 pb-1">
+            <p className="mb-2 text-xs text-slate-400">Keep the surahs you read every day here. Tap the star on any surah, or start with:</p>
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTED_SURAHS.map((n) => {
+                const surah = surahByNumber(n);
+                if (!surah) return null;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-label={`Add ${surah.englishName} to My surahs`}
+                    onClick={() => toggle(n)}
+                    className="min-h-11 rounded-xl border border-slate-700 bg-slate-800 px-3 text-xs font-black text-slate-200 cursor-pointer"
+                  >
+                    + {surah.englishName}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="w-8 h-8 text-brand-400 animate-spin mb-3" aria-hidden="true" />
@@ -107,15 +171,20 @@ export default function SurahList({ surahs, loading, error, onRetry, lastReadSur
             {visible.map((surah, idx) => {
               const isLastRead = surah.number === lastReadSurah;
               const hasBookmark = bookmarkedAyahs.some((k) => k.startsWith(`${surah.number}:`));
+              const favourite = isFavourite(surah.number);
               return (
-                <motion.button
+                <motion.div
                   key={surah.number}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: Math.min(idx * 0.01, 0.3) }}
-                  onClick={() => onSelect(surah)}
-                  className={`w-full flex items-center gap-4 px-4 py-3.5 text-left cursor-pointer transition-all hover:bg-slate-800/40 ${isLastRead ? 'bg-brand-500/5' : ''}`}
+                  className={`flex items-center transition-all hover:bg-slate-800/40 ${isLastRead ? 'bg-brand-500/5' : ''}`}
                 >
+                  <button
+                    type="button"
+                    onClick={() => onSelect(surah)}
+                    className="flex-1 min-w-0 flex items-center gap-4 pl-4 pr-2 py-3.5 text-left cursor-pointer"
+                  >
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-black border ${
                     isLastRead ? 'bg-brand-500/20 border-brand-500/40 text-brand-400' : 'bg-slate-800 border-slate-700 text-slate-400'
                   }`}>
@@ -132,7 +201,17 @@ export default function SurahList({ surahs, loading, error, onRetry, lastReadSur
                     <p className="text-xs text-slate-400 mt-0.5">{surah.englishNameTranslation} · {surah.numberOfAyahs} ayahs · {surah.revelationType}</p>
                   </div>
                   <p className="text-base font-arabic text-slate-300 shrink-0" lang="ar" dir="rtl">{surah.name}</p>
-                </motion.button>
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={favourite}
+                    aria-label={favourite ? `Remove ${surah.englishName} from favourites` : `Add ${surah.englishName} to favourites`}
+                    onClick={() => toggle(surah.number)}
+                    className="min-h-11 min-w-11 shrink-0 flex items-center justify-center cursor-pointer"
+                  >
+                    <Star className={`w-5 h-5 ${favourite ? 'fill-brand-400 text-brand-400' : 'text-slate-500'}`} aria-hidden="true" />
+                  </button>
+                </motion.div>
               );
             })}
           </div>
