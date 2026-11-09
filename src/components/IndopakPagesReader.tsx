@@ -6,7 +6,7 @@ import LayoutPageView from './LayoutPageView';
 import { formatAyahForCopy } from '../quran/editions';
 import { plainForCopy } from '../quran/indopak';
 import {
-  LAYOUT_PAGES, ayahsOnPage, clampLayoutPage, firstPageOfJuz, juzOfAyah,
+  LAYOUT_PAGES, ayahIndexOf, ayahsOnPage, clampLayoutPage, firstPageOfJuz, juzOfAyah, pageOfAyah,
 } from '../quran/indopak-layout';
 import { swipeDirection } from '../quran/pages';
 import type { ReaderSettings } from '../quran/settings';
@@ -139,6 +139,11 @@ export default function IndopakPagesReader({
     () => (data ? Array.from({ length: 30 }, (_, i) => firstPageOfJuz(data.layout, data.words, i + 1)) : undefined),
     [data],
   );
+  // This mushaf has its own 15-line pages, so each surah's page is found in its own layout.
+  const surahPages = React.useMemo(
+    () => (data ? Array.from({ length: 114 }, (_, i) => pageOfAyah(data.layout, data.words, ayahIndexOf(data.words, i + 1, 1))) : undefined),
+    [data],
+  );
 
   return (
     <div className="screen relative" data-reader-theme={settings.theme} style={{ background: 'var(--reader-bg)', color: 'var(--reader-ink)' }}>
@@ -155,7 +160,7 @@ export default function IndopakPagesReader({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            <button type="button" aria-label="Go to page or juz" aria-haspopup="dialog" onClick={() => setJumpOpen(true)} className="tap-target flex w-11 items-center justify-center rounded-xl cursor-pointer" style={barButton}>
+            <button type="button" aria-label="Go to page, juz or surah" aria-haspopup="dialog" onClick={() => setJumpOpen(true)} className="tap-target flex w-11 items-center justify-center rounded-xl cursor-pointer" style={barButton}>
               <BookOpen className="h-4 w-4" aria-hidden="true" />
             </button>
             <button type="button" aria-label="Reader settings" aria-haspopup="dialog" onClick={() => setSettingsOpen(true)} className="tap-target flex w-11 items-center justify-center rounded-xl cursor-pointer" style={barButton}>
@@ -250,7 +255,7 @@ export default function IndopakPagesReader({
 
       <p key={noticeId} className="sr-only" role="status" aria-live="polite">{notice}</p>
 
-      <PageJumpSheet open={jumpOpen} onClose={() => setJumpOpen(false)} page={pageNumber} total={LAYOUT_PAGES} juzFirstPages={juzPages ?? JUZ_PLACEHOLDER} onGo={(target) => { goTo(target); setJumpOpen(false); }} />
+      <PageJumpSheet open={jumpOpen} onClose={() => setJumpOpen(false)} page={pageNumber} total={LAYOUT_PAGES} juzFirstPages={juzPages ?? JUZ_PLACEHOLDER} surahFirstPages={surahPages} onGo={(target) => { goTo(target); setJumpOpen(false); }} />
       <ReaderSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} settings={settings} onChange={onChangeSettings} catalog={catalog} />
     </div>
   );

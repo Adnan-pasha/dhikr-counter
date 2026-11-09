@@ -7,6 +7,7 @@ import { scriptOption } from '../quran/editions';
 import { formatAyahForCopy } from '../quran/editions';
 import { plainForCopy, BASMALA_INDOPAK } from '../quran/indopak';
 import { clampPage, swipeDirection, TOTAL_PAGES, type PageAyah, type PageSurahStart } from '../quran/pages';
+import { SURAH_FIRST_PAGES } from '../quran/surahs';
 import { arabicFontSize, lineHeightFor, type ReaderSettings } from '../quran/settings';
 import { BASMALA, toArabicDigits } from '../quran/text';
 import { useMushafPage } from '../quran/useMushafPage';
@@ -49,7 +50,7 @@ const runsOf = (ayahs: readonly PageAyah[]): PageAyah[][] => {
   return runs;
 };
 
-/** The mushaf as 604 pages: swipe or tap to turn, jump to a page or juz, tap an ayah for its translation. */
+/** The mushaf as 604 pages: swipe or tap to turn, jump to a surah, page or juz, tap an ayah for its translation. */
 export default function MushafReader({
   initialPage, settings, onChangeSettings, catalog, bookmarkedAyahs, onBookmarkToggle, onBack, onOpenSurah,
   onPosition, onPageChange, onCopy, notice = '', noticeId = 0, canOpenSurah = true, dwellMs = DEFAULT_DWELL_MS,
@@ -201,7 +202,7 @@ export default function MushafReader({
             <p className="text-xs" style={{ color: 'var(--reader-muted)' }}>{page ? `Juz ${page.juz}` : 'Mushaf pages'}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            <button type="button" aria-label="Go to page or juz" aria-haspopup="dialog" onClick={() => setJumpOpen(true)} className="tap-target flex w-11 items-center justify-center rounded-xl cursor-pointer" style={barButton}>
+            <button type="button" aria-label="Go to page, juz or surah" aria-haspopup="dialog" onClick={() => setJumpOpen(true)} className="tap-target flex w-11 items-center justify-center rounded-xl cursor-pointer" style={barButton}>
               <BookOpen className="h-4 w-4" aria-hidden="true" />
             </button>
             <button type="button" aria-label="Reader settings" aria-haspopup="dialog" onClick={() => setSettingsOpen(true)} className="tap-target flex w-11 items-center justify-center rounded-xl cursor-pointer" style={barButton}>
@@ -311,7 +312,7 @@ export default function MushafReader({
 
       <p key={noticeId} className="sr-only" role="status" aria-live="polite">{notice}</p>
 
-      <PageJumpSheet open={jumpOpen} onClose={() => setJumpOpen(false)} page={pageNumber} onGo={(target) => { goTo(target); setJumpOpen(false); }} />
+      <PageJumpSheet open={jumpOpen} onClose={() => setJumpOpen(false)} page={pageNumber} surahFirstPages={SURAH_FIRST_PAGES} onGo={(target) => { goTo(target); setJumpOpen(false); }} />
       <ReaderSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} settings={settings} onChange={onChangeSettings} catalog={catalog} />
     </div>
   );

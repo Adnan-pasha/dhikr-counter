@@ -160,7 +160,7 @@ const JUZ_START: ReadonlyArray<readonly [number, number]> = [
 
 const indexCache = new WeakMap<IndopakWords, Map<string, number>>();
 
-const ayahIndexOf = (w: IndopakWords, surah: number, ayah: number): number => {
+export const ayahIndexOf = (w: IndopakWords, surah: number, ayah: number): number => {
   let map = indexCache.get(w);
   if (!map) {
     map = new Map(w.refs.map((r, i) => [`${r.surah}:${r.ayah}`, i]));

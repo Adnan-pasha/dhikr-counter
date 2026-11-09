@@ -125,7 +125,7 @@ test('only the words of the chosen ayah are highlighted', async () => {
 test('the jump sheet uses 610 pages and the juz pages of this layout', async () => {
   mount();
   await ready();
-  fireEvent.click(screen.getByRole('button', { name: 'Go to page or juz' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Go to page, juz or surah' }));
   assert.match(document.body.textContent, /Pages 1 to 610/);
   fireEvent.click(screen.getByRole('button', { name: 'Juz 30' }));
   await waitFor(() => assert.ok(document.querySelector('[data-layout-page="586"]')));
