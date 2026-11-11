@@ -144,9 +144,13 @@ export default function HomeScreen({
     return r.transliteration ?? r.translation;
   };
 
-  // Live clock
+  // Live clock. It shows hours and minutes, so the screen is only redrawn when the minute changes.
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
+    const minute = (date: Date) => Math.floor(date.getTime() / 60_000);
+    const timer = setInterval(() => setTime((previous) => {
+      const now = new Date();
+      return minute(now) === minute(previous) ? previous : now;
+    }), 1000);
     return () => clearInterval(timer);
   }, []);
 

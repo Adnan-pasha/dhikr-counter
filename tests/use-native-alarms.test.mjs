@@ -25,7 +25,8 @@ const reminder = (over = {}) => ({
 });
 
 const fakePhone = ({ display = 'granted', exact = 'granted' } = {}) => {
-  const state = { display, exact, scheduled: [], cancelled: 0, changeExact: 0, schedules: 0 };
+  // `syncs` counts how often the app checked the phone; `schedules` how often it actually had to set alarms.
+  const state = { display, exact, scheduled: [], cancelled: 0, changeExact: 0, schedules: 0, syncs: 0 };
   return {
     state,
     checkPermissions: async () => ({ display: state.display }),
@@ -33,7 +34,7 @@ const fakePhone = ({ display = 'granted', exact = 'granted' } = {}) => {
     checkExactNotificationSetting: async () => ({ exact_alarm: state.exact }),
     changeExactNotificationSetting: async () => { state.changeExact += 1; return { exact_alarm: state.exact }; },
     createChannel: async () => {},
-    getPending: async () => ({ notifications: state.scheduled.map((n) => ({ id: n.id })) }),
+    getPending: async () => { state.syncs += 1; return { notifications: state.scheduled.map((n) => ({ id: n.id })) }; },
     cancel: async () => { state.cancelled += 1; state.scheduled = []; },
     schedule: async ({ notifications }) => { state.schedules += 1; state.scheduled.push(...notifications); },
   };
@@ -117,12 +118,24 @@ test('a change to the reminders schedules again, and a burst of changes becomes 
 
 test('a change to the place or a prayer setting, made anywhere, schedules again without needing a tab change', async () => {
   const phone = fakePhone();
-  renderHook(() => useNativeAlarms([], deps(phone)));
+  let place = MECCA;
+  renderHook(() => useNativeAlarms([], deps(phone, { readPlace: () => place })));
   await settle();
   assert.equal(phone.state.schedules, 1);
+  place = { lat: 24.4672, lng: 39.6111, timeZone: 'Asia/Riyadh', label: 'Madinah' };
   announcePrayerConfigChange();
   await settle();
-  assert.equal(phone.state.schedules, 2);
+  assert.equal(phone.state.schedules, 2, 'the new place has different prayer times, so they are set again');
+});
+
+test('a change that leaves the schedule as it was checks the phone but sets nothing again', async () => {
+  const phone = fakePhone();
+  renderHook(() => useNativeAlarms([], deps(phone)));
+  await settle();
+  announcePrayerConfigChange();
+  await settle();
+  assert.equal(phone.state.syncs, 2, 'it looked');
+  assert.equal(phone.state.schedules, 1, 'and found nothing to redo');
 });
 
 test('several such changes in a row become one sync', async () => {
@@ -131,7 +144,7 @@ test('several such changes in a row become one sync', async () => {
   await settle();
   announcePrayerConfigChange(); announcePrayerConfigChange(); announcePrayerConfigChange();
   await settle();
-  assert.equal(phone.state.schedules, 2);
+  assert.equal(phone.state.syncs, 2, 'one for opening, one for the burst of changes');
 });
 
 test('after leaving, a change is no longer listened for', async () => {
@@ -149,9 +162,10 @@ test('coming back to the app from the background tops the alarms up', async () =
   renderHook(() => useNativeAlarms([], deps(phone)));
   await settle();
   assert.equal(resumeHandlers.length, 1, 'it listens for the app coming back');
+  phone.state.scheduled = phone.state.scheduled.slice(1); // an alarm rang while the app was away
   resumeHandlers[0]();
   await settle();
-  assert.equal(phone.state.schedules, 2);
+  assert.equal(phone.state.schedules, 2, 'what the phone no longer has is set again');
 });
 
 test('leaving stops listening and stops any sync that was waiting', async () => {
