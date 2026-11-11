@@ -479,6 +479,9 @@ export const findMissedReminderCandidates = (
 
 // ─── Motivational Messages ───────────────────────────────────────────────────
 
+/** "1 day", "12 days". */
+export const dayCount = (n: number): string => `${n} ${n === 1 ? 'day' : 'days'}`;
+
 export const getMotivationalMessage = (streak: number): { arabic: string; english: string; note: string } => {
   const hour = new Date().getHours();
 
@@ -496,7 +499,7 @@ export const getMotivationalMessage = (streak: number): { arabic: string; englis
       arabic: 'سُبْحَانَ ٱللَّٰهِ وَبِحَمْدِهِ',
       english: 'Glory be to Allah and praise belongs to Him',
       note: streak > 0
-        ? `${streak} days strong! Keep going — consistency is beloved to Allah.`
+        ? `${dayCount(streak)} strong! Keep going — consistency is beloved to Allah.`
         : 'Every bead counts. Start your streak today!',
     };
   }
@@ -514,7 +517,7 @@ export const getMotivationalMessage = (streak: number): { arabic: string; englis
       arabic: 'أَسْتَغْفِرُ ٱللَّٰهَ',
       english: 'I seek forgiveness from Allah',
       note: streak > 0
-        ? `${streak} days of remembrance! Asr time — the witnessed hour.`
+        ? `${dayCount(streak)} of remembrance! Asr time — the witnessed hour.`
         : 'The Prophet ﷺ said seek forgiveness often. Begin your journey.',
     };
   }
@@ -531,7 +534,7 @@ export const getMotivationalMessage = (streak: number): { arabic: string; englis
     arabic: 'حَسْبِيَ ٱللَّٰهُ لَا إِلَٰهَ إِلَّا هُوَ',
     english: 'Allah is sufficient for me, there is no god but Him',
     note: streak > 0
-      ? `${streak} nights of devotion! The night remembrance is precious.`
+      ? `${streak} ${streak === 1 ? 'night' : 'nights'} of devotion! The night remembrance is precious.`
       : 'The night is a time of peace — remember Allah before sleep.',
   };
 };

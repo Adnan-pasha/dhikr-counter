@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, Flame, Calendar, ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react';
-import { SalahLog, SalahName, Routine, SALAH_META, HIJRI_MONTHS } from '../types';
+import { SalahLog, SalahName, Routine, SALAH_META } from '../types';
+import { hijriLabelForDay } from '../hijri';
 import { AppIcon } from '../icons';
 import SalahCalendar from './SalahCalendar';
 import {
@@ -29,21 +30,6 @@ interface SalahTrackerProps {
 const parse = (value: string): Date => {
   const [y, m, d] = value.split('-').map(Number);
   return new Date(y, m - 1, d);
-};
-
-const getHijriDate = (date: Date): string => {
-  const jd = Math.floor((date.getTime() / 86400000) + 2440587.5);
-  const l = jd - 1948440 + 10632;
-  const n = Math.floor((l - 1) / 10631);
-  const ll = l - 10631 * n + 354;
-  const j = Math.floor((10985 - ll) / 5316) * Math.floor((50 * ll) / 17719)
-    + Math.floor(ll / 5670) * Math.floor((43 * ll) / 15238);
-  const lll = ll - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50)
-    - Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
-  const month = Math.floor((24 * lll) / 709);
-  const day = lll - Math.floor((709 * month) / 24);
-  const year = 30 * n + j - 30;
-  return `${day} ${HIJRI_MONTHS[month - 1]} ${year} AH`;
 };
 
 const stripBg = (count: number): string => {
@@ -122,7 +108,7 @@ export default function SalahTracker({ salahLogs, onTogglePrayer, onSetDay, afte
             <p className="caption">
               {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: isToday ? undefined : 'numeric' })}
             </p>
-            <p className="text-sm font-medium" style={{ color: 'var(--color-text-brand)', opacity: 0.8 }}>{getHijriDate(selectedDate)}</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--color-text-brand)', opacity: 0.8 }}>{hijriLabelForDay(selectedDate)}</p>
           </div>
           {!isToday && (
             <button

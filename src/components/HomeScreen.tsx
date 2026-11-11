@@ -9,6 +9,7 @@ import { Dhikr, DhikrHistory, Routine, UserPreferences } from '../types';
 import { AppIcon, IconKey } from '../icons';
 import { ADHKAAR_LIBRARY } from '../adhkaar-data';
 import { isTimestampOnLocalDay, dhikrReadingLines } from '../domain';
+import { hijriLabelForDay } from '../hijri';
 import type { DailyProgress, StreakInfo } from '../habits';
 import DailyGoalCard from './DailyGoalCard';
 import FridayCard from './FridayCard';
@@ -43,30 +44,6 @@ interface HomeScreenProps {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// Hijri date calculation
-function getHijriDate(): string {
-  const now = new Date();
-  // Simple Hijri calculation (approximate — within 1 day)
-  const jd = Math.floor((now.getTime() / 86400000) + 2440587.5);
-  const l = jd - 1948440 + 10632;
-  const n = Math.floor((l - 1) / 10631);
-  const ll = l - 10631 * n + 354;
-  const j = Math.floor((10985 - ll) / 5316) * Math.floor((50 * ll) / 17719)
-    + Math.floor(ll / 5670) * Math.floor((43 * ll) / 15238);
-  const lll = ll - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50)
-    - Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
-  const month = Math.floor((24 * lll) / 709);
-  const day = lll - Math.floor((709 * month) / 24);
-  const year = 30 * n + j - 30;
-
-  const HIJRI_MONTHS = [
-    'Muharram','Safar','Rabi al-Awwal','Rabi al-Thani',
-    'Jumada al-Awwal','Jumada al-Thani','Rajab','Sha\'ban',
-    'Ramadan','Shawwal','Dhul Qa\'dah','Dhul Hijjah'
-  ];
-  return `${day} ${HIJRI_MONTHS[month - 1]} ${year} AH`;
-}
 
 // Time of day greeting
 function getGreeting(): { text: string; icon: IconKey } {
@@ -135,7 +112,9 @@ export default function HomeScreen({
   const allTimeCount = useMemo(() => getAllTimeCount(history), [history]);
   const greeting = getGreeting();
   const ayah = getDailyAyah();
-  const hijriDate = useMemo(() => getHijriDate(), []);
+  // The same Islamic date the Prayers and Salah screens show; it follows the day, so it rolls over at midnight.
+  const dayKey = time.toDateString();
+  const hijriDate = useMemo(() => hijriLabelForDay(new Date(dayKey)), [dayKey]);
   const allDhikrs = [...ADHKAAR_LIBRARY, ...customDhikrs];
   const currentDhikr = allDhikrs.find(d => d.id === currentDhikrId) ?? ADHKAAR_LIBRARY[0];
   const currentReading = dhikrReadingLines(currentDhikr, preferences);
@@ -195,7 +174,7 @@ export default function HomeScreen({
                 <span className="inline-flex items-center gap-1.5"><AppIcon name={greeting.icon} className="w-3.5 h-3.5" />{greeting.text}</span>
               </p>
               <h1 className="font-display font-black text-2xl mt-0.5 leading-tight" style={{ color: 'var(--color-text-primary)' }}>
-                Dhikr Counter
+                Muneeb
               </h1>
               <p className="text-xs mt-1 font-medium" style={{ color: 'var(--color-text-muted)' }}>
                 {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -214,7 +193,7 @@ export default function HomeScreen({
           {/* Stats row */}
           <div className="flex gap-2.5 mt-4">
             {[
-              { icon: <Flame className="w-3.5 h-3.5" />, label: 'Streak', value: streakInfo.streak, unit: 'days', color: 'var(--color-orange-400)' },
+              { icon: <Flame className="w-3.5 h-3.5" />, label: 'Streak', value: streakInfo.streak, unit: streakInfo.streak === 1 ? 'day' : 'days', color: 'var(--color-orange-400)' },
               { icon: <Target className="w-3.5 h-3.5" />, label: 'Adhkaar', value: completedTodayIds.length, unit: 'done today', color: 'var(--color-text-brand)' },
               { icon: <Trophy className="w-3.5 h-3.5" />, label: 'Total', value: allTimeCount >= 1000 ? `${(allTimeCount / 1000).toFixed(1)}k` : allTimeCount, unit: 'beads', color: 'var(--color-text-brand)' },
             ].map(({ icon, label, value, unit, color }) => (
