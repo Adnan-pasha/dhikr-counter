@@ -307,3 +307,81 @@ test('a full sync works through the adapter over a plugin that behaves like Capa
   assert.equal(result.status, 'scheduled');
   assert.ok(received.some(([name]) => name === 'schedule'));
 });
+
+// ── not redoing work the phone already has ──
+
+const holds = (phone, ...ids) => { phone.state.pending = ids; phone.log.length = 0; };
+
+test('when the phone already holds exactly the planned alarms, a second sync cancels and schedules nothing', async () => {
+  const phone = fakePhone();
+  const sync = createAlarmSync(phone);
+  const plan = [alarm(1, 0), alarm(2, 5)];
+  await sync.sync(plan);
+  holds(phone, 1, 2);
+  const result = await sync.sync(plan);
+  assert.equal(result.status, 'scheduled');
+  assert.equal(result.scheduled, 2);
+  assert.equal(calls(phone, 'schedule').length, 0);
+  assert.equal(calls(phone, 'cancel').length, 0);
+});
+
+test('an alarm that moved in time, with the same id, is set again', async () => {
+  const phone = fakePhone();
+  const sync = createAlarmSync(phone);
+  await sync.sync([alarm(1, 0), alarm(2, 5)]);
+  holds(phone, 1, 2);
+  await sync.sync([alarm(1, 30), alarm(2, 5)]);
+  assert.equal(calls(phone, 'schedule').length, 1);
+  assert.equal(calls(phone, 'cancel').length, 1);
+});
+
+test('a new alarm in the plan is set, and the old ones are replaced with it', async () => {
+  const phone = fakePhone();
+  const sync = createAlarmSync(phone);
+  await sync.sync([alarm(1, 0), alarm(2, 5)]);
+  holds(phone, 1, 2);
+  await sync.sync([alarm(1, 0), alarm(3, 9)]);
+  assert.deepEqual(calls(phone, 'schedule')[0].notifications.map((n) => n.id), [1, 3]);
+});
+
+test('an alarm the phone has lost (it fired, or was cleared) is brought back', async () => {
+  const phone = fakePhone();
+  const sync = createAlarmSync(phone);
+  const plan = [alarm(1, 0), alarm(2, 5)];
+  await sync.sync(plan);
+  holds(phone, 1);
+  await sync.sync(plan);
+  assert.equal(calls(phone, 'schedule').length, 1);
+});
+
+test('allowing exact timing since the last sync sets the alarms again, now as exact', async () => {
+  const phone = fakePhone({ exact: 'denied' });
+  const sync = createAlarmSync(phone);
+  const plan = [alarm(1, 0)];
+  await sync.sync(plan);
+  phone.state.exact = 'granted';
+  holds(phone, 1);
+  await sync.sync(plan);
+  const scheduled = calls(phone, 'schedule');
+  assert.equal(scheduled.length, 1);
+  assert.equal(scheduled[0].notifications[0].isExactNotification, true);
+});
+
+test('after the app restarts it cannot know what it set last time, so it sets everything again', async () => {
+  const phone = fakePhone({ pending: [1, 2] });
+  const result = await createAlarmSync(phone).sync([alarm(1, 0), alarm(2, 5)]);
+  assert.equal(result.status, 'scheduled');
+  assert.equal(calls(phone, 'schedule').length, 1);
+});
+
+test('a sync that failed is never remembered as done', async () => {
+  const phone = fakePhone();
+  const sync = createAlarmSync(phone);
+  const plan = [alarm(1, 0)];
+  phone.state.failOn = 'schedule';
+  assert.equal((await sync.sync(plan)).status, 'error');
+  phone.state.failOn = null;
+  holds(phone, 1);
+  await sync.sync(plan);
+  assert.equal(calls(phone, 'schedule').length, 1);
+});

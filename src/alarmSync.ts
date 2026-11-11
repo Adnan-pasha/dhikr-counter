@@ -100,6 +100,8 @@ const message = (error: unknown): string => (error instanceof Error ? error.mess
  */
 export const createAlarmSync = (port: AlarmPort) => {
   let queue: Promise<unknown> = Promise.resolve();
+  /** What was last handed to the phone in full, or null when that is unknown (a fresh start, or a failed attempt). */
+  let lastPlanKey: string | null = null;
   const inOrder = <T>(job: () => Promise<T>): Promise<T> => {
     const run = queue.then(job, job);
     queue = run.catch(() => undefined);
@@ -125,10 +127,19 @@ export const createAlarmSync = (port: AlarmPort) => {
         const { notifications: pending } = await port.getPending();
         // A test alert still waiting for its ten seconds is not part of the schedule, so it is left alone.
         const stale = pending.filter(({ id }) => id !== TEST_ALARM_ID);
-        if (stale.length > 0) await port.cancel({ notifications: stale.map(({ id }) => ({ id })) });
         // Read before scheduling, so alarms are never asked to be exact when they may not be (see isExactNotification).
         const exact = await exactAllowed();
-        if (plan.length > 0) await port.schedule({ notifications: plan.map((alarm) => toNotification(alarm, exact)) });
+        const notifications = plan.map((alarm) => toNotification(alarm, exact));
+        const planKey = JSON.stringify(notifications);
+        // Opening the app tops the plan up every time; when the phone already holds exactly what was set last time,
+        // cancelling and setting up to 300 alarms again is wasted work across the bridge.
+        const wanted = new Set(notifications.map(({ id }) => id));
+        const phoneHoldsPlan = planKey === lastPlanKey && stale.length === wanted.size && stale.every(({ id }) => wanted.has(id));
+        if (phoneHoldsPlan) return { status: 'scheduled', scheduled: plan.length, exact };
+        lastPlanKey = null;
+        if (stale.length > 0) await port.cancel({ notifications: stale.map(({ id }) => ({ id })) });
+        if (notifications.length > 0) await port.schedule({ notifications });
+        lastPlanKey = planKey;
         return { status: 'scheduled', scheduled: plan.length, exact };
       } catch (error) {
         return { status: 'error', scheduled: 0, error: message(error) };

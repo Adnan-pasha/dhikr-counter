@@ -7,14 +7,8 @@ import { Dhikr, DhikrHistory, UserPreferences, DhikrReminder, Routine, SalahLog,
 import { playCompletionSound } from './audio';
 import CounterScreen from './components/CounterScreen';
 import HomeScreen from './components/HomeScreen';
-import SalahTracker from './components/SalahTracker';
-import QuranReader from './components/QuranReader';
-import StatsScreen from './components/StatsScreen';
-import SettingsScreen from './components/SettingsScreen';
 import ReminderBanner from './components/ReminderBanner';
 import ConfirmModal from './components/ConfirmModal';
-import AdhkaarLibrary from './components/AdhkaarLibrary';
-import RoutineManager from './components/RoutineManager';
 import BottomNav from './components/BottomNav';
 import OnboardingFlow from './components/OnboardingFlow';
 import { ADHKAAR_LIBRARY } from './adhkaar-data';
@@ -32,6 +26,14 @@ import { routeNotificationTap, type AdhanPlayRequest } from './nativeAlarms';
 import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer, uniqueInOrder, readStartedRoutine, writeStartedRoutine, afterFinishingRoutine } from './routines';
 import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
 
+// Home and the counter are what opens first; every other screen is fetched when it is first visited, which keeps
+// the first paint (and the app's start-up) light.
+const SalahTracker = lazy(() => import('./components/SalahTracker'));
+const QuranReader = lazy(() => import('./components/QuranReader'));
+const StatsScreen = lazy(() => import('./components/StatsScreen'));
+const SettingsScreen = lazy(() => import('./components/SettingsScreen'));
+const AdhkaarLibrary = lazy(() => import('./components/AdhkaarLibrary'));
+const RoutineManager = lazy(() => import('./components/RoutineManager'));
 const QiblaScreen = lazy(() => import('./components/QiblaScreen'));
 const PrayersScreen = lazy(() => import('./components/PrayersScreen'));
 // Use the full rich ADHKAAR_LIBRARY as system dhikrs
@@ -494,6 +496,11 @@ export default function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
           >
+            <Suspense fallback={
+              <div className="flex-1 flex items-center justify-center bg-[var(--color-bg-base)]" role="status">
+                <span className="text-brand-400 text-xs font-bold animate-pulse">Loading...</span>
+              </div>
+            }>
             {activeTab === 'home' && (
               <HomeScreen
                 streakInfo={streakInfo}
@@ -717,6 +724,7 @@ export default function App() {
                 <QiblaScreen theme={preferences.theme} />
               </Suspense>
             )}
+            </Suspense>
           </motion.main>
 
           {/* ── BOTTOM NAVIGATION ───────────────────────────────────────── */}

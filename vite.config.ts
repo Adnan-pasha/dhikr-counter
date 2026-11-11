@@ -14,14 +14,20 @@ const listFiles = (dir: string): string[] =>
     entry.isDirectory() ? listFiles(path.join(dir, entry.name)) : [path.join(dir, entry.name)],
   );
 
-/** Injects a content-hashed build id and the emitted asset list into dist/sw.js. */
+let outDir = path.resolve(__dirname, 'dist');
+
+/** Injects a content-hashed build id and the emitted asset list into sw.js in the output folder. */
 const swBuildManifest = (): Plugin => ({
   name: 'sw-build-manifest',
   apply: 'build',
+  // The folder this build really writes to (a build run with --outDir must not read a stale dist/sw.js).
+  configResolved(config) {
+    outDir = path.resolve(config.root, config.build.outDir);
+  },
   closeBundle() {
-    const dist = path.resolve(__dirname, 'dist');
+    const dist = outDir;
     const swPath = path.join(dist, 'sw.js');
-    if (!existsSync(swPath)) return;
+    if (!existsSync(swPath)) throw new Error(`sw.js was not emitted into ${dist}`);
 
     const assets = listFiles(path.join(dist, 'assets'))
       .filter((file) => PRECACHE_EXTENSIONS.has(path.extname(file)))
