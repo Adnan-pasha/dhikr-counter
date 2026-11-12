@@ -162,9 +162,20 @@ export const sanitizeDailyGoal = (value: unknown): number => {
 export const beadsOnDay = (history: readonly DhikrHistory[], day: string): number =>
   history.reduce((sum, h) => (toLocalDate(new Date(h.timestamp)) === day ? sum + h.count : sum), 0);
 
-/** Beads counted today (finished rounds plus the one in progress) against the daily goal. */
-export const dailyProgress = (finished: number, currentCount: number, goal: number): DailyProgress => {
-  const beads = finished + Math.max(0, currentCount);
+/**
+ * Beads on the counter that are not in the history yet. The counter keeps counting across rounds (33, 34, ...) and
+ * every finished round is saved as it completes, so only the beads past the last finished round are still unsaved.
+ * A dhikr with no target never saves a round, so all of its beads are.
+ */
+export const unloggedBeads = (count: number, target: number): number => {
+  if (!Number.isFinite(count) || count <= 0) return 0;
+  const whole = Math.floor(count);
+  return target > 0 ? whole % target : whole;
+};
+
+/** Beads counted today (finished rounds plus the unsaved beads of the one in progress) against the daily goal. */
+export const dailyProgress = (finished: number, inProgress: number, goal: number): DailyProgress => {
+  const beads = finished + Math.max(0, inProgress);
   const ratio = goal > 0 ? Math.min(1, beads / goal) : 0;
   return { beads, goal, ratio, done: goal > 0 && beads >= goal };
 };

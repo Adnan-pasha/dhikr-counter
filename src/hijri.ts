@@ -41,3 +41,12 @@ export const hijriLabel = (instant: Date, timeZone: string): string => {
   const parts = hijriParts(instant, timeZone);
   return parts ? `${parts.day} ${HIJRI_MONTHS[parts.month - 1]} ${parts.year} AH` : '';
 };
+
+/**
+ * The Islamic date of a calendar day on this phone, for screens that show a day and not a place. Read at the day's
+ * noon, the same way the Prayers screen reads it, so every screen shows the same date whatever the hour.
+ */
+export const hijriLabelForDay = (day: Date): string => {
+  if (Number.isNaN(day.getTime())) return '';
+  return hijriLabel(new Date(day.getFullYear(), day.getMonth(), day.getDate(), 12), deviceTimeZone());
+};

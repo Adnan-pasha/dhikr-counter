@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, Volume2, Sparkles, Sliders, Smartphone, HelpCircle, User, Clock, Plus, Trash2, Bell, BookOpenText, Check, ChevronLeft } from 'lucide-react';
+import { Settings, Volume2, Sparkles, Sliders, HelpCircle, User, Clock, Plus, Trash2, Bell, BookOpenText, Check, ChevronLeft } from 'lucide-react';
 import { UserPreferences, SoundTone, AppTheme, DhikrReminder, Dhikr, Madhab } from '../types';
 import { AppIcon } from '../icons';
 import { playBeadSound, playCompletionSound } from '../audio';
@@ -924,14 +924,6 @@ export default function SettingsScreen({
             ))}
           </ul>
           </details>
-        </div>
-
-        {/* Brand Information Footer */}
-        <div className="text-center py-4 space-y-1 opacity-70">
-          <p className="text-xs text-slate-400 uppercase tracking-wider select-none flex items-center justify-center gap-1 font-semibold">
-            <Smartphone className="w-3.5 h-3.5 text-brand-400 animate-pulse" /> Tasbih Companion Hub
-          </p>
-          <p className="text-xs text-slate-500 select-none">Designed and engineered in high-fidelity sandbox context</p>
         </div>
       </div>
     </div>

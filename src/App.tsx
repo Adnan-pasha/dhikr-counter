@@ -24,7 +24,7 @@ import { isNativeApp, onNotificationTap } from './native';
 import { useNativeAlarms } from './useNativeAlarms';
 import { routeNotificationTap, type AdhanPlayRequest } from './nativeAlarms';
 import { resolveActiveRoutine, togglePrayerLog, afterSalahRoutine, isFardPrayer, uniqueInOrder, readStartedRoutine, writeStartedRoutine, afterFinishingRoutine } from './routines';
-import { computeStreakInfo, dailyProgress, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
+import { computeStreakInfo, dailyProgress, unloggedBeads, beadsOnDay, addActiveDay, startPause, endPause, type StreakPause } from './habits';
 
 // Home and the counter are what opens first; every other screen is fetched when it is first visited, which keeps
 // the first paint (and the app's start-up) light.
@@ -243,7 +243,6 @@ export default function App() {
   const streakInfo = React.useMemo(() => computeStreakInfo(history, streakPauses, today, activeDays), [history, streakPauses, today, activeDays]);
   const friday = React.useMemo(() => fridayChecklist(history, fridayKahf, today), [history, fridayKahf, today]);
   const finishedToday = React.useMemo(() => beadsOnDay(history, today), [history, today]);
-  const progress = dailyProgress(finishedToday, currentCount, preferences.dailyGoal);
 
   // Quran bookmarks & last read persistence
   React.useEffect(() => {
@@ -285,6 +284,9 @@ export default function App() {
 
 
   const activeDhikr = dhikrs.find((d) => d.id === currentDhikrId) || SYSTEM_DHIKRS[0];
+  // Finished rounds are already in the history; only the beads past the last finished round are added on top.
+  const inProgressBeads = unloggedBeads(currentCount, activeDhikr.targetCount);
+  const progress = dailyProgress(finishedToday, inProgressBeads, preferences.dailyGoal);
 
 
 
@@ -674,7 +676,7 @@ export default function App() {
               <StatsScreen
                 history={history}
                 streak={streakInfo.streak}
-                allTimeCount={history.reduce((sum, current) => sum + current.count, 0) + currentCount}
+                allTimeCount={history.reduce((sum, current) => sum + current.count, 0) + inProgressBeads}
                 onClearHistory={handleClearHistory}
                 dhikrs={dhikrs}
                 onGoBack={() => setActiveTab('home')}

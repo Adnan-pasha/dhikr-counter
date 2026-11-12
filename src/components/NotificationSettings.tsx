@@ -82,7 +82,7 @@ function BrowserNotificationSettings() {
       )}
 
       <p id="notification_note" className="text-xs leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
-        Reminders appear while Dhikr is open or running in the background. When the app is closed,
+        Reminders appear while Muneeb is open or running in the background. When the app is closed,
         your phone may not deliver them; reliable alarms need the Android app.
       </p>
     </div>
