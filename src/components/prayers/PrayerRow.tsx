@@ -36,15 +36,17 @@ export default function PrayerRow({ id, label, arabic, icon, time, isCurrent, is
         <AppIcon name={icon} className="w-5 h-5" />
       </span>
 
-      <div className="min-w-0 flex-1 py-3">
-        <p className="flex items-baseline gap-2">
-          <span className="text-sm font-black" style={{ color: isCurrent ? 'var(--color-text-brand)' : 'var(--color-text-primary)' }}>{label}</span>
-          <span className="text-sm font-arabic" style={{ color: 'var(--color-text-muted)' }} aria-hidden="true">{arabic}</span>
-          {isCurrent && <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--color-text-brand)' }}>Now</span>}
-        </p>
+      {/* Two short lines, so the name never shares a line with the time on a narrow phone. */}
+      <div className="min-w-0 flex-1 py-2 flex flex-col">
+        <span data-prayer-name className="text-sm font-black leading-tight truncate" style={{ color: isCurrent ? 'var(--color-text-brand)' : 'var(--color-text-primary)' }}>{label}</span>
+        {isCurrent ? (
+          <span data-prayer-sub className="text-xs font-bold" style={{ color: 'var(--color-text-brand)' }}>Now</span>
+        ) : (
+          <span data-prayer-sub className="text-xs font-arabic truncate" style={{ color: 'var(--color-text-muted)' }} aria-hidden="true">{arabic}</span>
+        )}
       </div>
 
-      <p className="text-sm font-black tabular-nums shrink-0" style={{ color: 'var(--color-text-primary)' }}>{time}</p>
+      <p data-prayer-time className="text-sm font-black tabular-nums shrink-0 whitespace-nowrap" style={{ color: 'var(--color-text-primary)' }}>{time}</p>
 
       {isPrayer ? (
         <>

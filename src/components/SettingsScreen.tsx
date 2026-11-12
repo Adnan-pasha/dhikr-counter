@@ -165,14 +165,6 @@ export default function SettingsScreen({
     playCompletionSound(preferences.volume);
   };
 
-  const themes: { id: AppTheme; label: string; color: string; border: string }[] = [
-    { id: 'slate', label: 'Slate Gray', color: 'bg-slate-600', border: 'border-slate-500' },
-    { id: 'emerald', label: 'Emerald Mosque', color: 'bg-emerald-600', border: 'border-emerald-500' },
-    { id: 'amber', label: 'Rose Desert', color: 'bg-brand-600', border: 'border-brand-500' },
-    { id: 'indigo', label: 'Tahajjud Blue', color: 'bg-indigo-600', border: 'border-indigo-500' },
-    { id: 'midnight', label: 'Obsidian Jet', color: 'bg-slate-950 border border-slate-800', border: 'border-red-500' },
-  ];
-
   const madhabs: Array<{ id: Madhab; label: string; note: string }> = [
     { id: 'hanafi', label: 'Hanafi', note: 'Later Asr calculation' },
     { id: 'shafi', label: "Shafi'i", note: 'Standard Asr calculation' },
@@ -261,33 +253,6 @@ export default function SettingsScreen({
                   <span className="text-sm font-bold" style={{ color: matches ? 'var(--color-text-brand)' : 'var(--color-text-primary)' }}>
                     {mode.label}
                   </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Card: Themes Selection */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 select-none">
-            <Sparkles className="w-3.5 h-3.5" /> Color Theme
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            {themes.map((theme) => {
-              const matches = preferences.theme === theme.id;
-              return (
-                <button
-                  id={`theme_option_${theme.id}`}
-                  key={theme.id}
-                  onClick={() => onChangePreferences({ theme: theme.id })}
-                  className={`min-h-11 p-3 rounded-2xl border bg-slate-900/40 flex items-center gap-2.5 cursor-pointer text-left transition-all ${
-                    matches 
-                      ? 'border-brand-500 shadow-md bg-slate-900/80' 
-                      : 'border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <span className={`w-4 h-4 rounded-full ${theme.color} shrink-0`} />
-                  <span className="text-xs font-bold text-slate-200">{theme.label}</span>
                 </button>
               );
             })}
@@ -844,9 +809,9 @@ export default function SettingsScreen({
                     }`}
                   >
                     <div className="flex-1 min-w-0 pr-2">
-                      <div className="flex items-center gap-1.5 mb-1 bg-transparent">
-                        <span className="text-xs font-black font-mono text-brand-450">{format12Hour(rem.timeString)}</span>
-                        <span className="text-xs font-black uppercase tracking-wider text-slate-400 truncate font-sans">{rem.label}</span>
+                      <div className="mb-1 bg-transparent">
+                        <p className="text-xs font-black tabular-nums whitespace-nowrap text-brand-450">{format12Hour(rem.timeString)}</p>
+                        <p className="text-xs font-black text-slate-300 break-words font-sans">{rem.label}</p>
                       </div>
                       <div className="flex flex-col gap-0.5">
                         <p className="text-xs text-slate-400 font-bold truncate font-sans">

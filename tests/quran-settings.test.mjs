@@ -4,17 +4,17 @@ import {
   DEFAULT_READER_SETTINGS, READER_THEMES, TEXT_SIZES, sanitizeReaderSettings, arabicFontSize, stepTextSize,
 } from '../src/quran/settings.ts';
 
-test('defaults read comfortably: dark theme, middle size, Uthmani, translation on', () => {
+test('defaults read comfortably: the theme follows the app, middle size, Uthmani, translation on', () => {
   const d = DEFAULT_READER_SETTINGS;
-  assert.equal(d.theme, 'dark');
+  assert.equal(d.theme, 'auto');
   assert.equal(d.script, 'uthmani');
   assert.equal(d.showTranslation, true);
   assert.equal(d.keepScreenOn, false);
   assert.ok(d.textSize > 0 && d.textSize < TEXT_SIZES.length - 1, 'not at either end');
 });
 
-test('four reading themes are offered, the last one high contrast', () => {
-  assert.deepEqual(READER_THEMES.map((t) => t.id), ['dark', 'paper', 'modern', 'contrast']);
+test('Auto and four reading themes are offered, the last one high contrast', () => {
+  assert.deepEqual(READER_THEMES.map((t) => t.id), ['auto', 'dark', 'paper', 'modern', 'contrast']);
 });
 
 test('stored settings are accepted when valid', () => {

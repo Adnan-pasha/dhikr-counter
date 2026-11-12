@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { AppTheme } from '../types';
 import { CITY_PRESETS, qiblaBearing, readPrayerLocation, writePrayerLocation, type CityPreset } from '../places';
+import { hasCoarsePointer, showAlignSimulator } from '../qiblaPreview';
 
 interface QiblaScreenProps {
   theme: AppTheme;
@@ -53,7 +54,10 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
   const [heading, setHeading] = useState<number>(0); // 0 = facing north
   const [isLiveSensors, setIsLiveSensors] = useState<boolean>(false);
   const [iosNeedsPermission, setIosNeedsPermission] = useState<boolean>(false);
-  
+  // The hand-turned dial is a preview aid for computers; a phone only ever shows its real compass.
+  const [coarsePointer] = useState<boolean>(hasCoarsePointer);
+  const simulatorShown = showAlignSimulator({ liveSensors: isLiveSensors, coarsePointer });
+
   const targetHeading = useRef<number>(0);
   const currentHeading = useRef<number>(0);
 
@@ -227,7 +231,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
 
   // Manual Drag Rotation logic for seamless offline desktop simulation
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (isLiveSensors) return; // ignore manual dial drag if GPS compass is active
+    if (!simulatorShown) return; // the dial is only turned by hand in the desktop preview
     if (!dialRef.current) return;
     setIsDragging(true);
 
@@ -267,7 +271,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isLiveSensors) return;
+    if (!simulatorShown) return;
     if (!dialRef.current) return;
     setIsDragging(true);
 
@@ -690,10 +694,16 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
                 Live Compass Gyro Active
               </div>
             )}
+
+            {!isLiveSensors && !simulatorShown && hasLocation && (
+              <p id="qibla_no_compass" className="text-2xs font-medium text-slate-400 mt-1">
+                No compass reading from this phone yet. The Qibla is {qiblaAngle}° from north.
+              </p>
+            )}
           </div>
 
-          {/* Desktop Preview / Simulator precision calibration dashboard */}
-          {!isLiveSensors && (
+          {/* Desktop preview only: a dial turned by hand, because a computer has no compass. */}
+          {simulatorShown && (
             <div className="w-full max-w-xs bg-slate-900/30 border border-slate-850/70 rounded-2xl p-3 flex flex-col gap-2.5 shrink-0 select-none">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
@@ -788,7 +798,7 @@ export default function QiblaScreen({ theme }: QiblaScreenProps) {
           <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-850/60 text-[10px] leading-relaxed text-slate-400 max-w-xs flex items-start gap-1.5 select-none shrink-0">
             <Info className="w-3.5 h-3.5 text-brand-400 shrink-0 mt-0.5" />
             <p>
-              Position your phone flat and frame the compass straight. Match <b>0° Alignment</b> to find Kaaba's exact direction. Live dragging is simulated for desktop.
+              Position your phone flat and frame the compass straight. Match <b>0° Alignment</b> to find Kaaba's exact direction.{simulatorShown && <> Live dragging is simulated for desktop.</>}
             </p>
           </div>
 

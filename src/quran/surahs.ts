@@ -130,5 +130,12 @@ export const SURAHS: readonly SurahInfo[] = [
 
 export const surahByNumber = (n: number): SurahInfo | undefined => SURAHS[n - 1];
 
+/**
+ * A surah's name for display: from the loaded list when it has one, otherwise from the built-in table, so a name is
+ * shown at once and offline. "Surah 7" is only the answer for a number that is not a surah.
+ */
+export const surahDisplayName = (n: number, loaded: ReadonlyArray<Pick<Surah, 'number' | 'englishName'>>): string =>
+  loaded.find((s) => s.number === n)?.englishName ?? surahByNumber(n)?.englishName ?? `Surah ${n}`;
+
 /** The first page of each surah, in surah order, as the page jump wants it. */
 export const SURAH_FIRST_PAGES: readonly number[] = SURAHS.map((s) => s.firstPage);

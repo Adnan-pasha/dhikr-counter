@@ -1,9 +1,11 @@
 import { SCRIPTS, DEFAULT_SCRIPT, type ScriptId } from './editions';
 import { PICKTHALL_ID, parseTranslationId, type TranslationId } from './translations';
 
-export type ReaderTheme = 'dark' | 'paper' | 'modern' | 'contrast';
+/** "auto" follows the app: the dark page in dark mode, paper in light mode (the pairing lives in index.css). */
+export type ReaderTheme = 'auto' | 'dark' | 'paper' | 'modern' | 'contrast';
 
 export const READER_THEMES: ReadonlyArray<{ id: ReaderTheme; label: string }> = [
+  { id: 'auto', label: 'Auto' },
   { id: 'dark', label: 'Dark' },
   { id: 'paper', label: 'Paper' },
   { id: 'modern', label: 'Modern' },
@@ -36,7 +38,7 @@ export interface ReaderSettings {
 }
 
 export const DEFAULT_READER_SETTINGS: ReaderSettings = {
-  theme: 'dark',
+  theme: 'auto',
   textSize: 2,
   lineSpacing: 1,
   script: DEFAULT_SCRIPT,

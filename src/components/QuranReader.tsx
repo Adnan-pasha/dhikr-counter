@@ -22,6 +22,7 @@ import { clampLayoutPage } from '../quran/indopak-layout';
 import { PICKTHALL_ID, applyTranslation, parseTranslationId, translationCredit } from '../quran/translations';
 import type { TranslationView } from './ReaderView';
 import type { Surah } from '../quran/types';
+import { surahDisplayName } from '../quran/surahs';
 
 type ProgressActions = ReturnType<typeof useQuranProgress>['actions'];
 
@@ -215,7 +216,7 @@ export default function QuranReader({
 
   useEffect(() => () => window.clearTimeout(noticeTimer.current), []);
 
-  const surahName = useCallback((n: number) => surahs.find((s) => s.number === n)?.englishName ?? `Surah ${n}`, [surahs]);
+  const surahName = useCallback((n: number) => surahDisplayName(n, surahs), [surahs]);
 
   const savePosition = useCallback((surah: number, ayah: ReaderAyah, seen: { from: number; to: number }) => {
     progressActions.recordPosition({ surah, ayah: ayah.numberInSurah, global: ayah.number }, seen);

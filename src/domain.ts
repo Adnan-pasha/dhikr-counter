@@ -144,7 +144,8 @@ export const sanitizeHistory = (value: unknown): DhikrHistory[] => {
 export const sanitizePreferences = (value: unknown, fallback: UserPreferences): UserPreferences => {
   if (!isObject(value)) return fallback;
   const soundTone = SOUND_TONES.includes(value.soundTone as SoundTone) ? value.soundTone as SoundTone : fallback.soundTone;
-  const theme = THEMES.includes(value.theme as AppTheme) ? value.theme as AppTheme : fallback.theme;
+  // The colour theme picker was removed (it changed almost nothing), so nobody is left on a colour they cannot change.
+  const theme: AppTheme = 'emerald';
   const volume = isNumber(value.volume) ? Math.min(1, Math.max(0, value.volume)) : fallback.volume;
   const madhab = MADHABS.includes(value.madhab as Madhab) ? value.madhab as Madhab : fallback.madhab;
   const hapticStrength = HAPTIC_STRENGTHS.includes(value.hapticStrength as HapticStrength) ? value.hapticStrength as HapticStrength : fallback.hapticStrength;
