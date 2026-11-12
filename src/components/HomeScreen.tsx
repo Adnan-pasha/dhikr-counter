@@ -194,15 +194,15 @@ export default function HomeScreen({
           <div className="flex gap-2.5 mt-4">
             {[
               { icon: <Flame className="w-3.5 h-3.5" />, label: 'Streak', value: streakInfo.streak, unit: streakInfo.streak === 1 ? 'day' : 'days', color: 'var(--color-orange-400)' },
-              { icon: <Target className="w-3.5 h-3.5" />, label: 'Adhkaar', value: completedTodayIds.length, unit: 'done today', color: 'var(--color-text-brand)' },
+              { icon: <Target className="w-3.5 h-3.5" />, label: 'Done', value: completedTodayIds.length, unit: 'adhkaar today', color: 'var(--color-text-brand)' },
               { icon: <Trophy className="w-3.5 h-3.5" />, label: 'Total', value: allTimeCount >= 1000 ? `${(allTimeCount / 1000).toFixed(1)}k` : allTimeCount, unit: 'beads', color: 'var(--color-text-brand)' },
             ].map(({ icon, label, value, unit, color }) => (
-              <div key={label} className="flex-1 rounded-2xl p-3" style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)' }}>
-                <div className="flex items-center gap-1.5 mb-1.5" style={{ color }}>
-                  {icon}
-                  <span className="section-label" style={{ color: 'var(--color-text-muted)' }}>{label}</span>
-                </div>
-                <p className="font-display font-black text-xl leading-none" style={{ color }}>{value}</p>
+              <div key={label} className="flex-1 min-w-0 rounded-2xl p-3" style={{ background: 'var(--color-bg-raised)', border: '1px solid var(--color-border)' }}>
+                {/* The icon sits with the number, so the label has the card's full width and is never cut short. */}
+                <p className="section-label truncate mb-1.5" style={{ color: 'var(--color-text-muted)' }}>{label}</p>
+                <p className="font-display font-black text-xl leading-none flex items-center gap-1.5" style={{ color }}>
+                  <span className="shrink-0" aria-hidden="true">{icon}</span>{value}
+                </p>
                 <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{unit}</p>
               </div>
             ))}

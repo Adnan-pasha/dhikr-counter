@@ -53,7 +53,8 @@ test('display tab: picking a theme and a text size reports the change', () => {
   assert.deepEqual(calls.patches.at(-1), { theme: 'paper' });
   fireEvent.change(screen.getByRole('slider', { name: 'Text size' }), { target: { value: '4' } });
   assert.deepEqual(calls.patches.at(-1), { textSize: 4 });
-  assert.equal(screen.getByRole('button', { name: /Dark/ }).getAttribute('aria-pressed'), 'true');
+  // Nothing was chosen yet, so the reader is on Auto, which follows the app's light or dark mode.
+  assert.equal(screen.getByRole('button', { name: /Auto/ }).getAttribute('aria-pressed'), 'true');
 });
 
 test('text tab: scripts show a live sample, and choosing one reports it', () => {

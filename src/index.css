@@ -596,7 +596,9 @@ body {
 
 /* ─── Quran reader themes ─────────────────────────────────────────────────
    Chosen separately from the app theme: reading is long-form, so people want a page they like.
+   "auto" is the default and follows the app: this dark page in dark mode, the paper page in light mode.
    Every pair is checked for contrast in tests/quran-theme.test.mjs. */
+[data-reader-theme="auto"],
 [data-reader-theme="dark"] {
   --reader-bg: #0c1815;
   --reader-surface: #132420;
@@ -651,6 +653,7 @@ body {
   --tj-g: #ffae5c;
 }
 
+[data-theme="light"] [data-reader-theme="auto"],
 [data-reader-theme="paper"] {
   --reader-bg: #f6efd9;
   --reader-surface: #fbf6e7;
